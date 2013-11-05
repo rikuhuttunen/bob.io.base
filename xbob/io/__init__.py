@@ -1,3 +1,5 @@
+from ._library import __version__, __api_version__
+
 def get_include():
   """Returns the directory containing the C/C++ API include directives"""
 

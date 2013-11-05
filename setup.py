@@ -68,7 +68,7 @@ include_dirs = [package_dir]
 # Define package version
 version = '2.0.0a0'
 define_macros += [
-    ("XBOB_CORE_VERSION", version),
+    ("XBOB_IO_VERSION", version),
     ]
 
 setup(
@@ -98,7 +98,7 @@ setup(
     ext_modules = [
       Extension("xbob.io._library",
         [
-          "xbob/io/file.cpp",
+          "xbob/io/main.cpp",
           ],
         define_macros=define_macros,
         include_dirs=include_dirs + bob_pkg.include_directories(),
