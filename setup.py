@@ -98,6 +98,7 @@ setup(
     ext_modules = [
       Extension("xbob.io._library",
         [
+          "xbob/io/file.cpp",
           "xbob/io/main.cpp",
           ],
         define_macros=define_macros,
