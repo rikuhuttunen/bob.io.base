@@ -43,6 +43,11 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   static void* PyXbobIo_API[PyXbobIo_API_pointers];
 
   /* exhaustive list of C APIs */
+
+  /**************
+   * Versioning *
+   **************/
+
   PyXbobIo_API[PyXbobIo_APIVersion_NUM] = (void *)&PyXbobIo_APIVersion;
 
   /*****************************
@@ -50,6 +55,12 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
    *****************************/
 
   PyXbobIo_API[PyBobIoFile_Type_NUM] = (void *)&PyBobIoFile_Type;
+
+  /************************
+   * I/O generic bindings *
+   ************************/
+  
+  PyBlitzArray_API[PyBobIo_AsTypenum_NUM] = (void *)PyBobIo_AsTypenum;
 
   /* imports the NumPy C-API */
   import_array();

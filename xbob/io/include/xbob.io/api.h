@@ -44,8 +44,16 @@ typedef struct {
 #define PyBobIoFile_Type_NUM 1
 #define PyBobIoFile_Type_TYPE PyTypeObject
 
+/************************
+ * I/O generic bindings *
+ ************************/
+
+#define PyBobIo_AsTypenum_NUM 2
+#define PyBobIo_AsTypenum_RET int
+#define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
+
 /* Total number of C API pointers */
-#define PyXbobIo_API_pointers 2
+#define PyXbobIo_API_pointers 3
 
 #ifdef XBOB_IO_MODULE
 
@@ -62,6 +70,12 @@ typedef struct {
    *****************************/
 
   extern PyBobIoFile_Type_TYPE PyBobIoFile_Type;
+
+  /************************
+   * I/O generic bindings *
+   ************************/
+
+  PyBobIo_AsTypenum_RET PyBobIo_AsTypenum PyBobIo_AsTypenum_PROTO;
 
 #else
 
@@ -102,6 +116,12 @@ typedef struct {
    *****************************/
 
 # define PyBobIoFile_Type (*(PyBobIoFile_Type_TYPE *)PyXbobIo_API[PyBobIoFile_Type_NUM])
+
+  /************************
+   * I/O generic bindings *
+   ************************/
+
+# define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyBlitzArray_API[PyBobIo_AsTypenum_NUM])
 
   /**
    * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception

@@ -62,8 +62,9 @@ else:
 # Local include directory
 import os
 package_dir = os.path.dirname(os.path.realpath(__file__))
+package_base = os.path.join(package_dir, 'xbob', 'io')
 package_dir = os.path.join(package_dir, 'xbob', 'io', 'include')
-include_dirs = [package_dir]
+include_dirs = [package_base, package_dir]
 
 # Define package version
 version = '2.0.0a0'
@@ -98,6 +99,7 @@ setup(
     ext_modules = [
       Extension("xbob.io._library",
         [
+          "xbob/io/bobskin.cpp",
           "xbob/io/file.cpp",
           "xbob/io/main.cpp",
           ],
