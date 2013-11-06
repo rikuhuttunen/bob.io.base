@@ -23,8 +23,8 @@
 import os
 import sys
 import numpy
-from ...test import utils as testutils
-from .. import supported_videowriter_formats
+from . import utils as testutils
+from .._library import supported_videowriter_formats
 from ..utils import color_distortion, frameskip_detection, quality_degradation
 
 # These are some global parameters for the test.

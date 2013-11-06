@@ -12,7 +12,10 @@
 #include <bob/io/File.h>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/shared_ptr.hpp>
+
+extern "C" {
 #include <Python.h>
+}
 
 #define XBOB_IO_MODULE_PREFIX xbob.io
 #define XBOB_IO_MODULE_NAME _library
@@ -90,7 +93,7 @@ typedef struct {
 #  if defined(PY_ARRAY_UNIQUE_SYMBOL)
 #    define XBOB_IO_MAKE_API_NAME_INNER(a) XBOB_IO_ ## a
 #    define XBOB_IO_MAKE_API_NAME(a) XBOB_IO_MAKE_API_NAME_INNER(a)
-#    define PyBlitzArray_API XBOB_IO_MAKE_API_NAME(PY_ARRAY_UNIQUE_SYMBOL)
+#    define PyXbobIo_API XBOB_IO_MAKE_API_NAME(PY_ARRAY_UNIQUE_SYMBOL)
 #  endif
 
 #  if defined(NO_IMPORT_ARRAY)
@@ -121,7 +124,7 @@ typedef struct {
    * I/O generic bindings *
    ************************/
 
-# define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyBlitzArray_API[PyBobIo_AsTypenum_NUM])
+# define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyXbobIo_API[PyBobIo_AsTypenum_NUM])
 
   /**
    * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception

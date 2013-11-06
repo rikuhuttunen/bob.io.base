@@ -10,6 +10,7 @@
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>
+#include <blitz.array/capi.h>
 #include <stdexcept>
 
 #include <bobskin.h>
@@ -46,10 +47,10 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
   char* mode = 0;
   int mode_len = 0;
   char* pretend_extension = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "ss|s", kwlist, &filename,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "ss#|s", kwlist, &filename,
         &mode, &mode_len, &pretend_extension)) return -1;
 
-  if (mode_len != 1 || !(mode[0] != 'r' && mode[0] != 'w' && mode[0] != 'a')) {
+  if (mode_len != 1 || !(mode[0] == 'r' || mode[0] == 'w' || mode[0] == 'a')) {
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write) or 'a' (append)");
     return -1;
   }
@@ -215,33 +216,38 @@ int PyBobIo_AsTypenum (bob::core::array::ElementType type) {
 static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, Py_ssize_t i) {
 
   if (i < 0 || i >= self->f->size()) {
-    PyErr_SetString(PyExc_IndexError, "file index out of range");
+    PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
     return 0;
   }
 
   const bob::core::array::typeinfo& info = self->f->type();
 
   npy_intp shape[NPY_MAXDIMS];
-  for (i=0; i<info.nd; ++i) shape[i] = info.shape[i];
+  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
-  bobskin skin(retval, info.dtype);
+  if (!retval) return 0;
 
   try {
+    bobskin skin(retval, info.dtype);
     self->f->read(skin, i);
   }
   catch (std::runtime_error& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
+    Py_DECREF(retval);
     return 0;
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
+    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown while reading file `%s'", self->f->filename().c_str());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
+    Py_DECREF(retval);
     return 0;
   }
 
@@ -255,6 +261,220 @@ static PySequenceMethods PyBobIoFile_Sequence = {
     0, /* repeat */
     (ssizeargfunc)PyBobIoFile_GetItem,
     0 /* slice */
+};
+
+static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"index", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  Py_ssize_t i = PY_SSIZE_T_MIN;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n", kwlist, &i)) return 0;
+
+  if (i != PY_SSIZE_T_MIN) {
+
+    // reads a specific object inside the file
+
+    if (i < 0) i += self->f->size();
+
+    if (i < 0 || i >= self->f->size()) {
+      PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
+      return 0;
+    }
+
+    return PyBobIoFile_GetItem(self, i);
+
+  }
+
+  // reads the whole file in a single shot
+
+  const bob::core::array::typeinfo& info = self->f->type_all();
+
+  npy_intp shape[NPY_MAXDIMS];
+  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
+
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
+
+  PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
+  if (!retval) return 0;
+
+  try {
+    bobskin skin(retval, info.dtype);
+    self->f->read_all(skin);
+  }
+  catch (std::runtime_error& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading all contents of file `%s': %s", self->f->filename().c_str(), e.what());
+    Py_DECREF(retval);
+    return 0;
+  }
+  catch (std::exception& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading all contents of file `%s': %s", self->f->filename().c_str(), e.what());
+    Py_DECREF(retval);
+    return 0;
+  }
+  catch (...) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while reading all contents of file `%s'", self->f->filename().c_str());
+    Py_DECREF(retval);
+    return 0;
+  }
+
+  return retval;
+
+}
+
+PyDoc_STRVAR(s_read_str, "read");
+PyDoc_STRVAR(s_read_doc,
+"read([index]) -> numpy.ndarray\n\
+\n\
+Reads a specific object in the file, or the whole file.\n\
+\n\
+Parameters:\n\
+\n\
+index\n\
+  [int|long, optional] The index to the object one wishes\n\
+  to retrieve from the file. Negative indexing is supported.\n\
+  If not given, impliess retrieval of the whole file contents.\n\
+\n\
+This method reads data from the file. If you specified an\n\
+index, it reads just the object indicated by the index, as\n\
+you would do using the ``[]`` operator. If an index is\n\
+not specified, reads the whole contents of the file into a\n\
+:py:class:`numpy.ndarray`.\n\
+"
+);
+
+static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"array", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  PyBlitzArrayObject* bz = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
+
+  try {
+    bobskin skin(bz);
+    self->f->write(skin);
+  }
+  catch (std::runtime_error& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while writing to file `%s': %s", self->f->filename().c_str(), e.what());
+    return 0;
+  }
+  catch (std::exception& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while writing to file `%s': %s", self->f->filename().c_str(), e.what());
+    return 0;
+  }
+  catch (...) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while writing to file `%s'", self->f->filename().c_str());
+    return 0;
+  }
+
+  Py_RETURN_NONE;
+
+}
+
+PyDoc_STRVAR(s_write_str, "write");
+PyDoc_STRVAR(s_write_doc,
+"write(array) -> None\n\
+\n\
+Writes the contents of an object to the file.\n\
+\n\
+Parameters:\n\
+\n\
+array\n\
+  [array] The array to be written into the file. It can be a\n\
+  numpy, a blitz array or any other object which can be\n\
+  converted to either of them, as long as the number of\n\
+  dimensions and scalar type are supported by\n\
+  :py:class:`blitz.array`.\n\
+\n\
+This method writes data to the file. It acts like the\n\
+given array is the only piece of data that will ever be written\n\
+to such a file. No more data appending may happen after a call to\n\
+this method.\n\
+"
+);
+
+static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"array", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  PyBlitzArrayObject* bz = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
+  Py_ssize_t pos = -1;
+
+  try {
+    bobskin skin(bz);
+    pos = self->f->append(skin);
+  }
+  catch (std::runtime_error& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while appending to file `%s': %s", self->f->filename().c_str(), e.what());
+    return 0;
+  }
+  catch (std::exception& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while appending to file `%s': %s", self->f->filename().c_str(), e.what());
+    return 0;
+  }
+  catch (...) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while appending to file `%s'", self->f->filename().c_str());
+    return 0;
+  }
+
+# if PY_VERSION_HEX >= 0x03000000
+  return PyLong_FromSsize_t(pos);
+# else
+  return PyInt_FromSsize_t(pos);
+# endif
+
+}
+
+PyDoc_STRVAR(s_append_str, "append");
+PyDoc_STRVAR(s_append_doc,
+"append(array) -> int\n\
+\n\
+Adds the contents of an object to the file.\n\
+\n\
+Parameters:\n\
+\n\
+array\n\
+  [array] The array to be added into the file. It can be a\n\
+  numpy, a blitz array or any other object which can be\n\
+  converted to either of them, as long as the number of\n\
+  dimensions and scalar type are supported by\n\
+  :py:class:`blitz.array`.\n\
+\n\
+This method appends data to the file. If the file does not\n\
+exist, creates a new file, else, makes sure that the inserted\n\
+array respects the previously set file structure.\n\
+\n\
+Returns the current position of the newly written array.\n\
+"
+);
+
+static PyMethodDef PyBobIoFile_Methods[] = {
+    {
+      s_read_str,
+      (PyCFunction)PyBobIoFile_Read,
+      METH_VARARGS|METH_KEYWORDS,
+      s_read_doc,
+    },
+    {
+      s_write_str,
+      (PyCFunction)PyBobIoFile_Write,
+      METH_VARARGS|METH_KEYWORDS,
+      s_write_doc,
+    },
+    {
+      s_append_str,
+      (PyCFunction)PyBobIoFile_Append,
+      METH_VARARGS|METH_KEYWORDS,
+      s_append_doc,
+    },
+    {0}  /* Sentinel */
 };
 
 PyTypeObject PyBobIoFile_Type = {
@@ -286,7 +506,7 @@ PyTypeObject PyBobIoFile_Type = {
     0,		                                      /* tp_weaklistoffset */
     0,		                                      /* tp_iter */
     0,		                                      /* tp_iternext */
-    0, //PyBobIoFile_methods,                               /* tp_methods */
+    PyBobIoFile_Methods,                        /* tp_methods */
     0,                                          /* tp_members */
     PyBobIoFile_getseters,                      /* tp_getset */
     0,                                          /* tp_base */
@@ -300,28 +520,6 @@ PyTypeObject PyBobIoFile_Type = {
 };
 
 /**
-static object file_read_all(bob::io::File& f) {
-  bob::python::py_array a(f.type_all());
-  f.read_all(a);
-  return a.pyobject(); //shallow copy
-}
-
-static object file_read(bob::io::File& f, size_t index) {
-  bob::python::py_array a(f.type_all());
-  f.read(a, index);
-  return a.pyobject(); //shallow copy
-}
-
-static void file_write(bob::io::File& f, object array) {
-  bob::python::py_array a(array, object());
-  f.write(a);
-}
-
-static void file_append(bob::io::File& f, object array) {
-  bob::python::py_array a(array, object());
-  f.append(a);
-}
-
 static dict extensions() {
   typedef std::map<std::string, std::string> map_type;
   dict retval;
@@ -337,18 +535,6 @@ void bind_io_file() {
     .add_property("type_all", make_function(&bob::io::File::type_all, return_value_policy<copy_const_reference>()), "Typing information to load all of the file at once")
 
     .add_property("type", make_function(&bob::io::File::type, return_value_policy<copy_const_reference>()), "Typing information to load the file as an Arrayset")
-
-    .def("read", &file_read_all, (arg("self")), "Reads the whole contents of the file into a NumPy ndarray")
-    .def("write", &file_write, (arg("self"), arg("array")), "Writes an array into the file, truncating it first")
-
-    .def("__len__", &bob::io::File::size, (arg("self")), "Size of the file if it is supposed to be read as a set of arrays instead of performing a single read")
-
-    .def("read", &file_read, (arg("self"), arg("index")), "Reads a single array from the file considering it to be an arrayset list")
-
-    .def("__getitem__", &file_read, (arg("self"), arg("index")), "Reads a single array from the file considering it to be an arrayset list")
-
-    .def("append", &file_append, (arg("self"), arg("array")), "Appends an array to a file. Compatibility requirements may be enforced.")
-    ;
 
   def("extensions", &extensions, "Returns a dictionary containing all extensions and descriptions currently stored on the global codec registry");
 

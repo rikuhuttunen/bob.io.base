@@ -113,6 +113,12 @@ setup(
         ),
       ],
 
+    entry_points={
+      'console_scripts': [
+        'xbob_video_test.py = xbob.io.script.video_test:main',
+        ],
+      },
+
     classifiers = [
       'Development Status :: 3 - Alpha',
       'Intended Audience :: Developers',

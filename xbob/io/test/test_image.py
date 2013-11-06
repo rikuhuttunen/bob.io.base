@@ -20,11 +20,7 @@
 """Runs some image tests
 """
 
-import os
-import sys
-import numpy
-
-from ...test import utils as testutils
+from . import utils as testutils
 
 # These are some global parameters for the test.
 PNG_INDEXED_COLOR = testutils.datafile('img_indexed_color.png', __name__)

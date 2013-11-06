@@ -6,8 +6,13 @@
  * functionality.
  */
 
-#include <Python.h>
 #include <bob/core/array.h>
+
+extern "C" {
+#include <Python.h>
+#include <blitz.array/capi.h>
+}
+
 
 /**
  * Wraps a PyArrayObject such that we can access it from bob::io
@@ -20,6 +25,11 @@ class bobskin: public bob::core::array::interface {
      * @brief Builds a new array an array like object
      */
     bobskin(PyObject* array, bob::core::array::ElementType eltype);
+
+    /**
+     * @brief Builds a new array an array like object
+     */
+    bobskin(PyBlitzArrayObject* array);
 
     /**
      * @brief By default, the interface is never freed. You must override 
