@@ -38,6 +38,30 @@ def test_codec_support():
     assert supported[codec]['decode']
 
 @testutils.ffmpeg_found()
+def test_input_format_support():
+
+  # Describes all encoders
+  from .._externals import supported_videoreader_formats
+
+  supported = supported_videoreader_formats()
+
+  # Assert we support, at least, some known codecs
+  for fmt in ('avi', 'mov', 'mp4'):
+    assert fmt in supported
+
+@testutils.ffmpeg_found()
+def test_output_format_support():
+
+  # Describes all encoders
+  from .._externals import supported_videowriter_formats
+
+  supported = supported_videowriter_formats()
+
+  # Assert we support, at least, some known codecs
+  for fmt in ('avi', 'mov', 'mp4'):
+    assert fmt in supported
+
+@testutils.ffmpeg_found()
 def test_can_use_array_interface():
 
   # This shows you can use the array interface to read an entire video
@@ -150,7 +174,7 @@ def test_format_codecs():
     distortions['mpeg2video']['color'] = 9.0
     distortions['mpeg2video']['frameskip'] = 1.4
 
-  from .._library import supported_videowriter_formats
+  from .._externals import supported_videowriter_formats
   SUPPORTED = supported_videowriter_formats()
   for format in SUPPORTED:
     for codec in SUPPORTED[format]['supported_codecs']:
@@ -231,7 +255,7 @@ def test_user_video():
       msmpeg4v2  = 2.3,
       )
 
-  from .._library import supported_videowriter_formats
+  from .._externals import supported_videowriter_formats
   SUPPORTED = supported_videowriter_formats()
   for format in SUPPORTED:
     for codec in SUPPORTED[format]['supported_codecs']:
