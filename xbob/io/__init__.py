@@ -1,4 +1,5 @@
 from ._library import __version__, __api_version__, File
+from . import _externals
 
 import os
 
@@ -146,28 +147,28 @@ def peek(filename):
 
   Effectively, this is the same as creating a :py:class:`bob.io.File` object
   with the mode flag set to `r` (read-only) and returning
-  :py:attr:`bob.io.File.type`.
+  :py:attr:`bob.io.File.describe()`.
 
   Parameters:
 
   filename
     The name of the file to peek information from
   """
-  return File(filename, 'r').type
+  return File(filename, 'r').describe()
 
 def peek_all(filename):
   """Returns the type of array (for full readouts) saved in the given file.
 
   Effectively, this is the same as creating a :py:class:`bob.io.File` object
   with the mode flag set to `r` (read-only) and returning
-  :py:attr:`bob.io.File.type_all`.
+  :py:attr:`bob.io.File.describe(all=True)`.
 
   Parameters:
 
   filename
     The name of the file to peek information from
   """
-  return File(filename, 'r').type_all
+  return File(filename, 'r').describe(all=True)
 
 # Keeps compatibility with the previously existing API
 open = File

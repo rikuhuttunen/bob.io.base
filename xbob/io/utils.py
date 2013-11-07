@@ -2,6 +2,8 @@
 # vim: set fileencoding=utf-8 :
 # Andre Anjos <andre.dos.anjos@gmail.com>
 # Thu 14 Mar 17:00:58 2013
+#
+# Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
 
 """Some utilities to generate fake patterns
 """

@@ -10,12 +10,14 @@
 
 #include <xbob.io/config.h>
 #include <bob/io/File.h>
+
+#if WITH_FFMPEG
+#include <bob/io/VideoReader.h>
+#endif /* WITH_FFMPEG */
+
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/shared_ptr.hpp>
-
-extern "C" {
 #include <Python.h>
-}
 
 #define XBOB_IO_MODULE_PREFIX xbob.io
 #define XBOB_IO_MODULE_NAME _library
@@ -55,8 +57,31 @@ typedef struct {
 #define PyBobIo_AsTypenum_RET int
 #define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
 
+#if WITH_FFMPEG
+
+/******************
+ * Video bindings *
+ ******************/
+
+typedef struct {
+  PyObject_HEAD
+
+  /* Type-specific fields go here. */
+  boost::shared_ptr<bob::io::VideoReader> v;
+
+} PyBobIoVideoReaderObject;
+
+#define PyBobIoVideoReader_Type_NUM 3
+#define PyBobIoVideoReader_Type_TYPE PyTypeObject
+
+#endif /* WITH_FFMPEG */
+
 /* Total number of C API pointers */
-#define PyXbobIo_API_pointers 3
+#if WITH_FFMPEG
+#  define PyXbobIo_API_pointers 4
+#else
+#  define PyXbobIo_API_pointers 3
+#endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
 
@@ -79,6 +104,14 @@ typedef struct {
    ************************/
 
   PyBobIo_AsTypenum_RET PyBobIo_AsTypenum PyBobIo_AsTypenum_PROTO;
+
+#if WITH_FFMPEG
+  /******************
+   * Video bindings *
+   ******************/
+
+  extern PyBobIoVideoReader_Type_TYPE PyBobIoVideoReader_Type;
+#endif /* WITH_FFMPEG */
 
 #else
 
@@ -125,6 +158,14 @@ typedef struct {
    ************************/
 
 # define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyXbobIo_API[PyBobIo_AsTypenum_NUM])
+
+#if WITH_FFMPEG
+  /******************
+   * Video bindings *
+   ******************/
+
+# define PyBobIoVideoReader_Type (*(PyBobIoVideoReader_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReader_Type_NUM])
+#endif /* WITH_FFMPEG */
 
   /**
    * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception

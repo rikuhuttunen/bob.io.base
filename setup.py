@@ -97,10 +97,23 @@ setup(
       ],
 
     ext_modules = [
+      Extension("xbob.io._externals",
+        [
+          "xbob/io/externals.cpp",
+          ],
+        define_macros=define_macros,
+        include_dirs=include_dirs,
+        extra_compile_args=extra_compile_args,
+        library_dirs=bob_pkg.library_directories(),
+        runtime_library_dirs=bob_pkg.library_directories(),
+        libraries=bob_libraries,
+        language="c++",
+        ),
       Extension("xbob.io._library",
         [
           "xbob/io/bobskin.cpp",
           "xbob/io/file.cpp",
+          "xbob/io/videoreader.cpp",
           "xbob/io/main.cpp",
           ],
         define_macros=define_macros,

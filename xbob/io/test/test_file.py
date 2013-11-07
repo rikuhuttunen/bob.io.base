@@ -14,7 +14,7 @@ import sys
 import numpy
 import nose.tools
 
-from .. import load, write, File
+from .. import load, write, peek, peek_all, File
 from . import utils as testutils
 
 def transcode(filename):
@@ -272,3 +272,9 @@ def test_csv():
   arrayset_readwrite('.csv', a1, close=True)
   arrayset_readwrite(".csv", a2, close=True)
   arrayset_readwrite('.csv', a3, close=True)
+
+def test_peek():
+  
+  f = testutils.datafile('test1.hdf5', __name__)
+  assert peek(f) == (numpy.uint16, (3,), (1,))
+  assert peek_all(f) == (numpy.uint16, (3,3), (3,1))

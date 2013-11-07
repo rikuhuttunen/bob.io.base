@@ -44,31 +44,30 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
   static char** kwlist = const_cast<char**>(const_kwlist);
 
   char* filename = 0;
-  char* mode = 0;
-  int mode_len = 0;
+  char mode = 0;
   char* pretend_extension = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "ss#|s", kwlist, &filename,
-        &mode, &mode_len, &pretend_extension)) return -1;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "sc|s", kwlist, &filename,
+        &mode, &pretend_extension)) return -1;
 
-  if (mode_len != 1 || !(mode[0] == 'r' || mode[0] == 'w' || mode[0] == 'a')) {
+  if (mode != 'r' && mode != 'w' && mode != 'a') {
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write) or 'a' (append)");
     return -1;
   }
 
   try {
     if (pretend_extension) {
-      self->f = bob::io::open(filename, mode[0], pretend_extension);
+      self->f = bob::io::open(filename, mode, pretend_extension);
     }
     else {
-      self->f = bob::io::open(filename, mode[0]);
+      self->f = bob::io::open(filename, mode);
     }
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%s': %s", filename, mode, e.what());
+    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': %s", filename, mode, e.what());
     return -1;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%s': unknown exception caught", filename, mode);
+    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", filename, mode);
     return -1;
   }
 
@@ -76,7 +75,7 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
 }
 
 PyDoc_STRVAR(s_file_doc,
-"file(filename, mode, [pretend_extension]) -> new bob::io::File\n\
+"File(filename, mode, [pretend_extension]) -> new bob::io::File\n\
 \n\
 Use this object to read and write data into files.\n\
 \n\
@@ -455,6 +454,71 @@ Returns the current position of the newly written array.\n\
 "
 );
 
+static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"all", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  PyObject* all = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &all)) return 0;
+
+  if (all && !PyBool_Check(all)) {
+    PyErr_SetString(PyExc_TypeError, "argument to `all' must be a boolean");
+    return 0;
+  }
+
+  const bob::core::array::typeinfo* info = 0;
+  if (all && all == Py_True) info = &self->f->type_all();
+  else info = &self->f->type();
+
+  /* Now return type description and tuples with shape and strides */
+  int type_num = PyBobIo_AsTypenum(info->dtype);
+  if (type_num == NPY_NOTYPE) return 0;
+
+  /* Get data-type */
+  PyObject* dtype = reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num));
+
+  /* Build shape and stride */
+  PyObject* shape = PyTuple_New(info->nd);
+  PyObject* stride = PyTuple_New(info->nd);
+
+  for (Py_ssize_t i=0; i<info->nd; ++i) {
+#   if PY_VERSION_HEX >= 0x03000000
+    PyObject* shape_item = PyLong_FromSsize_t(info->shape[i]);
+    PyObject* stride_item = PyLong_FromSsize_t(info->stride[i]);
+#   else
+    PyObject* shape_item = PyInt_FromSsize_t(info->shape[i]); 
+    PyObject* stride_item = PyInt_FromSsize_t(info->stride[i]);
+#   endif
+    PyTuple_SetItem(shape, i, shape_item);
+    PyTuple_SetItem(stride, i, stride_item);
+  }
+
+  /* Return a new tuple */
+  PyObject* retval = PyTuple_New(3);
+  PyTuple_SetItem(retval, 0, dtype);
+  PyTuple_SetItem(retval, 1, shape);
+  PyTuple_SetItem(retval, 2, stride);
+  
+  return retval;
+
+}
+
+PyDoc_STRVAR(s_describe_str, "describe");
+PyDoc_STRVAR(s_describe_doc,
+"describe([all]) -> tuple\n\
+\n\
+Returns a description (dtype, shape, stride) of data at the file.\n\
+\n\
+Parameters:\n\
+\n\
+all\n\
+  [bool] If set, return the shape and strides for reading\n\
+  the whole file contents in one go.\n\
+\n\
+");
+
 static PyMethodDef PyBobIoFile_Methods[] = {
     {
       s_read_str,
@@ -473,6 +537,12 @@ static PyMethodDef PyBobIoFile_Methods[] = {
       (PyCFunction)PyBobIoFile_Append,
       METH_VARARGS|METH_KEYWORDS,
       s_append_doc,
+    },
+    {
+      s_describe_str,
+      (PyCFunction)PyBobIoFile_Describe,
+      METH_VARARGS|METH_KEYWORDS,
+      s_describe_doc,
     },
     {0}  /* Sentinel */
 };
@@ -518,26 +588,3 @@ PyTypeObject PyBobIoFile_Type = {
     0,                                          /* tp_alloc */
     PyBobIoFile_New,                            /* tp_new */
 };
-
-/**
-static dict extensions() {
-  typedef std::map<std::string, std::string> map_type;
-  dict retval;
-  const map_type& table = bob::io::CodecRegistry::getExtensions();
-  for (map_type::const_iterator it=table.begin(); it!=table.end(); ++it) {
-    retval[it->first] = it->second;
-  }
-  return retval;
-}
-
-void bind_io_file() {
-
-    .add_property("type_all", make_function(&bob::io::File::type_all, return_value_policy<copy_const_reference>()), "Typing information to load all of the file at once")
-
-    .add_property("type", make_function(&bob::io::File::type, return_value_policy<copy_const_reference>()), "Typing information to load the file as an Arrayset")
-
-  def("extensions", &extensions, "Returns a dictionary containing all extensions and descriptions currently stored on the global codec registry");
-
-}
-
-**/

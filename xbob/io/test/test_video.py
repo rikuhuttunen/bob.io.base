@@ -4,18 +4,6 @@
 # Wed Jun 22 17:50:08 2011 +0200
 #
 # Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Runs some video tests
 """
@@ -23,13 +11,31 @@
 import os
 import sys
 import numpy
+import nose.tools
 from . import utils as testutils
-from .._library import supported_videowriter_formats
 from ..utils import color_distortion, frameskip_detection, quality_degradation
 
 # These are some global parameters for the test.
 INPUT_VIDEO = testutils.datafile('test.mov', __name__)
-SUPPORTED = supported_videowriter_formats()
+
+@testutils.ffmpeg_found()
+def test_codec_support():
+
+  # Describes all encoders
+  from .._externals import describe_encoder, describe_decoder, supported_video_codecs
+
+  supported = supported_video_codecs()
+
+  for k,v in supported.items():
+    # note: searching by name (using `k') will not always work
+    if v['decode']: assert describe_decoder(v['id'])
+    if v['encode']: assert describe_encoder(v['id'])
+
+  # Assert we support, at least, some known codecs
+  for codec in ('ffv1', 'zlib', 'wmv2', 'mpeg4', 'mjpeg'):
+    assert codec in supported
+    assert supported[codec]['encode']
+    assert supported[codec]['decode']
 
 @testutils.ffmpeg_found()
 def test_can_use_array_interface():
@@ -144,7 +150,8 @@ def test_format_codecs():
     distortions['mpeg2video']['color'] = 9.0
     distortions['mpeg2video']['frameskip'] = 1.4
 
-
+  from .._library import supported_videowriter_formats
+  SUPPORTED = supported_videowriter_formats()
   for format in SUPPORTED:
     for codec in SUPPORTED[format]['supported_codecs']:
       for method in methods:
@@ -224,6 +231,8 @@ def test_user_video():
       msmpeg4v2  = 2.3,
       )
 
+  from .._library import supported_videowriter_formats
+  SUPPORTED = supported_videowriter_formats()
   for format in SUPPORTED:
     for codec in SUPPORTED[format]['supported_codecs']:
       check_user_video.description = "%s.test_user_video_format_%s_codec_%s" % (__name__, format, codec)

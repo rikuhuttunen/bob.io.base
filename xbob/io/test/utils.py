@@ -2,6 +2,8 @@
 # vim: set fileencoding=utf-8 :
 # Andre Anjos <andre.anjos@idiap.ch>
 # Thu Feb  7 09:58:22 2013
+#
+# Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
 
 """Re-usable decorators and utilities for xbob test code
 """
@@ -59,14 +61,17 @@ ffmpeg_versions = {
     '0.11': [ SV('54.23.100'), SV('54.6.100'),  SV('51.54.100') ],
     '1.0':  [ SV('54.59.100'), SV('54.29.104'), SV('51.73.101') ],
     '1.1':  [ SV('54.86.100'), SV('54.59.106'), SV('52.13.100') ],
+    '1.2':  [ SV('54.92.100'), SV('54.63.104'), SV('52.18.100') ],
+    '2.0':  [ SV('55.18.102'), SV('55.12.100'), SV('52.38.100') ],
+    '2.1':  [ SV('55.39.100'), SV('55.19.104'), SV('52.48.100') ],
     }
 
 def ffmpeg_version_lessthan(v):
   '''Returns true if the version of ffmpeg compiled-in is at least the version
   indicated as a string parameter.'''
 
-  from ..io._io import version
-  avcodec_inst= SV(version['FFmpeg']['avcodec'])
+  from .._externals import versions
+  avcodec_inst= SV(versions['FFmpeg']['avcodec'])
   avcodec_req = ffmpeg_versions[v][0]
   return avcodec_inst < avcodec_req
 
@@ -95,10 +100,10 @@ def ffmpeg_found(version_geq=None):
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
       try:
-        from ..io._io import version
-        avcodec_inst= SV(version['FFmpeg']['avcodec'])
-        avformat_inst= SV(version['FFmpeg']['avformat'])
-        avutil_inst= SV(version['FFmpeg']['avutil'])
+        from .._externals import versions
+        avcodec_inst = SV(versions['FFmpeg']['avcodec'])
+        avformat_inst = SV(versions['FFmpeg']['avformat'])
+        avutil_inst = SV(versions['FFmpeg']['avutil'])
         if version_geq is not None:
           avcodec_req,avformat_req,avutil_req = ffmpeg_versions[version_geq]
           if avcodec_inst < avcodec_req:
@@ -136,7 +141,7 @@ def extension_available(extension):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from .._library import extensions
+      from .._externals import extensions
       if extension in extensions():
         return test(*args, **kwargs)
       else:
