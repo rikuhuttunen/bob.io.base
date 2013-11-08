@@ -12,7 +12,6 @@
 #include <numpy/arrayobject.h>
 #include <blitz.array/capi.h>
 #include <stdexcept>
-
 #include <bobskin.h>
 
 #define FILETYPE_NAME file
@@ -113,23 +112,11 @@ static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
 }
 
 static PyObject* PyBobIoFile_Filename(PyBobIoFileObject* self) {
-  return
-# if PY_VERSION_HEX >= 0x03000000
-  PyUnicode_FromString
-# else
-  PyString_FromString
-# endif
-  (self->f->filename().c_str());
+  return Py_BuildValue("s", self->f->filename().c_str());
 }
 
 static PyObject* PyBobIoFile_CodecName(PyBobIoFileObject* self) {
-  return
-# if PY_VERSION_HEX >= 0x03000000
-  PyUnicode_FromString
-# else
-  PyString_FromString
-# endif
-  (self->f->name().c_str());
+  return Py_BuildValue("s", self->f->name().c_str());
 }
 
 PyDoc_STRVAR(s_filename_str, "filename");
@@ -233,11 +220,6 @@ static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, Py_ssize_t i) {
   try {
     bobskin skin(retval, info.dtype);
     self->f->read(skin, i);
-  }
-  catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
-    Py_DECREF(retval);
-    return 0;
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
@@ -423,11 +405,7 @@ static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyO
     return 0;
   }
 
-# if PY_VERSION_HEX >= 0x03000000
-  return PyLong_FromSsize_t(pos);
-# else
-  return PyInt_FromSsize_t(pos);
-# endif
+  return Py_BuildValue("n", pos);
 
 }
 
@@ -454,6 +432,35 @@ Returns the current position of the newly written array.\n\
 "
 );
 
+PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti) {
+
+  int type_num = PyBobIo_AsTypenum(ti.dtype);
+  if (type_num == NPY_NOTYPE) return 0;
+
+  PyObject* retval = Py_BuildValue("NNN", 
+      reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num)),
+      PyTuple_New(ti.nd), //shape
+      PyTuple_New(ti.nd)  //strides
+      );
+  if (!retval) return 0;
+
+  PyObject* shape = PyTuple_GET_ITEM(retval, 1);
+  PyObject* stride = PyTuple_GET_ITEM(retval, 2);
+  for (Py_ssize_t i=0; i<ti.nd; ++i) {
+    if (PyTuple_SetItem(shape, i, Py_BuildValue("n", ti.shape[i])) != 0) {
+      Py_DECREF(retval);
+      return 0;
+    }
+    if (PyTuple_SetItem(stride, i, Py_BuildValue("n", ti.stride[i])) != 0) {
+      Py_DECREF(retval);
+      return 0;
+    }
+  }
+
+  return retval;
+
+}
+
 static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
   
   /* Parses input arguments in a single shot */
@@ -473,36 +480,7 @@ static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, P
   else info = &self->f->type();
 
   /* Now return type description and tuples with shape and strides */
-  int type_num = PyBobIo_AsTypenum(info->dtype);
-  if (type_num == NPY_NOTYPE) return 0;
-
-  /* Get data-type */
-  PyObject* dtype = reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num));
-
-  /* Build shape and stride */
-  PyObject* shape = PyTuple_New(info->nd);
-  PyObject* stride = PyTuple_New(info->nd);
-
-  for (Py_ssize_t i=0; i<info->nd; ++i) {
-#   if PY_VERSION_HEX >= 0x03000000
-    PyObject* shape_item = PyLong_FromSsize_t(info->shape[i]);
-    PyObject* stride_item = PyLong_FromSsize_t(info->stride[i]);
-#   else
-    PyObject* shape_item = PyInt_FromSsize_t(info->shape[i]); 
-    PyObject* stride_item = PyInt_FromSsize_t(info->stride[i]);
-#   endif
-    PyTuple_SetItem(shape, i, shape_item);
-    PyTuple_SetItem(stride, i, stride_item);
-  }
-
-  /* Return a new tuple */
-  PyObject* retval = PyTuple_New(3);
-  PyTuple_SetItem(retval, 0, dtype);
-  PyTuple_SetItem(retval, 1, shape);
-  PyTuple_SetItem(retval, 2, stride);
-  
-  return retval;
-
+  return PyBobIo_TypeInfoAsTuple(*info);
 }
 
 PyDoc_STRVAR(s_describe_str, "describe");

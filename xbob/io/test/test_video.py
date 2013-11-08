@@ -62,6 +62,45 @@ def test_output_format_support():
     assert fmt in supported
 
 @testutils.ffmpeg_found()
+def test_video_reader_attributes():
+
+  from .. import VideoReader
+
+  iv = VideoReader(INPUT_VIDEO)
+
+  assert isinstance(iv.filename, str)
+  assert isinstance(iv.height, int)
+  assert isinstance(iv.width, int)
+  assert iv.height != iv.width
+  assert isinstance(iv.duration, int)
+  assert isinstance(iv.format_name, str)
+  assert isinstance(iv.format_long_name, str)
+  assert isinstance(iv.codec_name, str)
+  assert isinstance(iv.codec_long_name, str)
+  assert isinstance(iv.frame_rate, float)
+  assert isinstance(iv.video_type, tuple)
+  assert len(iv.video_type) == 3
+  assert isinstance(iv.video_type[0], numpy.dtype)
+  assert isinstance(iv.video_type[1], tuple)
+  assert isinstance(iv.video_type[2], tuple)
+  assert isinstance(iv.frame_type, tuple)
+  assert len(iv.frame_type) == 3
+  assert iv.frame_type[0] == iv.video_type[0]
+  assert isinstance(iv.video_type[1], tuple)
+  nose.tools.eq_(len(iv.video_type[1]), len(iv.frame_type[1])+1)
+  nose.tools.eq_(len(iv.video_type[2]), len(iv.frame_type[2])+1)
+  assert isinstance(iv.info, str)
+
+@testutils.ffmpeg_found()
+def test_video_reader_str():
+
+  from .. import VideoReader
+
+  iv = VideoReader(INPUT_VIDEO)
+  assert repr(iv)
+  assert str(iv)
+
+@testutils.ffmpeg_found()
 def test_can_use_array_interface():
 
   # This shows you can use the array interface to read an entire video

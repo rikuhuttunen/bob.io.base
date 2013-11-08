@@ -1,4 +1,4 @@
-from ._library import __version__, __api_version__, File
+from ._library import __version__, __api_version__, File, VideoReader
 from . import _externals
 
 import os

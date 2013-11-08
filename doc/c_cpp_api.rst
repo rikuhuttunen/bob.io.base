@@ -51,6 +51,23 @@ Generic Functions
    Returns ``NPY_NOTYPE`` in case of problems, and sets a
    :py:class:`RuntimeError`.
 
+.. cpp:function:: PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti)
+
+   Converts the ``bob::core::array::typeinfo&`` object into a **new reference**
+   to a :py:class:`tuple` with 3 elements:
+
+     [0]
+         The data type as a :py:class:`numpy.dtype` object
+
+     [1]
+         The shape of the object, as a tuple of integers
+
+     [2]
+         The strides of the object, as a tuple of integers
+
+   Returns ``0`` in case of failure, or a **new reference** to the tuple
+   described above in case of success.
+
 Bob File Support
 ----------------
 

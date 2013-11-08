@@ -9,6 +9,7 @@
 #define XBOB_IO_H
 
 #include <xbob.io/config.h>
+#include <bob/config.h>
 #include <bob/io/File.h>
 
 #if WITH_FFMPEG
@@ -57,6 +58,10 @@ typedef struct {
 #define PyBobIo_AsTypenum_RET int
 #define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
 
+#define PyBobIo_TypeInfoAsTuple_NUM 3
+#define PyBobIo_TypeInfoAsTuple_RET PyObject*
+#define PyBobIo_TypeInfoAsTuple_PROTO (const bob::core::array::typeinfo& ti)
+
 #if WITH_FFMPEG
 
 /******************
@@ -71,16 +76,16 @@ typedef struct {
 
 } PyBobIoVideoReaderObject;
 
-#define PyBobIoVideoReader_Type_NUM 3
+#define PyBobIoVideoReader_Type_NUM 4
 #define PyBobIoVideoReader_Type_TYPE PyTypeObject
 
 #endif /* WITH_FFMPEG */
 
 /* Total number of C API pointers */
 #if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 4
+#  define PyXbobIo_API_pointers 5
 #else
-#  define PyXbobIo_API_pointers 3
+#  define PyXbobIo_API_pointers 6
 #endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
@@ -104,6 +109,8 @@ typedef struct {
    ************************/
 
   PyBobIo_AsTypenum_RET PyBobIo_AsTypenum PyBobIo_AsTypenum_PROTO;
+  
+  PyBobIo_TypeInfoAsTuple_RET PyBobIo_TypeInfoAsTuple PyBobIo_TypeInfoAsTuple_PROTO;
 
 #if WITH_FFMPEG
   /******************
@@ -158,6 +165,8 @@ typedef struct {
    ************************/
 
 # define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyXbobIo_API[PyBobIo_AsTypenum_NUM])
+
+# define PyBobIo_TypeInfoAsTuple (*(PyBobIo_TypeInfoAsTuple_RET (*)PyBobIo_TypeInfoAsTuple_PROTO) PyXbobIo_API[PyBobIo_TypeInfoAsTuple_NUM])
 
 #if WITH_FFMPEG
   /******************
