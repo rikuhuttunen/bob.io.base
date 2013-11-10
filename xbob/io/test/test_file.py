@@ -17,6 +17,87 @@ import nose.tools
 from .. import load, write, peek, peek_all, File
 from . import utils as testutils
 
+def test_peek():
+  
+  f = testutils.datafile('test1.hdf5', __name__)
+  assert peek(f) == (numpy.uint16, (3,), (1,))
+  assert peek_all(f) == (numpy.uint16, (3,3), (3,1))
+
+def test_indexing():
+  
+  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+  nose.tools.eq_(len(f), 512)
+
+  objs = f[:]
+  nose.tools.eq_(len(f), len(objs))
+  obj0 = f[0]
+  obj1 = f[1]
+
+  # simple indexing
+  assert numpy.allclose(objs[0], obj0)
+  assert numpy.allclose(objs[1], obj1)
+  assert numpy.allclose(f[len(f)-1], f[-1])
+  assert numpy.allclose(f[len(f)-2], f[-2])
+
+  # get slice
+  s1 = f[3:10:2]
+  nose.tools.eq_(len(s1), 4)
+  assert numpy.allclose(s1[0], objs[3])
+  assert numpy.allclose(s1[1], objs[5])
+  assert numpy.allclose(s1[2], objs[7])
+  assert numpy.allclose(s1[3], objs[9])
+
+  # get negative slicing
+  s2 = f[-10:-2:3]
+  nose.tools.eq_(len(s2), 3)
+  assert numpy.allclose(s2[0], f[len(f)-10])
+  assert numpy.allclose(s2[1], f[len(f)-7])
+  assert numpy.allclose(s2[2], f[len(f)-4])
+
+  # get negative stepping slice
+  s3 = f[20:10:-3]
+  nose.tools.eq_(len(s3), 4)
+  assert numpy.allclose(s3[0], f[20])
+  assert numpy.allclose(s3[1], f[17])
+  assert numpy.allclose(s3[2], f[14])
+  assert numpy.allclose(s3[3], f[11])
+
+  # get negative indexing and positive stepping slice
+  s4 = f[-20:-10:3]
+  nose.tools.eq_(len(s4), 4)
+  assert numpy.allclose(s4[0], f[len(f)-20])
+  assert numpy.allclose(s4[1], f[len(f)-17])
+  assert numpy.allclose(s4[2], f[len(f)-14])
+  assert numpy.allclose(s4[3], f[len(f)-11])
+
+  # get all negative slice
+  s5 = f[-10:-20:-3]
+  nose.tools.eq_(len(s5), 4)
+  assert numpy.allclose(s5[0], f[len(f)-10])
+  assert numpy.allclose(s5[1], f[len(f)-13])
+  assert numpy.allclose(s5[2], f[len(f)-16])
+  assert numpy.allclose(s5[3], f[len(f)-19])
+
+@nose.tools.raises(TypeError)
+def test_indexing_type_check():
+  
+  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+  nose.tools.eq_(len(f), 512)
+  f[4.5]
+
+@nose.tools.raises(IndexError)
+def test_indexing_boundaries():
+  
+  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+  nose.tools.eq_(len(f), 512)
+  f[512]
+
+@nose.tools.raises(IndexError)
+def test_indexing_negative_boundaries():
+  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+  nose.tools.eq_(len(f), 512)
+  f[-513]
+
 def transcode(filename):
   """Runs a complete transcoding test, to and from the binary format."""
 
@@ -273,8 +354,3 @@ def test_csv():
   arrayset_readwrite(".csv", a2, close=True)
   arrayset_readwrite('.csv', a3, close=True)
 
-def test_peek():
-  
-  f = testutils.datafile('test1.hdf5', __name__)
-  assert peek(f) == (numpy.uint16, (3,), (1,))
-  assert peek_all(f) == (numpy.uint16, (3,3), (3,1))

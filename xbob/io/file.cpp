@@ -199,7 +199,9 @@ int PyBobIo_AsTypenum (bob::core::array::ElementType type) {
 
 }
 
-static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, Py_ssize_t i) {
+static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
+
+  if (i < 0) i += self->f->size(); ///< adjust for negative indexing
 
   if (i < 0 || i >= self->f->size()) {
     PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
@@ -236,12 +238,52 @@ static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, Py_ssize_t i) {
 
 }
 
-static PySequenceMethods PyBobIoFile_Sequence = {
-    (lenfunc)PyBobIoFile_Len,
-    0, /* concat */
-    0, /* repeat */
-    (ssizeargfunc)PyBobIoFile_GetItem,
-    0 /* slice */
+static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step, Py_ssize_t length) {
+
+  PyObject* retval = PyList_New(length);
+  if (!retval) return 0;
+
+  Py_ssize_t counter = 0;
+  for (auto i = start; (start<=stop)?i<stop:i>stop; i+=step) {
+
+    PyObject* item = PyBobIoFile_GetIndex(self, i);
+    if (!item) {
+      Py_DECREF(retval);
+      return 0;
+    }
+
+    PyList_SET_ITEM(retval, counter++, item);
+
+  }
+
+  return retval;
+
+}
+
+static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, PyObject* item) {
+   if (PyIndex_Check(item)) {
+     Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+     if (i == -1 && PyErr_Occurred()) return 0;
+     return PyBobIoFile_GetIndex(self, i);
+   }
+   if (PySlice_Check(item)) {
+     Py_ssize_t start, stop, step, slicelength;
+     if (PySlice_GetIndicesEx((PySliceObject*)item, self->f->size(), 
+           &start, &stop, &step, &slicelength) < 0) return 0;
+     if (slicelength <= 0) return PyList_New(0);
+     return PyBobIoFile_GetSlice(self, start, stop, step, slicelength);
+   }
+   else {
+     PyErr_Format(PyExc_TypeError, "File indices must be integers, not %.200s",
+         item->ob_type->tp_name);
+     return 0;
+   }
+}
+
+static PyMappingMethods PyBobIoFile_Mapping = {
+    (lenfunc)PyBobIoFile_Len, //mp_lenght
+    (binaryfunc)PyBobIoFile_GetItem, //mp_subscript
+    0 /* (objobjargproc)PyBobIoFile_SetItem //mp_ass_subscript */
 };
 
 static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
@@ -264,7 +306,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
       return 0;
     }
 
-    return PyBobIoFile_GetItem(self, i);
+    return PyBobIoFile_GetIndex(self, i);
 
   }
 
@@ -538,8 +580,8 @@ PyTypeObject PyBobIoFile_Type = {
     0,                                          /*tp_compare*/
     (reprfunc)PyBobIoFile_Repr,                 /*tp_repr*/
     0,                                          /*tp_as_number*/
-    &PyBobIoFile_Sequence,                      /*tp_as_sequence*/
-    0,                                          /*tp_as_mapping*/
+    0,                                          /*tp_as_sequence*/
+    &PyBobIoFile_Mapping,                       /*tp_as_mapping*/
     0,                                          /*tp_hash */
     0,                                          /*tp_call*/
     (reprfunc)PyBobIoFile_Repr,                 /*tp_str*/
