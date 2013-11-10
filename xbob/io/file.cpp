@@ -243,12 +243,37 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, Py_ssize_t start
   PyObject* retval = PyList_New(length);
   if (!retval) return 0;
 
+  const bob::core::array::typeinfo& info = self->f->type();
+
+  npy_intp shape[NPY_MAXDIMS];
+  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
+
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
+
   Py_ssize_t counter = 0;
   for (auto i = start; (start<=stop)?i<stop:i>stop; i+=step) {
 
-    PyObject* item = PyBobIoFile_GetIndex(self, i);
+    PyObject* item = PyArray_SimpleNew(info.nd, shape, type_num);
     if (!item) {
       Py_DECREF(retval);
+      return 0;
+    }
+
+    try {
+      bobskin skin(item, info.dtype);
+      self->f->read(skin, i);
+    }
+    catch (std::exception& e) {
+      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
+      Py_DECREF(retval);
+      Py_DECREF(item);
+      return 0;
+    }
+    catch (...) {
+      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
+      Py_DECREF(retval);
+      Py_DECREF(item);
       return 0;
     }
 

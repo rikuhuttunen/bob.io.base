@@ -129,8 +129,8 @@ PyDoc_STRVAR(s_width_str, "width");
 PyDoc_STRVAR(s_width_doc,
 "[int] The width of each frame in the video (a multiple of 2)");
 
-PyObject* PyBobIoVideoReader_Len(PyBobIoVideoReaderObject* self) {
-  return Py_BuildValue("n", self->v->numberOfFrames());
+Py_ssize_t PyBobIoVideoReader_Len(PyBobIoVideoReaderObject* self) {
+  return self->v->numberOfFrames();
 }
 
 PyDoc_STRVAR(s_number_of_frames_str, "number_of_frames");
@@ -412,7 +412,9 @@ static PyMethodDef PyBobIoVideoReader_Methods[] = {
     {0}  /* Sentinel */
 };
 
-static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, Py_ssize_t i) {
+static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py_ssize_t i) {
+
+  if (i < 0) i += self->v->numberOfFrames(); ///< adjust for negative indexing
 
   if (i < 0 || i >= self->v->numberOfFrames()) {
     PyErr_Format(PyExc_IndexError, "video frame index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d frame(s)", self->v->filename().c_str(), self->v->numberOfFrames());
@@ -451,17 +453,10 @@ static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, Py_
 
 }
 
-static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py_ssize_t lo, Py_ssize_t hi) {
+static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step, Py_ssize_t length) {
 
-  if (lo < 0 || lo >= self->v->numberOfFrames()) {
-    PyErr_Format(PyExc_IndexError, "video frame index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d frame(s)", self->v->filename().c_str(), self->v->numberOfFrames());
-    return 0;
-  }
-
-  if (hi < 0 || hi >= self->v->numberOfFrames()) {
-    PyErr_Format(PyExc_IndexError, "video frame index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d frame(s)", self->v->filename().c_str(), self->v->numberOfFrames());
-    return 0;
-  }
+  PyObject* retval = PyList_New(length);
+  if (!retval) return 0;
 
   const bob::core::array::typeinfo& info = self->v->frame_type();
 
@@ -471,55 +466,73 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
-  PyObject* retval = PyList_New(0);
-  if (!retval) return 0;
+  Py_ssize_t counter = 0;
+  Py_ssize_t lo, hi, st;
+  auto it = self->v->begin();
 
-  PyObject* frame = 0;
+  if (start <= stop) lo = start, hi = stop, st = step, it += lo;
+  else lo = stop, hi = start, st = -step, it += lo + (hi-lo)%st;
 
-  try {
-    auto it = self->v->begin();
-    it += lo;
-    for (size_t i=lo; it.parent() && i<hi; ++i) {
-      Check_Interrupt();
-      frame = PyArray_SimpleNew(info.nd, shape, type_num);
-      if (!frame) {
-        Py_DECREF(retval);
-        return 0;
-      }
-      bobskin skin(frame, info.dtype);
-      it.read(skin);
-      int ok = PyList_Append(retval, frame);
-      Py_DECREF(frame);
-      frame = 0;
-      if (ok != 0) {
-        Py_DECREF(retval);
-        return 0;
-      }
+  for (auto i=lo; i<hi; i+=st) {
+
+    PyObject* item = PyArray_SimpleNew(info.nd, shape, type_num);
+    if (!item) {
+      Py_DECREF(retval);
+      return 0;
     }
+
+    try {
+      bobskin skin(item, info.dtype);
+      it.read(skin);
+      it += (st-1);
+    }
+    catch (std::exception& e) {
+      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame %" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->v->filename().c_str(), e.what());
+      Py_DECREF(retval);
+      Py_DECREF(item);
+      return 0;
+    }
+    catch (...) {
+      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->v->filename().c_str());
+      Py_DECREF(retval);
+      Py_DECREF(item);
+      return 0;
+    }
+
+    PyList_SET_ITEM(retval, counter++, item);
+
   }
-  catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading slice [%" PY_FORMAT_SIZE_T "d, %" PY_FORMAT_SIZE_T "d[ from file `%s': %s", lo, hi, self->v->filename().c_str(), e.what());
-    Py_XDECREF(frame);
-    Py_DECREF(retval);
-    return 0;
-  }
-  catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading slice [%" PY_FORMAT_SIZE_T "d, %" PY_FORMAT_SIZE_T "d[ from file `%s'", lo, hi, self->v->filename().c_str());
-    Py_XDECREF(frame);
-    Py_DECREF(retval);
-    return 0;
-  }
+
+  if (st == -step) PyList_Reverse(retval);
 
   return retval;
 
 }
 
-static PySequenceMethods PyBobIoVideoReader_Sequence = {
-    (lenfunc)PyBobIoVideoReader_Len,
-    0, /* concat */
-    0, /* repeat */
-    (ssizeargfunc)PyBobIoVideoReader_GetItem,
-    (ssizessizeargfunc)PyBobIoVideoReader_GetSlice
+static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, PyObject* item) {
+   if (PyIndex_Check(item)) {
+     Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+     if (i == -1 && PyErr_Occurred()) return 0;
+     return PyBobIoVideoReader_GetIndex(self, i);
+   }
+   if (PySlice_Check(item)) {
+     Py_ssize_t start, stop, step, slicelength;
+     if (PySlice_GetIndicesEx((PySliceObject*)item, self->v->numberOfFrames(), 
+           &start, &stop, &step, &slicelength) < 0) return 0;
+     if (slicelength <= 0) return PyList_New(0);
+     return PyBobIoVideoReader_GetSlice(self, start, stop, step, slicelength);
+   }
+   else {
+     PyErr_Format(PyExc_TypeError, "VideoReader indices must be integers, not %.200s",
+         item->ob_type->tp_name);
+     return 0;
+   }
+}
+
+static PyMappingMethods PyBobIoVideoReader_Mapping = {
+    (lenfunc)PyBobIoVideoReader_Len, //mp_lenght
+    (binaryfunc)PyBobIoVideoReader_GetItem, //mp_subscript
+    0 /* (objobjargproc)PyBobIoVideoReader_SetItem //mp_ass_subscript */
 };
 
 PyTypeObject PyBobIoVideoReader_Type = {
@@ -535,8 +548,8 @@ PyTypeObject PyBobIoVideoReader_Type = {
     0,                                          /*tp_compare*/
     (reprfunc)PyBobIoVideoReader_Repr,          /*tp_repr*/
     0,                                          /*tp_as_number*/
-    &PyBobIoVideoReader_Sequence,               /*tp_as_sequence*/
-    0,                                          /*tp_as_mapping*/
+    0,                                          /*tp_as_sequence*/
+    &PyBobIoVideoReader_Mapping,                /*tp_as_mapping*/
     0,                                          /*tp_hash */
     0,                                          /*tp_call*/
     (reprfunc)PyBobIoVideoReader_Print,         /*tp_str*/

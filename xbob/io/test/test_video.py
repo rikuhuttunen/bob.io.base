@@ -101,10 +101,93 @@ def test_video_reader_str():
   assert str(iv)
 
 @testutils.ffmpeg_found()
+def test_indexing():
+
+  from .. import VideoReader
+  f = VideoReader(INPUT_VIDEO)
+
+  nose.tools.eq_(len(f), 375)
+
+  objs = f[:10]
+  nose.tools.eq_(len(objs), 10)
+  obj0 = f[0]
+  obj1 = f[1]
+
+  # simple indexing
+  assert numpy.allclose(objs[0], obj0)
+  assert numpy.allclose(objs[1], obj1)
+  assert numpy.allclose(f[len(f)-1], f[-1])
+  assert numpy.allclose(f[len(f)-2], f[-2])
+
+@testutils.ffmpeg_found()
+def test_slicing_0():
+
+  from .. import load, VideoReader
+  f = VideoReader(INPUT_VIDEO)
+
+  objs = f[:]
+  for i, k in enumerate(load(INPUT_VIDEO)):
+    assert numpy.allclose(k, objs[i])
+
+@testutils.ffmpeg_found()
+def test_slicing_1():
+
+  from .. import VideoReader
+  f = VideoReader(INPUT_VIDEO)
+
+  s = f[3:10:2]
+  nose.tools.eq_(len(s), 4)
+  assert numpy.allclose(s[0], f[3])
+  assert numpy.allclose(s[1], f[5])
+  assert numpy.allclose(s[2], f[7])
+  assert numpy.allclose(s[3], f[9])
+
+@testutils.ffmpeg_found()
+def test_slicing_2():
+
+  from .. import VideoReader
+  f = VideoReader(INPUT_VIDEO)
+
+  s = f[-10:-2:3]
+  nose.tools.eq_(len(s), 3)
+  assert numpy.allclose(s[0], f[len(f)-10])
+  assert numpy.allclose(s[1], f[len(f)-7])
+  assert numpy.allclose(s[2], f[len(f)-4])
+
+@testutils.ffmpeg_found()
+def test_slicing_3():
+
+  from .. import VideoReader
+  f = VideoReader(INPUT_VIDEO)
+  objs = f.load()
+
+  # get negative stepping slice
+  s = f[20:10:-3]
+  nose.tools.eq_(len(s), 4)
+  assert numpy.allclose(s[0], f[20])
+  assert numpy.allclose(s[1], f[17])
+  assert numpy.allclose(s[2], f[14])
+  assert numpy.allclose(s[3], f[11])
+
+@testutils.ffmpeg_found()
+def test_slicing_4():
+
+  from .. import VideoReader
+  f = VideoReader(INPUT_VIDEO)
+  objs = f[:21]
+
+  # get all negative slice
+  s = f[-10:-20:-3]
+  nose.tools.eq_(len(s), 4)
+  assert numpy.allclose(s[0], f[len(f)-10])
+  assert numpy.allclose(s[1], f[len(f)-13])
+  assert numpy.allclose(s[2], f[len(f)-16])
+  assert numpy.allclose(s[3], f[len(f)-19])
+
+
+@testutils.ffmpeg_found()
 def test_can_use_array_interface():
 
-  # This shows you can use the array interface to read an entire video
-  # sequence in a single shot
   from .. import load, VideoReader
   array = load(INPUT_VIDEO)
   iv = VideoReader(INPUT_VIDEO)

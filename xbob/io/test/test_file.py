@@ -24,59 +24,79 @@ def test_peek():
   assert peek_all(f) == (numpy.uint16, (3,3), (3,1))
 
 def test_indexing():
-  
-  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+ 
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
   nose.tools.eq_(len(f), 512)
 
-  objs = f[:]
+  objs = load(fname)
   nose.tools.eq_(len(f), len(objs))
-  obj0 = f[0]
-  obj1 = f[1]
 
   # simple indexing
-  assert numpy.allclose(objs[0], obj0)
-  assert numpy.allclose(objs[1], obj1)
-  assert numpy.allclose(f[len(f)-1], f[-1])
-  assert numpy.allclose(f[len(f)-2], f[-2])
+  assert numpy.allclose(f[0], objs[0])
+  assert numpy.allclose(f[1], objs[1])
+  assert numpy.allclose(f[-1], objs[-1])
+  assert numpy.allclose(f[-2], objs[-2])
+
+def test_slicing_0():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
+
+  objs = f[:]
+  for i, k in enumerate(load(fname)):
+    assert numpy.allclose(k, objs[i])
+
+def test_slicing_1():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
 
   # get slice
   s1 = f[3:10:2]
   nose.tools.eq_(len(s1), 4)
-  assert numpy.allclose(s1[0], objs[3])
-  assert numpy.allclose(s1[1], objs[5])
-  assert numpy.allclose(s1[2], objs[7])
-  assert numpy.allclose(s1[3], objs[9])
+  assert numpy.allclose(s1[0], f[3])
+  assert numpy.allclose(s1[1], f[5])
+  assert numpy.allclose(s1[2], f[7])
+  assert numpy.allclose(s1[3], f[9])
+
+def test_slicing_2():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
 
   # get negative slicing
-  s2 = f[-10:-2:3]
-  nose.tools.eq_(len(s2), 3)
-  assert numpy.allclose(s2[0], f[len(f)-10])
-  assert numpy.allclose(s2[1], f[len(f)-7])
-  assert numpy.allclose(s2[2], f[len(f)-4])
+  s = f[-10:-2:3]
+  nose.tools.eq_(len(s), 3)
+  assert numpy.allclose(s[0], f[len(f)-10])
+  assert numpy.allclose(s[1], f[len(f)-7])
+  assert numpy.allclose(s[2], f[len(f)-4])
+
+def test_slicing_3():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
 
   # get negative stepping slice
-  s3 = f[20:10:-3]
-  nose.tools.eq_(len(s3), 4)
-  assert numpy.allclose(s3[0], f[20])
-  assert numpy.allclose(s3[1], f[17])
-  assert numpy.allclose(s3[2], f[14])
-  assert numpy.allclose(s3[3], f[11])
+  s = f[20:10:-3]
+  nose.tools.eq_(len(s), 4)
+  assert numpy.allclose(s[0], f[20])
+  assert numpy.allclose(s[1], f[17])
+  assert numpy.allclose(s[2], f[14])
+  assert numpy.allclose(s[3], f[11])
 
-  # get negative indexing and positive stepping slice
-  s4 = f[-20:-10:3]
-  nose.tools.eq_(len(s4), 4)
-  assert numpy.allclose(s4[0], f[len(f)-20])
-  assert numpy.allclose(s4[1], f[len(f)-17])
-  assert numpy.allclose(s4[2], f[len(f)-14])
-  assert numpy.allclose(s4[3], f[len(f)-11])
+def test_slicing_4():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
 
   # get all negative slice
-  s5 = f[-10:-20:-3]
-  nose.tools.eq_(len(s5), 4)
-  assert numpy.allclose(s5[0], f[len(f)-10])
-  assert numpy.allclose(s5[1], f[len(f)-13])
-  assert numpy.allclose(s5[2], f[len(f)-16])
-  assert numpy.allclose(s5[3], f[len(f)-19])
+  s = f[-10:-20:-3]
+  nose.tools.eq_(len(s), 4)
+  assert numpy.allclose(s[0], f[len(f)-10])
+  assert numpy.allclose(s[1], f[len(f)-13])
+  assert numpy.allclose(s[2], f[len(f)-16])
+  assert numpy.allclose(s[3], f[len(f)-19])
 
 @nose.tools.raises(TypeError)
 def test_indexing_type_check():
