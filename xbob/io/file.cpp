@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <bobskin.h>
 
-#define FILETYPE_NAME file
+#define FILETYPE_NAME File
 PyDoc_STRVAR(s_file_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILETYPE_NAME));
 
 /* How to create a new PyBobIoFileObject */
@@ -299,7 +299,7 @@ static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, PyObject* item) {
      return PyBobIoFile_GetSlice(self, start, stop, step, slicelength);
    }
    else {
-     PyErr_Format(PyExc_TypeError, "File indices must be integers, not %.200s",
+     PyErr_Format(PyExc_TypeError, "File indices must be integers, not %s",
          item->ob_type->tp_name);
      return 0;
    }
@@ -592,6 +592,76 @@ static PyMethodDef PyBobIoFile_Methods[] = {
     {0}  /* Sentinel */
 };
 
+/**********************************
+ * Definition of Iterator to File *
+ **********************************/
+
+#define FILEITERTYPE_NAME File.iter
+PyDoc_STRVAR(s_fileiterator_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILEITERTYPE_NAME));
+
+/* How to create a new PyBobIoFileIteratorObject */
+static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject*) {
+
+  /* Allocates the python object itself */
+  PyBobIoFileIteratorObject* self = (PyBobIoFileIteratorObject*)type->tp_alloc(type, 0);
+
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static PyObject* PyBobIoFileIterator_Iter (PyBobIoFileIteratorObject* self) {
+  Py_INCREF(self);
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static PyObject* PyBobIoFileIterator_Next (PyBobIoFileIteratorObject* self) {
+  if (self->curpos >= self->pyfile->f->size()) {
+    Py_XDECREF((PyObject*)self->pyfile);
+    self->pyfile = 0;
+    return 0;
+  }
+  return PyBobIoFile_GetIndex(self->pyfile, self->curpos++);
+}
+
+PyTypeObject PyBobIoFileIterator_Type = {
+    PyObject_HEAD_INIT(0)
+    0,                                          /* ob_size */
+    s_fileiterator_str,                         /* tp_name */
+    sizeof(PyBobIoFileIteratorObject),          /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    0,                                          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    0,                                          /* tp_compare */
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER,  /* tp_flags */
+    0,                                          /* tp_doc */
+    0,		                                      /* tp_traverse */
+    0,		                                      /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,		                                      /* tp_weaklistoffset */
+    (getiterfunc)PyBobIoFileIterator_Iter,      /* tp_iter */
+    (iternextfunc)PyBobIoFileIterator_Next      /* tp_iternext */
+};
+
+static PyObject* PyBobIoFile_Iter (PyBobIoFileObject* self) {
+  PyBobIoFileIteratorObject* retval = (PyBobIoFileIteratorObject*)PyBobIoFileIterator_New(&PyBobIoFileIterator_Type, 0, 0);
+  if (!retval) return 0;
+  Py_INCREF(self);
+  retval->pyfile = self;
+  retval->curpos = 0;
+  return reinterpret_cast<PyObject*>(retval);
+}
+
 PyTypeObject PyBobIoFile_Type = {
     PyObject_HEAD_INIT(0)
     0,                                          /*ob_size*/
@@ -619,7 +689,7 @@ PyTypeObject PyBobIoFile_Type = {
     0,		                                      /* tp_clear */
     0,                                          /* tp_richcompare */
     0,		                                      /* tp_weaklistoffset */
-    0,		                                      /* tp_iter */
+    (getiterfunc)PyBobIoFile_Iter,              /* tp_iter */
     0,		                                      /* tp_iternext */
     PyBobIoFile_Methods,                        /* tp_methods */
     0,                                          /* tp_members */

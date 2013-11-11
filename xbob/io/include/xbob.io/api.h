@@ -50,15 +50,27 @@ typedef struct {
 #define PyBobIoFile_Type_NUM 1
 #define PyBobIoFile_Type_TYPE PyTypeObject
 
+typedef struct {
+  PyObject_HEAD
+  
+  /* Type-specific fields go here. */
+  PyBobIoFileObject* pyfile;
+  Py_ssize_t curpos;
+
+} PyBobIoFileIteratorObject;
+
+#define PyBobIoFileIterator_Type_NUM 2
+#define PyBobIoFileIterator_Type_TYPE PyTypeObject
+
 /************************
  * I/O generic bindings *
  ************************/
 
-#define PyBobIo_AsTypenum_NUM 2
+#define PyBobIo_AsTypenum_NUM 3
 #define PyBobIo_AsTypenum_RET int
 #define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
 
-#define PyBobIo_TypeInfoAsTuple_NUM 3
+#define PyBobIo_TypeInfoAsTuple_NUM 4
 #define PyBobIo_TypeInfoAsTuple_RET PyObject*
 #define PyBobIo_TypeInfoAsTuple_PROTO (const bob::core::array::typeinfo& ti)
 
@@ -76,16 +88,28 @@ typedef struct {
 
 } PyBobIoVideoReaderObject;
 
-#define PyBobIoVideoReader_Type_NUM 4
+#define PyBobIoVideoReader_Type_NUM 5
 #define PyBobIoVideoReader_Type_TYPE PyTypeObject
+
+typedef struct {
+  PyObject_HEAD
+
+  /* Type-specific fields go here. */
+  PyBobIoVideoReaderObject* pyreader;
+  boost::shared_ptr<bob::io::VideoReader::const_iterator> iter;
+
+} PyBobIoVideoReaderIteratorObject;
+
+#define PyBobIoVideoReaderIterator_Type_NUM 5
+#define PyBobIoVideoReaderIterator_Type_TYPE PyTypeObject
 
 #endif /* WITH_FFMPEG */
 
 /* Total number of C API pointers */
 #if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 5
-#else
 #  define PyXbobIo_API_pointers 6
+#else
+#  define PyXbobIo_API_pointers 7
 #endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
@@ -103,6 +127,7 @@ typedef struct {
    *****************************/
 
   extern PyBobIoFile_Type_TYPE PyBobIoFile_Type;
+  extern PyBobIoFileIterator_Type_TYPE PyBobIoFileIterator_Type;
 
   /************************
    * I/O generic bindings *
@@ -118,6 +143,7 @@ typedef struct {
    ******************/
 
   extern PyBobIoVideoReader_Type_TYPE PyBobIoVideoReader_Type;
+  extern PyBobIoVideoReaderIterator_Type_TYPE PyBobIoVideoReaderIterator_Type;
 #endif /* WITH_FFMPEG */
 
 #else
@@ -159,6 +185,7 @@ typedef struct {
    *****************************/
 
 # define PyBobIoFile_Type (*(PyBobIoFile_Type_TYPE *)PyXbobIo_API[PyBobIoFile_Type_NUM])
+# define PyBobIoFileIterator_Type (*(PyBobIoFileIterator_Type_TYPE *)PyXbobIo_API[PyBobIoFileIterator_Type_NUM])
 
   /************************
    * I/O generic bindings *
@@ -174,6 +201,8 @@ typedef struct {
    ******************/
 
 # define PyBobIoVideoReader_Type (*(PyBobIoVideoReader_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReader_Type_NUM])
+
+# define PyBobIoVideoReaderIterator_Type (*(PyBobIoVideoReaderIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReaderIterator_Type_NUM])
 #endif /* WITH_FFMPEG */
 
   /**

@@ -23,6 +23,17 @@ def test_peek():
   assert peek(f) == (numpy.uint16, (3,), (1,))
   assert peek_all(f) == (numpy.uint16, (3,3), (3,1))
 
+def test_iteration():
+ 
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
+  nose.tools.eq_(len(f), 512)
+
+  objs = load(fname)
+
+  for l, i in zip(objs, f):
+    assert numpy.allclose(l, i)
+
 def test_indexing():
  
   fname = testutils.datafile('matlab_2d.hdf5', __name__)

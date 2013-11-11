@@ -101,6 +101,17 @@ def test_video_reader_str():
   assert str(iv)
 
 @testutils.ffmpeg_found()
+def test_iteration():
+ 
+  from .. import load, VideoReader
+  f = VideoReader(INPUT_VIDEO)
+  objs = load(INPUT_VIDEO)
+
+  nose.tools.eq_(len(f), len(objs))
+  for l, i in zip(objs, f):
+    assert numpy.allclose(l, i)
+
+@testutils.ffmpeg_found()
 def test_indexing():
 
   from .. import VideoReader

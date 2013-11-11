@@ -535,6 +535,110 @@ static PyMappingMethods PyBobIoVideoReader_Mapping = {
     0 /* (objobjargproc)PyBobIoVideoReader_SetItem //mp_ass_subscript */
 };
 
+/*****************************************
+ * Definition of Iterator to VideoReader *
+ *****************************************/
+
+#define VIDEOITERTYPE_NAME VideoReader.iter
+PyDoc_STRVAR(s_videoreaderiterator_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOITERTYPE_NAME));
+
+static PyObject* PyBobIoVideoReaderIterator_New(PyTypeObject* type, PyObject*, PyObject*) {
+
+  /* Allocates the python object itself */
+  PyBobIoVideoReaderIteratorObject* self = (PyBobIoVideoReaderIteratorObject*)type->tp_alloc(type, 0);
+
+  self->iter.reset();
+
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static PyObject* PyBobIoVideoReaderIterator_Iter (PyBobIoVideoReaderIteratorObject* self) {
+  Py_INCREF(self);
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObject* self) {
+
+  if (*self->iter == self->pyreader->v->end()) {
+    self->iter->reset();
+    self->iter.reset();
+    Py_XDECREF((PyObject*)self->pyreader);
+    return 0;
+  }
+
+  const bob::core::array::typeinfo& info = self->pyreader->v->frame_type();
+
+  npy_intp shape[NPY_MAXDIMS];
+  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
+
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
+
+  PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
+  if (!retval) return 0;
+
+  try {
+    bobskin skin(retval, info.dtype);
+    self->iter->read(skin);
+  }
+  catch (std::exception& e) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame %" PY_FORMAT_SIZE_T "d from file `%s': %s", self->iter->cur(), self->pyreader->v->filename().c_str(), e.what());
+    Py_DECREF(retval);
+    return 0;
+  }
+  catch (...) {
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s'", self->iter->cur(), self->pyreader->v->filename().c_str());
+    Py_DECREF(retval);
+    return 0;
+  }
+
+  return retval;
+
+}
+
+PyTypeObject PyBobIoVideoReaderIterator_Type = {
+    PyObject_HEAD_INIT(0)
+    0,                                          /* ob_size */
+    s_videoreaderiterator_str,                  /* tp_name */
+    sizeof(PyBobIoVideoReaderIteratorObject),   /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    0,                                          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+    0,                                          /* tp_compare */
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER,  /* tp_flags */
+    0,                                          /* tp_doc */
+    0,		                                      /* tp_traverse */
+    0,		                                      /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,		                                      /* tp_weaklistoffset */
+    (getiterfunc)PyBobIoVideoReaderIterator_Iter,      /* tp_iter */
+    (iternextfunc)PyBobIoVideoReaderIterator_Next      /* tp_iternext */
+};
+
+static PyObject* PyBobIoVideoReader_Iter (PyBobIoVideoReaderObject* self) {
+
+  /* Allocates the python object itself */
+  PyBobIoVideoReaderIteratorObject* retval = (PyBobIoVideoReaderIteratorObject*)PyBobIoVideoReaderIterator_New(&PyBobIoVideoReaderIterator_Type, 0, 0);
+  if (!retval) return 0;
+
+  Py_INCREF(self);
+  retval->pyreader = self;
+  retval->iter.reset(new bob::io::VideoReader::const_iterator(self->v->begin()));
+  return reinterpret_cast<PyObject*>(retval);
+}
+
 PyTypeObject PyBobIoVideoReader_Type = {
     PyObject_HEAD_INIT(0)
     0,                                          /*ob_size*/
@@ -562,7 +666,7 @@ PyTypeObject PyBobIoVideoReader_Type = {
     0,		                                      /* tp_clear */
     0,                                          /* tp_richcompare */
     0,		                                      /* tp_weaklistoffset */
-    0,		                                      /* tp_iter */
+    (getiterfunc)PyBobIoVideoReader_Iter,       /* tp_iter */
     0,		                                      /* tp_iternext */
     PyBobIoVideoReader_Methods,                 /* tp_methods */
     0,                                          /* tp_members */
@@ -576,12 +680,5 @@ PyTypeObject PyBobIoVideoReader_Type = {
     0,                                          /* tp_alloc */
     PyBobIoVideoReader_New,                     /* tp_new */
 };
-
-/**
-    .def("__iter__", &bob::io::VideoReader::begin, with_custodian_and_ward_postcall<0,1>())
-
-    .def("__getitem__", &videoreader_getslice)
-
-**/
 
 #endif /* WITH_FFMPEG */
