@@ -407,7 +407,7 @@ static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObj
   static char** kwlist = const_cast<char**>(const_kwlist);
 
   PyBlitzArrayObject* frame = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &frame)) return 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_BehavedConverter, &frame)) return 0;
 
   if (frame->ndim != 3 && frame->ndim != 4) {
     PyErr_Format(PyExc_ValueError, "input array should have 3 or 4 dimensions, but you passed an array with %" PY_FORMAT_SIZE_T "d dimensions", frame->ndim);
