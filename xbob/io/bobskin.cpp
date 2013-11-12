@@ -23,6 +23,16 @@ bobskin::bobskin(PyObject* array, bob::core::array::ElementType eltype) {
 
 }
 
+bobskin::bobskin(PyArrayObject* array, bob::core::array::ElementType eltype) {
+
+  m_type.set<npy_intp>(eltype, PyArray_NDIM((PyArrayObject*)array), 
+      PyArray_DIMS((PyArrayObject*)array),
+      PyArray_STRIDES((PyArrayObject*)array));
+
+  m_ptr = PyArray_DATA((PyArrayObject*)array);
+
+}
+
 static bob::core::array::ElementType signed_integer_type(int bits) {
   switch(bits) {
     case 8:

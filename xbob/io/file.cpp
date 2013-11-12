@@ -220,7 +220,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
   if (!retval) return 0;
 
   try {
-    bobskin skin(retval, info.dtype);
+    bobskin skin((PyArrayObject*)retval, info.dtype);
     self->f->read(skin, i);
   }
   catch (std::exception& e) {
@@ -277,7 +277,7 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
     }
 
     try {
-      bobskin skin(item, info.dtype);
+      bobskin skin((PyArrayObject*)item, info.dtype);
       self->f->read(skin, i);
     }
     catch (std::exception& e) {
@@ -359,7 +359,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
   if (!retval) return 0;
 
   try {
-    bobskin skin(retval, info.dtype);
+    bobskin skin((PyArrayObject*)retval, info.dtype);
     self->f->read_all(skin);
   }
   catch (std::runtime_error& e) {

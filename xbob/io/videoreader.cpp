@@ -356,7 +356,7 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
   Py_ssize_t frames_read = 0;
 
   try {
-    bobskin skin(retval, info.dtype);
+    bobskin skin((PyArrayObject*)retval, info.dtype);
     frames_read = self->v->load(skin, raise_on_error, &Check_Interrupt);
   }
   catch (std::exception& e) {
@@ -435,7 +435,7 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
   try {
     auto it = self->v->begin();
     it += i;
-    bobskin skin(retval, info.dtype);
+    bobskin skin((PyArrayObject*)retval, info.dtype);
     it.read(skin);
   }
   catch (std::exception& e) {
@@ -504,7 +504,7 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
     }
 
     try {
-      bobskin skin(item, info.dtype);
+      bobskin skin((PyArrayObject*)item, info.dtype);
       it.read(skin);
       it += (st-1);
     }
@@ -593,7 +593,7 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
   if (!retval) return 0;
 
   try {
-    bobskin skin(retval, info.dtype);
+    bobskin skin((PyArrayObject*)retval, info.dtype);
     self->iter->read(skin);
   }
   catch (std::exception& e) {

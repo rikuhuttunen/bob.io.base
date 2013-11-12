@@ -29,6 +29,11 @@ class bobskin: public bob::core::array::interface {
     /**
      * @brief Builds a new array an array like object
      */
+    bobskin(PyArrayObject* array, bob::core::array::ElementType eltype);
+
+    /**
+     * @brief Builds a new array an array like object
+     */
     bobskin(PyBlitzArrayObject* array);
 
     /**

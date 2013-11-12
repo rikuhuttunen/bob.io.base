@@ -411,11 +411,13 @@ static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObj
 
   if (frame->ndim != 3 && frame->ndim != 4) {
     PyErr_Format(PyExc_ValueError, "input array should have 3 or 4 dimensions, but you passed an array with %" PY_FORMAT_SIZE_T "d dimensions", frame->ndim);
+    Py_DECREF(frame);
     return 0;
   }
   
   if (frame->type_num != NPY_UINT8) {
     PyErr_Format(PyExc_TypeError, "input array should have dtype `uint8', but you passed an array with dtype == `%s'", PyBlitzArray_TypenumAsString(frame->type_num));
+    Py_DECREF(frame);
     return 0;
   }
 
@@ -429,13 +431,16 @@ static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObj
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while writing frame #%" PY_FORMAT_SIZE_T "d to file `%s': %s", self->v->numberOfFrames(), self->v->filename().c_str(), e.what());
+    Py_DECREF(frame);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing frame #%" PY_FORMAT_SIZE_T "d to file `%s'", self->v->numberOfFrames(), self->v->filename().c_str());
+    Py_DECREF(frame);
     return 0;
   }
 
+  Py_DECREF(frame);
   Py_RETURN_NONE;
 
 }

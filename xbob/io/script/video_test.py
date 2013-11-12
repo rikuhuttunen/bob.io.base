@@ -165,6 +165,9 @@ def summarize(function, shape, framerate, format, codec, output=None):
 
   Keyword parameters:
 
+  function
+    The function that will be evaluated, summarized
+
   shape (int, int, int)
     The length (number of frames), height and width for the generated sequence
 
