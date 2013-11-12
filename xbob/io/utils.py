@@ -61,7 +61,7 @@ def print_numbers(frame, counter, format, fontsize):
   img = Image.fromstring('RGB', (frame.shape[1], frame.shape[2]), frame.transpose(1,2,0).tostring())
   draw = ImageDraw.Draw(img)
   draw.text((x_pos, y_pos), text, font=font, fill=(255,255,255))
-  return numpy.asarray(img).transpose(2,0,1).copy()
+  return numpy.asarray(img).transpose(2,0,1)
 
 def generate_colors(height, width, shift):
   """Generates an image that serves as a test pattern for encoding/decoding and

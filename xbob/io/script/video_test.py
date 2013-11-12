@@ -44,6 +44,8 @@ def list_codecs(*args, **kwargs):
 
 def list_all_codecs(*args, **kwargs):
 
+  from .._externals import supported_video_codecs, available_video_codecs
+
   CODECS = supported_video_codecs()
   ALL_CODECS = available_video_codecs()
 

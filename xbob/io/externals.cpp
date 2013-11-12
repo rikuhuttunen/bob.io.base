@@ -677,10 +677,11 @@ built-in input formats for videos that are available, but **not\n\
 necessarily supported** by this library.\n\
 ");
 
-static PyObject* get_video_oformats(void (*f)(std::map<std::string, AVOutputFormat*>&)) {
+static PyObject* get_video_oformats(bool supported) {
 
   std::map<std::string, AVOutputFormat*> m;
-  f(m);
+  if (supported) bob::io::detail::ffmpeg::oformats_supported(m);
+  else bob::io::detail::ffmpeg::oformats_installed(m);
   
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
@@ -723,6 +724,7 @@ static PyObject* get_video_oformats(void (*f)(std::map<std::string, AVOutputForm
     }
 
     for (auto ext=exts.begin(); ext!=exts.end(); ++ext) {
+
       if (!list_append(ext_list, ext->c_str())) {
         Py_DECREF(ext_list);
         Py_DECREF(property);
@@ -763,28 +765,37 @@ static PyObject* get_video_oformats(void (*f)(std::map<std::string, AVOutputForm
     }
 
     /** get supported codec list **/
-    std::vector<const AVCodec*> codecs;
-    bob::io::detail::ffmpeg::oformat_supported_codecs(k->second->name, codecs);
-    PyObject* supported_codecs = PyDict_New();
-    for (auto c=codecs.begin(); c!=codecs.end(); ++c) {
-      PyObject* codec_descr = describe_codec(*c);
-      if (!codec_descr) {
-        Py_DECREF(supported_codecs);
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
-      if (!dict_steal(supported_codecs, (*c)->name, codec_descr)) {
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
-    }
+    if (supported) {
+      std::vector<const AVCodec*> codecs;
+      bob::io::detail::ffmpeg::oformat_supported_codecs(k->second->name, codecs);
 
-    if (!dict_steal(property, "supported_codecs", supported_codecs)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
+      PyObject* supported_codecs = PyDict_New();
+      if (!supported_codecs) {
+        Py_DECREF(property);
+        Py_DECREF(retval);
+        return 0;
+      }
+
+      for (auto c=codecs.begin(); c!=codecs.end(); ++c) {
+        PyObject* codec_descr = describe_codec(*c);
+        if (!codec_descr) {
+          Py_DECREF(supported_codecs);
+          Py_DECREF(property);
+          Py_DECREF(retval);
+          return 0;
+        }
+        if (!dict_steal(supported_codecs, (*c)->name, codec_descr)) {
+          Py_DECREF(property);
+          Py_DECREF(retval);
+          return 0;
+        }
+      }
+
+      if (!dict_steal(property, "supported_codecs", supported_codecs)) {
+        Py_DECREF(property);
+        Py_DECREF(retval);
+        return 0;
+      }
     }
 
     if (!dict_steal(retval, k->first.c_str(), property)) {
@@ -799,11 +810,11 @@ static PyObject* get_video_oformats(void (*f)(std::map<std::string, AVOutputForm
 }
   
 static PyObject* PyBobIo_SupportedOutputFormats(PyObject*) {
-  return get_video_oformats(&bob::io::detail::ffmpeg::oformats_supported); 
+  return get_video_oformats(true);
 }
 
 static PyObject* PyBobIo_AvailableOutputFormats(PyObject*) {
-  return get_video_oformats(&bob::io::detail::ffmpeg::oformats_installed); 
+  return get_video_oformats(false);
 }
 
 PyDoc_STRVAR(s_supported_oformats_str, "supported_videowriter_formats");
