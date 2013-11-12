@@ -23,17 +23,16 @@ import argparse
 import numpy
 
 # internal
-from .. import supported_video_codecs, available_video_codecs, supported_videowriter_formats, available_videowriter_formats
 from .. import utils, create_directories_save
-from ... import version
 from .. import save as save_to_file
-from ...test import utils as test_utils
-from .. import test as io_test
-
-CODECS = supported_video_codecs()
-ALL_CODECS = available_video_codecs()
+from ..test import utils as test_utils
 
 def list_codecs(*args, **kwargs):
+
+  from .._externals import supported_video_codecs, available_video_codecs
+  CODECS = supported_video_codecs()
+  ALL_CODECS = available_video_codecs()
+
   retval = """\
   Supported Codecs:
   -----------------\n"""
@@ -44,6 +43,10 @@ def list_codecs(*args, **kwargs):
   return retval[:-1]
 
 def list_all_codecs(*args, **kwargs):
+
+  CODECS = supported_video_codecs()
+  ALL_CODECS = available_video_codecs()
+
   retval = """\
   Available Codecs:
   -----------------\n"""
@@ -53,10 +56,11 @@ def list_all_codecs(*args, **kwargs):
 
   return retval[:-1]
 
-FORMATS = supported_videowriter_formats()
-ALL_FORMATS = available_videowriter_formats()
-
 def list_formats(*args, **kwargs):
+
+  from .._externals import supported_videowriter_formats, available_videowriter_formats
+  FORMATS = supported_videowriter_formats()
+  ALL_FORMATS = available_videowriter_formats()
 
   retval = """\
   Supported Formats:
@@ -68,6 +72,10 @@ def list_formats(*args, **kwargs):
   return retval[:-1]
 
 def list_all_formats(*args, **kwargs):
+
+  from .._externals import supported_videowriter_formats, available_videowriter_formats
+  FORMATS = supported_videowriter_formats()
+  ALL_FORMATS = available_videowriter_formats()
 
   retval = """\
   Available Formats:
@@ -258,11 +266,15 @@ def detail(function, shape, framerate, format, codec, outdir):
 
 def main(user_input=None):
 
+  from .._library import __version__
+  from .._externals import supported_video_codecs, available_video_codecs, supported_videowriter_formats, available_videowriter_formats
+  from .. import test as io_test
+
   parser = argparse.ArgumentParser(description=__doc__, epilog=__epilog__,
       formatter_class=argparse.RawDescriptionHelpFormatter)
 
   name = os.path.basename(os.path.splitext(sys.argv[0])[0])
-  version_info = 'Video Encoding/Decoding Test Tool v%s (%s)' % (version, name)
+  version_info = 'Video Encoding/Decoding Test Tool v%s (%s)' % (__version__, name)
   parser.add_argument('-V', '--version', action='version', version=version_info)
 
   test_choices = [
@@ -275,6 +287,9 @@ def main(user_input=None):
   parser.add_argument("test", metavar='TEST', type=str, nargs='*',
       default=test_choices, help="The name of the test or tests you want to run. Choose between `%s'. If none given, run through all." % ('|'.join(test_choices)))
 
+  CODECS = supported_video_codecs()
+  ALL_CODECS = available_video_codecs()
+
   supported_codecs = sorted(CODECS.keys())
   available_codecs = sorted(ALL_CODECS.keys())
 
@@ -284,6 +299,9 @@ def main(user_input=None):
       help="List all supported codecs and exits")
   parser.add_argument("--list-all-codecs", action="store_true", default=False,
       help="List all available codecs and exits")
+
+  FORMATS = supported_videowriter_formats()
+  ALL_FORMATS = available_videowriter_formats()
 
   supported_formats = sorted(FORMATS.keys())
   available_formats = sorted(ALL_FORMATS.keys())

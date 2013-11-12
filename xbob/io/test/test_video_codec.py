@@ -148,7 +148,6 @@ def check_user_video(format, codec, maxdist):
 
     if os.path.exists(fname): os.unlink(fname)
 
-@nose.tools.nottest
 def test_user_video():
 
   # distortion patterns for specific codecs
