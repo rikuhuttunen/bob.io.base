@@ -49,6 +49,14 @@ def test_indexing():
   assert numpy.allclose(f[-1], objs[-1])
   assert numpy.allclose(f[-2], objs[-2])
 
+def test_slicing_empty():
+
+  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  f = File(fname, 'r')
+
+  objs = f[1:1]
+  assert objs.shape == tuple()
+
 def test_slicing_0():
 
   fname = testutils.datafile('matlab_2d.hdf5', __name__)

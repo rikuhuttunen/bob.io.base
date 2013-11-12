@@ -114,6 +114,7 @@ setup(
           "xbob/io/bobskin.cpp",
           "xbob/io/file.cpp",
           "xbob/io/videoreader.cpp",
+          "xbob/io/videowriter.cpp",
           "xbob/io/main.cpp",
           ],
         define_macros=define_macros,

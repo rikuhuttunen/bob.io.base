@@ -14,6 +14,7 @@
 
 #if WITH_FFMPEG
 #include <bob/io/VideoReader.h>
+#include <bob/io/VideoWriter.h>
 #endif /* WITH_FFMPEG */
 
 #include <boost/preprocessor/stringize.hpp>
@@ -103,13 +104,24 @@ typedef struct {
 #define PyBobIoVideoReaderIterator_Type_NUM 5
 #define PyBobIoVideoReaderIterator_Type_TYPE PyTypeObject
 
+typedef struct {
+  PyObject_HEAD
+
+  /* Type-specific fields go here. */
+  boost::shared_ptr<bob::io::VideoWriter> v;
+
+} PyBobIoVideoWriterObject;
+
+#define PyBobIoVideoWriter_Type_NUM 6
+#define PyBobIoVideoWriter_Type_TYPE PyTypeObject
+
 #endif /* WITH_FFMPEG */
 
 /* Total number of C API pointers */
 #if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 6
-#else
 #  define PyXbobIo_API_pointers 7
+#else
+#  define PyXbobIo_API_pointers 8
 #endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
@@ -144,6 +156,7 @@ typedef struct {
 
   extern PyBobIoVideoReader_Type_TYPE PyBobIoVideoReader_Type;
   extern PyBobIoVideoReaderIterator_Type_TYPE PyBobIoVideoReaderIterator_Type;
+  extern PyBobIoVideoWriter_Type_TYPE PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
 
 #else
@@ -203,6 +216,8 @@ typedef struct {
 # define PyBobIoVideoReader_Type (*(PyBobIoVideoReader_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReader_Type_NUM])
 
 # define PyBobIoVideoReaderIterator_Type (*(PyBobIoVideoReaderIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReaderIterator_Type_NUM])
+
+# define PyBobIoVideoWriterIterator_Type (*(PyBobIoVideoWriterIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoWriterIterator_Type_NUM])
 #endif /* WITH_FFMPEG */
 
   /**

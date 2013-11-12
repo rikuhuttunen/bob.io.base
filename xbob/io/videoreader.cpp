@@ -325,7 +325,7 @@ static void Check_Interrupt() {
   }
 }
 
-static PyObject* PyBobIoFile_Load(PyBobIoVideoReaderObject* self, PyObject *args, PyObject* kwds) {
+static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObject *args, PyObject* kwds) {
 
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"raise_on_error", 0};
@@ -405,7 +405,7 @@ object.\n\
 static PyMethodDef PyBobIoVideoReader_Methods[] = {
     {
       s_load_str,
-      (PyCFunction)PyBobIoFile_Load,
+      (PyCFunction)PyBobIoVideoReader_Load,
       METH_VARARGS|METH_KEYWORDS,
       s_load_doc,
     },
@@ -453,29 +453,51 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
 
 }
 
-static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step, Py_ssize_t length) {
+static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, PySliceObject* slice) {
 
-  PyObject* retval = PyList_New(length);
-  if (!retval) return 0;
+  Py_ssize_t start, stop, step, slicelength;
+  if (PySlice_GetIndicesEx(slice, self->v->numberOfFrames(),
+        &start, &stop, &step, &slicelength) < 0) return 0;
 
+  //creates the return array
   const bob::core::array::typeinfo& info = self->v->frame_type();
-
-  npy_intp shape[NPY_MAXDIMS];
-  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
-  Py_ssize_t counter = 0;
+  if (slicelength <= 0) return PyArray_SimpleNew(0, 0, type_num);
+
+  npy_intp shape[NPY_MAXDIMS];
+  shape[0] = slicelength;
+  for (int k=0; k<info.nd; ++k) shape[k+1] = info.shape[k];
+
+  PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
+  if (!retval) return 0;
+
+  Py_ssize_t counter;
   Py_ssize_t lo, hi, st;
   auto it = self->v->begin();
-
-  if (start <= stop) lo = start, hi = stop, st = step, it += lo;
-  else lo = stop, hi = start, st = -step, it += lo + (hi-lo)%st;
+  if (start <= stop) {
+    lo = start, hi = stop, st = step;
+    it += lo, counter = 0;
+  }
+  else {
+    lo = stop, hi = start, st = -step;
+    it += lo + (hi-lo)%st, counter = slicelength - 1;
+  }
 
   for (auto i=lo; i<hi; i+=st) {
 
-    PyObject* item = PyArray_SimpleNew(info.nd, shape, type_num);
+    //get slice to fill
+    PyObject* islice = Py_BuildValue("n", counter);
+    counter = (st == -step)? counter-1 : counter+1;
+    if (!islice) {
+      Py_DECREF(retval);
+      return 0;
+    }
+
+    PyObject* item = PyObject_GetItem(retval, islice);
+    Py_DECREF(islice);
     if (!item) {
       Py_DECREF(retval);
       return 0;
@@ -499,11 +521,7 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
       return 0;
     }
 
-    PyList_SET_ITEM(retval, counter++, item);
-
   }
-
-  if (st == -step) PyList_Reverse(retval);
 
   return retval;
 
@@ -516,11 +534,7 @@ static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, PyO
      return PyBobIoVideoReader_GetIndex(self, i);
    }
    if (PySlice_Check(item)) {
-     Py_ssize_t start, stop, step, slicelength;
-     if (PySlice_GetIndicesEx((PySliceObject*)item, self->v->numberOfFrames(), 
-           &start, &stop, &step, &slicelength) < 0) return 0;
-     if (slicelength <= 0) return PyList_New(0);
-     return PyBobIoVideoReader_GetSlice(self, start, stop, step, slicelength);
+     return PyBobIoVideoReader_GetSlice(self, (PySliceObject*)item);
    }
    else {
      PyErr_Format(PyExc_TypeError, "VideoReader indices must be integers, not %.200s",
@@ -559,7 +573,8 @@ static PyObject* PyBobIoVideoReaderIterator_Iter (PyBobIoVideoReaderIteratorObje
 
 static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObject* self) {
 
-  if (*self->iter == self->pyreader->v->end()) {
+  if ((*self->iter == self->pyreader->v->end()) ||
+      (self->iter->cur() == self->pyreader->v->numberOfFrames())) {
     self->iter->reset();
     self->iter.reset();
     Py_XDECREF((PyObject*)self->pyreader);
@@ -582,7 +597,7 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
     self->iter->read(skin);
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame %" PY_FORMAT_SIZE_T "d from file `%s': %s", self->iter->cur(), self->pyreader->v->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s': %s", self->iter->cur(), self->pyreader->v->filename().c_str(), e.what());
     Py_DECREF(retval);
     return 0;
   }

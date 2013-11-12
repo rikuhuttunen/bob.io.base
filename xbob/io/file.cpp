@@ -238,23 +238,39 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
 }
 
-static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, Py_ssize_t start, Py_ssize_t stop, Py_ssize_t step, Py_ssize_t length) {
+static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* slice) {
 
-  PyObject* retval = PyList_New(length);
-  if (!retval) return 0;
+  Py_ssize_t start, stop, step, slicelength;
+  if (PySlice_GetIndicesEx(slice, self->f->size(),
+        &start, &stop, &step, &slicelength) < 0) return 0;
 
+  //creates the return array
   const bob::core::array::typeinfo& info = self->f->type();
-
-  npy_intp shape[NPY_MAXDIMS];
-  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
+  if (slicelength <= 0) return PyArray_SimpleNew(0, 0, type_num);
+
+  npy_intp shape[NPY_MAXDIMS];
+  shape[0] = slicelength;
+  for (int k=0; k<info.nd; ++k) shape[k+1] = info.shape[k];
+
+  PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
+  if (!retval) return 0;
+
   Py_ssize_t counter = 0;
   for (auto i = start; (start<=stop)?i<stop:i>stop; i+=step) {
 
-    PyObject* item = PyArray_SimpleNew(info.nd, shape, type_num);
+    //get slice to fill
+    PyObject* islice = Py_BuildValue("n", counter++);
+    if (!islice) {
+      Py_DECREF(retval);
+      return 0;
+    }
+
+    PyObject* item = PyObject_GetItem(retval, islice);
+    Py_DECREF(islice);
     if (!item) {
       Py_DECREF(retval);
       return 0;
@@ -277,8 +293,6 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, Py_ssize_t start
       return 0;
     }
 
-    PyList_SET_ITEM(retval, counter++, item);
-
   }
 
   return retval;
@@ -292,11 +306,7 @@ static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, PyObject* item) {
      return PyBobIoFile_GetIndex(self, i);
    }
    if (PySlice_Check(item)) {
-     Py_ssize_t start, stop, step, slicelength;
-     if (PySlice_GetIndicesEx((PySliceObject*)item, self->f->size(), 
-           &start, &stop, &step, &slicelength) < 0) return 0;
-     if (slicelength <= 0) return PyList_New(0);
-     return PyBobIoFile_GetSlice(self, start, stop, step, slicelength);
+     return PyBobIoFile_GetSlice(self, (PySliceObject*)item);
    }
    else {
      PyErr_Format(PyExc_TypeError, "File indices must be integers, not %s",

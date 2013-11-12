@@ -38,6 +38,9 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
 
   PyBobIoVideoReaderIterator_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return;
+
+  PyBobIoVideoWriter_Type.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return;
 #endif /* WITH_FFMPEG */
 
   PyObject* m = Py_InitModule3(BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME),
@@ -60,6 +63,9 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
 
   Py_INCREF(&PyBobIoVideoReaderIterator_Type);
   PyModule_AddObject(m, "VideoReader.iter", (PyObject *)&PyBobIoVideoReaderIterator_Type);
+
+  Py_INCREF(&PyBobIoVideoWriter_Type);
+  PyModule_AddObject(m, "VideoWriter", (PyObject *)&PyBobIoVideoWriter_Type);
 #endif /* WITH_FFMPEG */
 
   static void* PyXbobIo_API[PyXbobIo_API_pointers];
@@ -96,6 +102,8 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   PyXbobIo_API[PyBobIoVideoReader_Type_NUM] = (void *)&PyBobIoVideoReader_Type;
 
   PyXbobIo_API[PyBobIoVideoReaderIterator_Type_NUM] = (void *)&PyBobIoVideoReaderIterator_Type;
+
+  PyXbobIo_API[PyBobIoVideoWriter_Type_NUM] = (void *)&PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
 
   /* imports the NumPy C-API */
