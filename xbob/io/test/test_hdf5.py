@@ -278,13 +278,13 @@ def test_can_load_hdf5_from_matlab():
   # interestingly enough, if you load those files as arrays, you will read
   # the whole data at once:
 
-  t = peek_all(testutils.datafile('matlab_1d.hdf5', __name__))
-  assert t.shape == (512,)
-  assert t.dtype == numpy.dtype('float64')
+  dtype, shape, stride = peek_all(testutils.datafile('matlab_1d.hdf5', __name__))
+  assert shape == (512,)
+  assert dtype == numpy.dtype('float64')
 
-  t = peek_all(testutils.datafile('matlab_2d.hdf5', __name__))
-  assert t.shape == (512, 2)
-  assert t.dtype == numpy.dtype('float64')
+  dtype, shape, stride = peek_all(testutils.datafile('matlab_2d.hdf5', __name__))
+  assert shape == (512, 2)
+  assert dtype == numpy.dtype('float64')
 
 def test_matlab_import():
 

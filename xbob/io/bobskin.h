@@ -22,17 +22,17 @@ class bobskin: public bob::core::array::interface {
   public: //api
 
     /**
-     * @brief Builds a new array an array like object
+     * @brief Builds a new skin from an array like object
      */
     bobskin(PyObject* array, bob::core::array::ElementType eltype);
 
     /**
-     * @brief Builds a new array an array like object
+     * @brief Builds a new skin from a numpy array object
      */
     bobskin(PyArrayObject* array, bob::core::array::ElementType eltype);
 
     /**
-     * @brief Builds a new array an array like object
+     * @brief Builds a new skin around a blitz array object
      */
     bobskin(PyBlitzArrayObject* array);
 
