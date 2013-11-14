@@ -1718,41 +1718,6 @@ PyTypeObject PyBobIoHDF5File_Type = {
 };
 
 /**
-
     .def("__contains__", &bob::io::HDF5File::contains, (arg("self"), arg("key")), "Returns True if the file contains an HDF5 dataset with a given path")
 
-  //this class describes an HDF5 type
-  class_<bob::io::HDF5Type, boost::shared_ptr<bob::io::HDF5Type> >("HDF5Type", "Support to compare data types, convert types into runtime equivalents and make our life easier when deciding what to input and output.", no_init)
-    .def("__eq__", &bob::io::HDF5Type::operator==)
-    .def("__ne__", &bob::io::HDF5Type::operator!=)
-#   define DECLARE_SUPPORT(T) .def("compatible", &bob::io::HDF5Type::compatible<T>, (arg("self"), arg("value")), "Tests compatibility of this type against a given scalar")
-    DECLARE_SUPPORT(bool)
-    DECLARE_SUPPORT(int8_t)
-    DECLARE_SUPPORT(int16_t)
-    DECLARE_SUPPORT(int32_t)
-    DECLARE_SUPPORT(int64_t)
-    DECLARE_SUPPORT(uint8_t)
-    DECLARE_SUPPORT(uint16_t)
-    DECLARE_SUPPORT(uint32_t)
-    DECLARE_SUPPORT(uint64_t)
-    DECLARE_SUPPORT(float)
-    DECLARE_SUPPORT(double)
-    //DECLARE_SUPPORT(long double)
-    DECLARE_SUPPORT(std::complex<float>)
-    DECLARE_SUPPORT(std::complex<double>)
-    //DECLARE_SUPPORT(std::complex<long double>)
-    DECLARE_SUPPORT(std::string)
-#   undef DECLARE_SUPPORT
-    .def("compatible", &hdf5type_compatible, (arg("self"), arg("array")), "Tests compatibility of this type against a given array")
-    .def("shape", &hdf5type_shape, (arg("self")), "Returns the shape of the elements described by this type")
-    .def("type_str", &bob::io::HDF5Type::type_str, (arg("self")), "Returns a stringified representation of the base element type")
-    .def("element_type", &bob::io::HDF5Type::element_type, (arg("self")), "Returns a representation of the element type one of the bob supported element types.")
-    ;
-
-  //defines the descriptions returned by HDF5File::describe()
-  class_<bob::io::HDF5Descriptor, boost::shared_ptr<bob::io::HDF5Descriptor> >("HDF5Descriptor", "A dataset descriptor describes one of the possible ways to read a dataset", no_init)
-    .def_readonly("type", &bob::io::HDF5Descriptor::type)
-    .def_readonly("size", &bob::io::HDF5Descriptor::size)
-    .def_readonly("expandable", &bob::io::HDF5Descriptor::expandable)
-    ;
 **/
