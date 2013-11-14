@@ -83,7 +83,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   static char** kwlist = const_cast<char**>(const_kwlist);
 
   char* filename = 0;
-  char mode = 0;
+  char mode = 'r';
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|c", kwlist, &filename, &mode))
     return -1;
 
@@ -96,7 +96,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     self->f.reset(new bob::io::HDF5File(filename, mode));
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': %s", filename, mode, e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
@@ -130,7 +130,7 @@ static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, Py
     self->f->cd(path);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot change directory to `%s' in file `%s': %s", path, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -178,7 +178,7 @@ static PyObject* PyBobIoHDF5File_HasGroup(PyBobIoHDF5FileObject* self, PyObject 
     if (self->f->hasGroup(path)) Py_RETURN_TRUE;
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could not check for group `%s' in file `%s': %s", path, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -219,7 +219,7 @@ static PyObject* PyBobIoHDF5File_CreateGroup(PyBobIoHDF5FileObject* self, PyObje
     self->f->createGroup(path);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could not create group `%s' in file `%s': %s", path, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -260,7 +260,7 @@ static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObjec
     if (self->f->contains(key)) Py_RETURN_TRUE;
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could not check for dataset `%s' in file `%s': %s", key, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -396,7 +396,7 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
     }
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could not get description for dataset `%s' in file `%s': %s", key, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "unknown exception caught while getting description for dataset `%s' in HDF5 file `%s'", key, self->f->filename().c_str());
@@ -437,7 +437,7 @@ static PyObject* PyBobIoHDF5File_Unlink(PyBobIoHDF5FileObject* self, PyObject *a
     self->f->unlink(key);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could unlink dataset `%s' in file `%s': %s", key, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -480,7 +480,7 @@ static PyObject* PyBobIoHDF5File_Rename(PyBobIoHDF5FileObject* self, PyObject *a
     self->f->rename(from, to);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could rename dataset `%s' to `%s' in file `%s': %s", from, to, self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -530,7 +530,7 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
     }
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could read dataset names from file `%s': %s", self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -587,7 +587,7 @@ static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject
     }
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "could read group names from file `%s': %s", self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -621,10 +621,21 @@ recursive\n\
 static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self, 
     const char* p, int descriptor, int pos) {
 
-  const std::vector<bob::io::HDF5Descriptor>& D = self->f->describe(p);
+  const std::vector<bob::io::HDF5Descriptor>* D = 0;
+  try {
+    D = &self->f->describe(p);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", p, self->f->filename().c_str());
+    return 0;
+  }
 
   //last descriptor always contains the full readout.
-  const bob::io::HDF5Type& type = D[descriptor].type;
+  const bob::io::HDF5Type& type = (*D)[descriptor].type;
   const bob::io::HDF5Shape& shape = type.shape();
 
   if (shape.n() == 1 && shape[0] == 1) { //read as scalar
@@ -668,7 +679,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
       }
     }
     catch (std::exception& e) {
-      PyErr_Format(PyExc_RuntimeError, "cannot read %s scalar from dataset `%s' at position %d from HDF5 file `%s': %s", bob::io::stringize(type.type()), p, pos, self->f->filename().c_str(), e.what());
+      PyErr_SetString(PyExc_RuntimeError, e.what());
       return 0;
     }
     catch (...) {
@@ -694,7 +705,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     self->f->read_buffer(p, pos, atype, PyArray_DATA((PyArrayObject*)retval));
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot read dataset `%s' at position %d with descriptor `%s' from HDF5 file `%s': %s", p, pos, type.str().c_str(), self->f->filename().c_str(), e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }
@@ -748,12 +759,23 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
   if (pos >= 0) return PyBobIoHDF5File_Xread(self, key, 1, pos);
 
   //otherwise returns as a list
-  const std::vector<bob::io::HDF5Descriptor>& D = self->f->describe(key);
+  const std::vector<bob::io::HDF5Descriptor>* D = 0;
+  try {
+    D = &self->f->describe(key);
+  }
+  catch (std::exception& e) {
+    PyErr_Format(PyExc_RuntimeError, "%s", e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", key, self->f->filename().c_str());
+    return 0;
+  }
 
-  PyObject* retval = PyTuple_New(D[0].size);
+  PyObject* retval = PyTuple_New((*D)[0].size);
   if (!retval) return 0;
 
-  for (uint64_t k=0; k<D[0].size; ++k) {
+  for (uint64_t k=0; k<(*D)[0].size; ++k) {
     PyObject* item = PyBobIoHDF5File_Xread(self, key, 0, k);
     if (!item) {
       Py_DECREF(retval);

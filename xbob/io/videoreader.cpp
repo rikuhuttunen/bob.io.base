@@ -89,7 +89,7 @@ static int PyBobIoVideoReader_Init(PyBobIoVideoReaderObject* self,
     self->v = boost::make_shared<bob::io::VideoReader>(filename, check);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: %s", filename, e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
@@ -350,7 +350,7 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
     frames_read = self->v->load(skin, raise_on_error, &Check_Interrupt);
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading video from file `%s': %s", self->v->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }
@@ -429,7 +429,7 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
     it.read(skin);
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame %" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->v->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }
@@ -499,7 +499,7 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
       it += (st-1);
     }
     catch (std::exception& e) {
-      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame %" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->v->filename().c_str(), e.what());
+      if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
       Py_DECREF(retval);
       Py_DECREF(item);
       return 0;
@@ -587,7 +587,7 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
     self->iter->read(skin);
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s': %s", self->iter->cur(), self->pyreader->v->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }

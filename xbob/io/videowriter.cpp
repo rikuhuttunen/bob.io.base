@@ -128,7 +128,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
         framerate, bitrate, gop, codec, format, check);
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: %s", filename, e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
@@ -430,7 +430,7 @@ static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObj
     }
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while writing frame #%" PY_FORMAT_SIZE_T "d to file `%s': %s", self->v->numberOfFrames(), self->v->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(frame);
     return 0;
   }

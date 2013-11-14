@@ -89,7 +89,7 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
     }
   }
   catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': %s", filename, mode, e.what());
+    PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
@@ -224,7 +224,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
     self->f->read(skin, i);
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }
@@ -281,7 +281,7 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
       self->f->read(skin, i);
     }
     catch (std::exception& e) {
-      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s': %s", i, self->f->filename().c_str(), e.what());
+      if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
       Py_DECREF(retval);
       Py_DECREF(item);
       return 0;
@@ -368,7 +368,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
     return 0;
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while reading all contents of file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     Py_DECREF(retval);
     return 0;
   }
@@ -421,7 +421,7 @@ static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyOb
     return 0;
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while writing to file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
@@ -474,7 +474,7 @@ static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyO
     return 0;
   }
   catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::exception while appending to file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
     return 0;
   }
   catch (...) {
