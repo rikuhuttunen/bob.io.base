@@ -82,7 +82,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   static const char* const_kwlist[] = {"filename", "mode", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* filename = 0;
+  const char* filename = 0;
   char mode = 'r';
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|c", kwlist, &filename, &mode))
     return -1;
@@ -123,7 +123,7 @@ static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, Py
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* path = 0;
+  const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
   try {
@@ -171,7 +171,7 @@ static PyObject* PyBobIoHDF5File_HasGroup(PyBobIoHDF5FileObject* self, PyObject 
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* path = 0;
+  const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
   try {
@@ -212,7 +212,7 @@ static PyObject* PyBobIoHDF5File_CreateGroup(PyBobIoHDF5FileObject* self, PyObje
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* path = 0;
+  const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
   try {
@@ -253,7 +253,7 @@ static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObjec
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* key = 0;
+  const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   try {
@@ -391,7 +391,7 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* key = 0;
+  const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   PyObject* retval = 0;
@@ -443,7 +443,7 @@ static PyObject* PyBobIoHDF5File_Unlink(PyBobIoHDF5FileObject* self, PyObject *a
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* key = 0;
+  const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   try {
@@ -485,8 +485,8 @@ static PyObject* PyBobIoHDF5File_Rename(PyBobIoHDF5FileObject* self, PyObject *a
   static const char* const_kwlist[] = {"from", "to", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* from = 0;
-  char* to = 0;
+  const char* from = 0;
+  const char* to = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "ss", kwlist, &from, &to)) return 0;
 
   try {
@@ -837,9 +837,9 @@ static char* PyBobIo_GetString(PyObject* o) {
 }
 
 static int PyBobIoHDF5File_SetStringType(bob::io::HDF5Type& t, PyObject* o) {
-  char* s = PyBobIo_GetString(o);
-  if (!s) return -1;
-  t = bob::io::HDF5Type(s);
+  const char* value = PyBobIo_GetString(o);
+  if (!value) return -1;
+  t = bob::io::HDF5Type(value);
   return 0;
 }
 
@@ -1033,7 +1033,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   static const char* const_kwlist[] = {"path", "pos", "data", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* path = 0;
+  const char* path = 0;
   Py_ssize_t pos = -1;
   PyObject* data = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "snO", kwlist, &path, &pos, &data)) return 0;
@@ -1053,9 +1053,9 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
       switch(type.type()) {
         case bob::io::s:
           {
-            char* value = PyBobIo_GetString(data);
+            const char* value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->replace(path, pos, value);
+            self->f->replace<std::string>(path, pos, value);
             Py_RETURN_NONE;
           }
         case bob::io::b:
@@ -1185,9 +1185,9 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
       switch(type.type()) {
         case bob::io::s:
           {
-            char* value = PyBobIo_GetString(data);
+            const char* value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->append(path, value);
+            self->f->append<std::string>(path, value);
             return 1;
           }
         case bob::io::b:
@@ -1377,9 +1377,9 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
       switch(type.type()) {
         case bob::io::s:
           {
-            char* value = PyBobIo_GetString(data);
+            const char* value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->set(path, value);
+            self->f->set<std::string>(path, value);
             Py_RETURN_NONE;
           }
           break;

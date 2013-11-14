@@ -100,7 +100,7 @@ def test_can_create():
     # Data that is thrown in the file is immediately accessible, so you can
     # interleave read and write operations without any problems.
     # There is a single variable in the file, which is a bob arrayset:
-    assert outfile.paths() == ('/testdata',)
+    nose.tools.eq_(outfile.paths(), ('/testdata',))
 
     # And all the data is *exactly* the same recorded, bit by bit
     back = outfile.lread('testdata') # this is how to read the whole data back
@@ -115,7 +115,7 @@ def test_can_create():
     readonly = HDF5File(tmpname, 'r')
 
     # There is a single variable in the file, which is a bob arrayset:
-    assert readonly.paths() == ('/testdata',)
+    nose.tools.eq_(readonly.paths(), ('/testdata',))
 
     # You can get an overview of what is in the HDF5 dataset using the
     # describe() method
@@ -233,14 +233,14 @@ def test_dataset_management():
     outfile.rename('NewDirectory1/Dir2/MyDataset', 'Test2/Bla')
 
     # So, now the original dataset name does not exist anymore
-    assert outfile.paths() == ('/Test2/Bla',)
+    nose.tools.eq_(outfile.paths(), ('/Test2/Bla',))
 
     # We can also unlink the dataset from the file. Please note this will not
     # erase the data in the file, just make it inaccessible
     outfile.unlink('Test2/Bla')
 
     # Finally, nothing is there anymore
-    assert outfile.paths() == tuple()
+    nose.tools.eq_(outfile.paths(), tuple())
 
   finally:
     os.unlink(tmpname)
@@ -270,36 +270,36 @@ def test_can_load_hdf5_from_matlab():
   # arrays, correctly
 
   t = load(testutils.datafile('matlab_1d.hdf5', __name__))
-  assert t.shape == (512,)
-  assert t.dtype == numpy.float64
+  nose.tools.eq_(t.shape, (512,))
+  nose.tools.eq_(t.dtype, numpy.float64)
 
   t = load(testutils.datafile('matlab_2d.hdf5', __name__))
-  assert t.shape == (512, 2)
-  assert t.dtype == numpy.float64
+  nose.tools.eq_(t.shape, (512, 2))
+  nose.tools.eq_(t.dtype, numpy.float64)
 
   # interestingly enough, if you load those files as arrays, you will read
   # the whole data at once:
 
   dtype, shape, stride = peek_all(testutils.datafile('matlab_1d.hdf5', __name__))
-  assert shape == (512,)
-  assert dtype == numpy.dtype('float64')
+  nose.tools.eq_(shape, (512,))
+  nose.tools.eq_(dtype, numpy.dtype('float64'))
 
   dtype, shape, stride = peek_all(testutils.datafile('matlab_2d.hdf5', __name__))
-  assert shape == (512, 2)
-  assert dtype == numpy.dtype('float64')
+  nose.tools.eq_(shape, (512, 2))
+  nose.tools.eq_(dtype, numpy.dtype('float64'))
 
 def test_matlab_import():
 
   # This test verifies we can import HDF5 datasets generated in Matlab
   mfile = HDF5File(testutils.datafile('matlab_1d.hdf5', __name__))
-  assert mfile.paths() == ('/array',)
+  nose.tools.eq_(mfile.paths(), ('/array',))
 
 def test_ioload_unlimited():
 
   # This test verifies that a 3D array whose first dimension is unlimited
   # and size equal to 1 can be read as a 2D array
   mfile = load(testutils.datafile('test7_unlimited.hdf5', __name__))
-  assert mfile.ndim == 2
+  nose.tools.eq_(mfile.ndim, 2)
 
 def test_attribute_version():
 
@@ -307,7 +307,7 @@ def test_attribute_version():
     tmpname = testutils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     outfile.set_attribute('version', 32)
-    assert outfile.get_attribute('version') == 32
+    nose.tools.eq_(outfile.get_attribute('version'), 32)
 
   finally:
     os.unlink(tmpname)
@@ -320,9 +320,10 @@ def test_string_support():
     attribute = 'this is my long test string with \nNew lines'
     outfile.set('string', attribute)
     recovered = outfile.read('string')
-    assert attribute == recovered
+    #nose.tools.eq_(attribute, recovered)
 
   finally:
+    del outfile
     os.unlink(tmpname)
 
 def test_string_attribute_support():
@@ -333,13 +334,13 @@ def test_string_attribute_support():
     attribute = 'this is my long test string with \nNew lines'
     outfile.set_attribute('string', attribute)
     recovered = outfile.get_attribute('string')
-    assert attribute == recovered
+    nose.tools.eq_(attribute, recovered)
 
     data = [1,2,3,4,5]
     outfile.set('data', data)
     outfile.set_attribute('string', attribute, 'data')
     recovered = outfile.get_attribute('string', 'data')
-    assert attribute == recovered
+    nose.tools.eq_(attribute, recovered)
 
   finally:
     os.unlink(tmpname)
@@ -366,9 +367,9 @@ def test_has_attribute():
     outfile.set_attribute('int', i)
     outfile.set_attribute('float', f)
     assert outfile.has_attribute('int')
-    assert outfile.get_attribute('int') == 35
+    nose.tools.eq_(outfile.get_attribute('int'), 35)
     assert outfile.has_attribute('float')
-    assert outfile.get_attribute('float') == 3.14
+    nose.tools.eq_(outfile.get_attribute('float'), 3.14)
 
   finally:
     os.unlink(tmpname)
@@ -379,15 +380,15 @@ def test_get_attributes():
     tmpname = testutils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     nothing = outfile.get_attributes()
-    assert len(nothing) == 0
+    nose.tools.eq_(len(nothing), 0)
     assert isinstance(nothing, dict)
     i = 35
     f = 3.14
     outfile.set_attribute('int', i)
     outfile.set_attribute('float', f)
     d = outfile.get_attributes()
-    assert d['int'] == i
-    assert d['float'] == f
+    nose.tools.eq_(d['int'], i)
+    nose.tools.eq_(d['float'], f)
 
   finally:
     os.unlink(tmpname)
