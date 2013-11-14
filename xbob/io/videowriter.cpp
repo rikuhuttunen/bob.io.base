@@ -18,74 +18,6 @@
 #define VIDEOWRITER_NAME VideoWriter
 PyDoc_STRVAR(s_videowriter_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOWRITER_NAME));
 
-/* How to create a new PyBobIoVideoWriterObject */
-static PyObject* PyBobIoVideoWriter_New(PyTypeObject* type, PyObject*, PyObject*) {
-
-  /* Allocates the python object itself */
-  PyBobIoVideoWriterObject* self = (PyBobIoVideoWriterObject*)type->tp_alloc(type, 0);
-
-  self->v.reset();
-
-  return reinterpret_cast<PyObject*>(self);
-}
-
-static void PyBobIoVideoWriter_Delete (PyBobIoVideoWriterObject* o) {
-
-  o->v.reset();
-  o->ob_type->tp_free((PyObject*)o);
-
-}
-
-/* The __init__(self) method */
-static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self, 
-    PyObject *args, PyObject* kwds) {
-
-  /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {
-    "filename", "height", "width", //mandatory
-    "framerate", "bitrate", "gop", "codec", "format", "check",  //optional
-    0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
-
-  char* filename = 0;
-  Py_ssize_t height = 0;
-  Py_ssize_t width = 0;
-
-  double framerate = 25.;
-  double bitrate = 1500000.;
-  Py_ssize_t gop = 12;
-  char* codec = 0;
-  char* format = 0;
-  PyObject* pycheck = 0;
-
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "snn|ddnssO", kwlist,
-        &filename, &height, &width, &framerate, &bitrate, &gop, &codec, 
-        &format, &pycheck)) return -1;
-
-  if (pycheck && !PyBool_Check(pycheck)) {
-    PyErr_SetString(PyExc_TypeError, "argument to `check' must be a boolean");
-    return -1;
-  }
-
-  bool check = false;
-  if (pycheck && (pycheck == Py_True)) check = true;
-
-  try {
-    self->v = boost::make_shared<bob::io::VideoWriter>(filename, height, width,
-        framerate, bitrate, gop, codec, format, check);
-  }
-  catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: %s", filename, e.what());
-    return -1;
-  }
-  catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: unknown exception caught", filename);
-    return -1;
-  }
-
-  return 0; ///< SUCCESS
-}
-
 PyDoc_STRVAR(s_videowriter_doc,
 "VideoWriter(filename, height, width, [framerate=25., [bitrate=1500000., [gop=12, [codec='', [format='', [check=True]) -> new bob::io::VideoWriter\n\
 \n\
@@ -138,6 +70,74 @@ of RGB colored frames. Each frame inserted should be a 3D\n\
 Each frame should have a shape equivalent to\n\
 ``(plane, height, width)``.\n\
 ");
+
+/* How to create a new PyBobIoVideoWriterObject */
+static PyObject* PyBobIoVideoWriter_New(PyTypeObject* type, PyObject*, PyObject*) {
+
+  /* Allocates the python object itself */
+  PyBobIoVideoWriterObject* self = (PyBobIoVideoWriterObject*)type->tp_alloc(type, 0);
+
+  self->v.reset();
+
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static void PyBobIoVideoWriter_Delete (PyBobIoVideoWriterObject* o) {
+
+  o->v.reset();
+  o->ob_type->tp_free((PyObject*)o);
+
+}
+
+/* The __init__(self) method */
+static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self, 
+    PyObject *args, PyObject* kwds) {
+
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {
+    "filename", "height", "width", //mandatory
+    "framerate", "bitrate", "gop", "codec", "format", "check",  //optional
+    0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  char* filename = 0;
+  Py_ssize_t height = 0;
+  Py_ssize_t width = 0;
+
+  double framerate = 25.;
+  double bitrate = 1500000.;
+  Py_ssize_t gop = 12;
+  char* codec = 0;
+  char* format = 0;
+  PyObject* pycheck = 0;
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "snn|ddnssO", kwlist,
+        &filename, &height, &width, &framerate, &bitrate, &gop, &codec, 
+        &format, &pycheck)) return -1;
+
+  if (pycheck && PyObject_IsTrue(pycheck)) {
+    PyErr_SetString(PyExc_TypeError, "argument to `check' must be a boolean");
+    return -1;
+  }
+
+  bool check = false;
+  if (pycheck && (pycheck == Py_True)) check = true;
+
+  try {
+    self->v = boost::make_shared<bob::io::VideoWriter>(filename, height, width,
+        framerate, bitrate, gop, codec, format, check);
+  }
+  catch (std::exception& e) {
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: %s", filename, e.what());
+    return -1;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: unknown exception caught", filename);
+    return -1;
+  }
+
+  return 0; ///< SUCCESS
+}
 
 PyObject* PyBobIoVideoWriter_Filename(PyBobIoVideoWriterObject* self) {
   return Py_BuildValue("s", self->v->filename().c_str());

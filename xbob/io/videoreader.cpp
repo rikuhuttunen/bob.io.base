@@ -18,60 +18,6 @@
 #define VIDEOREADER_NAME VideoReader
 PyDoc_STRVAR(s_videoreader_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOREADER_NAME));
 
-/* How to create a new PyBobIoVideoReaderObject */
-static PyObject* PyBobIoVideoReader_New(PyTypeObject* type, PyObject*, PyObject*) {
-
-  /* Allocates the python object itself */
-  PyBobIoVideoReaderObject* self = (PyBobIoVideoReaderObject*)type->tp_alloc(type, 0);
-
-  self->v.reset();
-
-  return reinterpret_cast<PyObject*>(self);
-}
-
-static void PyBobIoVideoReader_Delete (PyBobIoVideoReaderObject* o) {
-
-  o->v.reset();
-  o->ob_type->tp_free((PyObject*)o);
-
-}
-
-/* The __init__(self) method */
-static int PyBobIoVideoReader_Init(PyBobIoVideoReaderObject* self, 
-    PyObject *args, PyObject* kwds) {
-
-  /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"filename", "check", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
-
-  char* filename = 0;
-  PyObject* pycheck = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O", kwlist, 
-        &filename, &pycheck)) return -1;
-
-  if (pycheck && !PyBool_Check(pycheck)) {
-    PyErr_SetString(PyExc_TypeError, "argument to `check' must be a boolean");
-    return -1;
-  }
-
-  bool check = false;
-  if (pycheck && (pycheck == Py_True)) check = true;
-
-  try {
-    self->v = boost::make_shared<bob::io::VideoReader>(filename, check);
-  }
-  catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: %s", filename, e.what());
-    return -1;
-  }
-  catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: unknown exception caught", filename);
-    return -1;
-  }
-
-  return 0; ///< SUCCESS
-}
-
 PyDoc_STRVAR(s_videoreader_doc,
 "VideoReader(filename, [check=True]) -> new bob::io::VideoReader\n\
 \n\
@@ -104,6 +50,55 @@ Output will be colored using the RGB standard, with each band\n\
 varying between 0 and 255, with zero meaning pure black and 255,\n\
 pure white (color).\n\
 ");
+
+/* How to create a new PyBobIoVideoReaderObject */
+static PyObject* PyBobIoVideoReader_New(PyTypeObject* type, PyObject*, PyObject*) {
+
+  /* Allocates the python object itself */
+  PyBobIoVideoReaderObject* self = (PyBobIoVideoReaderObject*)type->tp_alloc(type, 0);
+
+  self->v.reset();
+
+  return reinterpret_cast<PyObject*>(self);
+}
+
+static void PyBobIoVideoReader_Delete (PyBobIoVideoReaderObject* o) {
+
+  o->v.reset();
+  o->ob_type->tp_free((PyObject*)o);
+
+}
+
+/* The __init__(self) method */
+static int PyBobIoVideoReader_Init(PyBobIoVideoReaderObject* self, 
+    PyObject *args, PyObject* kwds) {
+
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"filename", "check", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  char* filename = 0;
+  PyObject* pycheck = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O", kwlist, 
+        &filename, &pycheck)) return -1;
+
+  bool check = false;
+  if (pycheck && PyObject_IsTrue(pycheck)) check = true;
+
+  try {
+    self->v = boost::make_shared<bob::io::VideoReader>(filename, check);
+  }
+  catch (std::exception& e) {
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: %s", filename, e.what());
+    return -1;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: unknown exception caught", filename);
+    return -1;
+  }
+
+  return 0; ///< SUCCESS
+}
 
 PyObject* PyBobIoVideoReader_Filename(PyBobIoVideoReaderObject* self) {
   return Py_BuildValue("s", self->v->filename().c_str());
@@ -334,13 +329,8 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
   PyObject* raise = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &raise)) return 0;
 
-  if (raise && !PyBool_Check(raise)) {
-    PyErr_SetString(PyExc_TypeError, "argument to `raise_on_error' must be a boolean");
-    return 0;
-  }
-
   bool raise_on_error = false;
-  if (raise && (raise == Py_True)) raise_on_error = true;
+  if (raise && PyObject_IsTrue(raise)) raise_on_error = true;
 
   const bob::core::array::typeinfo& info = self->v->video_type();
   

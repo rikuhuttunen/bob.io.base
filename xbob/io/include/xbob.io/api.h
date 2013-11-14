@@ -11,6 +11,7 @@
 #include <xbob.io/config.h>
 #include <bob/config.h>
 #include <bob/io/File.h>
+#include <bob/io/HDF5File.h>
 
 #if WITH_FFMPEG
 #include <bob/io/VideoReader.h>
@@ -117,11 +118,34 @@ typedef struct {
 
 #endif /* WITH_FFMPEG */
 
+/*****************
+ * HDF5 bindings *
+ *****************/
+
+typedef struct {
+  PyObject_HEAD
+
+  /* Type-specific fields go here. */
+  boost::shared_ptr<bob::io::HDF5File> f;
+
+} PyBobIoHDF5FileObject;
+
+#define PyBobIoHDF5File_Type_NUM 7
+#define PyBobIoHDF5File_Type_TYPE PyTypeObject
+
+#define PyBobIoHDF5File_Check_NUM 8
+#define PyBobIoHDF5File_Check_RET int
+#define PyBobIoHDF5File_Check_PROTO (PyObject* o)
+
+#define PyBobIoHDF5File_Converter_NUM 9
+#define PyBobIoHDF5File_Converter_RET int
+#define PyBobIoHDF5File_Converter_PROTO (PyObject* o, PyBobIoHDF5FileObject** a)
+
 /* Total number of C API pointers */
 #if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 7
+#  define PyXbobIo_API_pointers 10
 #else
-#  define PyXbobIo_API_pointers 8
+#  define PyXbobIo_API_pointers 11
 #endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
@@ -155,9 +179,21 @@ typedef struct {
    ******************/
 
   extern PyBobIoVideoReader_Type_TYPE PyBobIoVideoReader_Type;
+
   extern PyBobIoVideoReaderIterator_Type_TYPE PyBobIoVideoReaderIterator_Type;
+
   extern PyBobIoVideoWriter_Type_TYPE PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
+
+/*****************
+ * HDF5 bindings *
+ *****************/
+
+  extern PyBobIoHDF5File_Type_TYPE PyBobIoHDF5File_Type;
+
+  PyBobIoHDF5File_Check_RET PyBobIoHDF5File_Check PyBobIoHDF5File_Check_PROTO;
+
+  PyBobIoHDF5File_Converter_RET PyBobIoHDF5File_Converter PyBobIoHDF5File_Converter_PROTO;
 
 #else
 
@@ -219,6 +255,16 @@ typedef struct {
 
 # define PyBobIoVideoWriterIterator_Type (*(PyBobIoVideoWriterIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoWriterIterator_Type_NUM])
 #endif /* WITH_FFMPEG */
+
+  /*****************
+   * HDF5 bindings *
+   *****************/
+
+# define PyBobIoHDF5File_Type (*(PyBobIoHDF5File_Type_TYPE *)PyXbobIo_API[PyBobIoHDF5File_Type_NUM])
+
+# define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyXbobIo_API[PyBobIoHDF5File_Check_NUM])
+
+# define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
 
   /**
    * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception

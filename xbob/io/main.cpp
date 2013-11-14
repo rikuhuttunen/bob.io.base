@@ -43,6 +43,9 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return;
 #endif /* WITH_FFMPEG */
 
+  PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return;
+
   PyObject* m = Py_InitModule3(BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME),
       module_methods, module_docstr);
 
@@ -67,6 +70,9 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   Py_INCREF(&PyBobIoVideoWriter_Type);
   PyModule_AddObject(m, "VideoWriter", (PyObject *)&PyBobIoVideoWriter_Type);
 #endif /* WITH_FFMPEG */
+
+  Py_INCREF(&PyBobIoHDF5File_Type);
+  PyModule_AddObject(m, "HDF5File", (PyObject *)&PyBobIoHDF5File_Type);
 
   static void* PyXbobIo_API[PyXbobIo_API_pointers];
 
@@ -105,6 +111,16 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
 
   PyXbobIo_API[PyBobIoVideoWriter_Type_NUM] = (void *)&PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
+
+  /*****************
+   * HDF5 bindings *
+   *****************/
+
+  PyXbobIo_API[PyBobIoHDF5File_Type_NUM] = (void *)&PyBobIoHDF5File_Type;
+  
+  PyXbobIo_API[PyBobIoHDF5File_Check_NUM] = (void *)&PyBobIoHDF5File_Check;
+
+  PyXbobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
 
   /* imports the NumPy C-API */
   import_array();

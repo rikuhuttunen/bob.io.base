@@ -17,6 +17,33 @@
 #define FILETYPE_NAME File
 PyDoc_STRVAR(s_file_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILETYPE_NAME));
 
+PyDoc_STRVAR(s_file_doc,
+"File(filename, [mode='r', [pretend_extension='']]) -> new bob::io::File\n\
+\n\
+Use this object to read and write data into files.\n\
+\n\
+Constructor parameters:\n\
+\n\
+filename\n\
+  [str] The file path to the file you want to open\n\
+\n\
+mode\n\
+  [str] A single character (one of ``'r'``, ``'w'``, ``'a'``),\n\
+  indicating if you'd like to read, write or append into the file.\n\
+  If you choose ``'w'`` and the file already exists, it will be\n\
+  truncated.By default, the opening mode is read-only (``'r'``).\n\
+\n\
+pretend_extension\n\
+  [str, optional] Normally we read the file matching the extension\n\
+  to one of the available codecs installed with the present release\n\
+  of Bob. If you set this parameter though, we will read the file\n\
+  as it had a given extension. The value should start with a ``'.'``.\n\
+  For example ``'.hdf5'``, to make the file be treated like an HDF5\n\
+  file.\n\
+\n\
+"
+);
+
 /* How to create a new PyBobIoFileObject */
 static PyObject* PyBobIoFile_New(PyTypeObject* type, PyObject*, PyObject*) {
 
@@ -43,9 +70,9 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
   static char** kwlist = const_cast<char**>(const_kwlist);
 
   char* filename = 0;
-  char mode = 0;
+  char mode = 'r';
   char* pretend_extension = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "sc|s", kwlist, &filename,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|cs", kwlist, &filename,
         &mode, &pretend_extension)) return -1;
 
   if (mode != 'r' && mode != 'w' && mode != 'a') {
@@ -72,33 +99,6 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
 
   return 0; ///< SUCCESS
 }
-
-PyDoc_STRVAR(s_file_doc,
-"File(filename, mode, [pretend_extension]) -> new bob::io::File\n\
-\n\
-Use this object to read and write data into files.\n\
-\n\
-Constructor parameters:\n\
-\n\
-filename\n\
-  [str] The file path to the file you want to open\n\
-\n\
-mode\n\
-  [str] A single character (one of ``'r'``, ``'w'``, ``'a'``),\n\
-  indicating if you'd like to read, write or append into the file.\n\
-  If you choose ``'w'`` and the file already exists, it will be\n\
-  truncated.\n\
-\n\
-pretend_extension\n\
-  [str, optional] Normally we read the file matching the extension\n\
-  to one of the available codecs installed with the present release\n\
-  of Bob. If you set this parameter though, we will read the file\n\
-  as it had a given extension. The value should start with a ``'.'``.\n\
-  For example ``'.hdf5'``, to make the file be treated like an HDF5\n\
-  file.\n\
-\n\
-"
-);
 
 static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
   return
@@ -524,14 +524,8 @@ PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti) {
   PyObject* shape = PyTuple_GET_ITEM(retval, 1);
   PyObject* stride = PyTuple_GET_ITEM(retval, 2);
   for (Py_ssize_t i=0; i<ti.nd; ++i) {
-    if (PyTuple_SetItem(shape, i, Py_BuildValue("n", ti.shape[i])) != 0) {
-      Py_DECREF(retval);
-      return 0;
-    }
-    if (PyTuple_SetItem(stride, i, Py_BuildValue("n", ti.stride[i])) != 0) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    PyTuple_SET_ITEM(shape, i, Py_BuildValue("n", ti.shape[i]));
+    PyTuple_SET_ITEM(stride, i, Py_BuildValue("n", ti.stride[i]));
   }
 
   return retval;
@@ -547,13 +541,8 @@ static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, P
   PyObject* all = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &all)) return 0;
 
-  if (all && !PyBool_Check(all)) {
-    PyErr_SetString(PyExc_TypeError, "argument to `all' must be a boolean");
-    return 0;
-  }
-
   const bob::core::array::typeinfo* info = 0;
-  if (all && all == Py_True) info = &self->f->type_all();
+  if (all && PyObject_IsTrue(all)) info = &self->f->type_all();
   else info = &self->f->type();
 
   /* Now return type description and tuples with shape and strides */
