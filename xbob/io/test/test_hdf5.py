@@ -121,8 +121,10 @@ def test_can_create():
     # describe() method
     description = readonly.describe('testdata')
 
-    assert description[0].type.compatible(arrays[0])
-    assert description[0].size == N
+    nose.tools.eq_(description[0][0][0], arrays[0].dtype)
+    nose.tools.eq_(description[0][0][1], arrays[0].shape)
+    nose.tools.eq_(description[0][1], N) #number of elements
+    nose.tools.eq_(description[0][2], True) #expandable
 
     # Test that writing will really fail
     nose.tools.assert_raises(RuntimeError, readonly.append, "testdata", arrays[0])

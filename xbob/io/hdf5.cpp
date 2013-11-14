@@ -1230,17 +1230,17 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
 
       switch (is_array) {
         case 1: //blitz.array
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+          if (!self->f->contains(path)) self->f->create(path, type, true, compression);
           self->f->extend_buffer(path, type, ((PyBlitzArrayObject*)data)->data);
           break;
 
         case 2: //numpy.ndarray
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+          if (!self->f->contains(path)) self->f->create(path, type, true, compression);
           self->f->extend_buffer(path, type, PyArray_DATA((PyArrayObject*)data));
           break;
 
         case 3: //converted numpy.ndarray
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+          if (!self->f->contains(path)) self->f->create(path, type, true, compression);
           self->f->extend_buffer(path, type, PyArray_DATA((PyArrayObject*)converted));
           Py_DECREF(converted);
           break;
@@ -1382,6 +1382,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
             self->f->set(path, value);
             Py_RETURN_NONE;
           }
+          break;
         case bob::io::b:
           return PyBobIoHDF5File_SetScalar<bool>(self, path, data);
         case bob::io::i8:
@@ -1497,8 +1498,20 @@ static PyObject* PyBobIoHDF5File_Copy(PyBobIoHDF5FileObject* self, PyObject *arg
   static const char* const_kwlist[] = {"file", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  PyBobIoHDF5FileObject* file = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBobIoHDF5File_Converter, &file)) return 0;
+  PyBobIoHDF5FileObject* other = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBobIoHDF5File_Converter, &other)) return 0;
+
+  try {
+    self->f->copy(*other->f);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while copying contents of file `%s' to file `%s'", self->f->filename().c_str(), other->f->filename().c_str());
+    return 0;
+  }
 
   Py_RETURN_NONE;
 }
@@ -1624,6 +1637,26 @@ static PyMethodDef PyBobIoHDF5File_Methods[] = {
   {0}  /* Sentinel */
 };
 
+static PyObject* PyBobIoHDF5File_Cwd(PyBobIoHDF5FileObject* self) {
+  return Py_BuildValue("s", self->f->cwd().c_str());
+}
+
+PyDoc_STRVAR(s_cwd_str, "cwd");
+PyDoc_STRVAR(s_cwd_doc,
+"The current working directory set on the file"
+);
+
+static PyGetSetDef PyBobIoHDF5File_getseters[] = {
+    {
+      s_cwd_str, 
+      (getter)PyBobIoHDF5File_Cwd,
+      0,
+      s_cwd_doc,
+      0,
+    },
+    {0}  /* Sentinel */
+};
+
 /**
 
     .def("get_attributes", &hdf5file_get_attributes, hdf5file_get_attributes_overloads((arg("self"), arg("path")="."), "Returns a dictionary containing all attributes related to a particular (existing) path in this file. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
@@ -1673,7 +1706,7 @@ PyTypeObject PyBobIoHDF5File_Type = {
     0,		                                      /* tp_iternext */
     PyBobIoHDF5File_Methods,                    /* tp_methods */
     0,                                          /* tp_members */
-    0, //PyBobIoHDF5File_getseters,                  /* tp_getset */
+    PyBobIoHDF5File_getseters,                  /* tp_getset */
     0,                                          /* tp_base */
     0,                                          /* tp_dict */
     0,                                          /* tp_descr_get */
@@ -1685,8 +1718,6 @@ PyTypeObject PyBobIoHDF5File_Type = {
 };
 
 /**
-
-    .add_property("cwd", &bob::io::HDF5File::cwd)
 
     .def("__contains__", &bob::io::HDF5File::contains, (arg("self"), arg("key")), "Returns True if the file contains an HDF5 dataset with a given path")
 
