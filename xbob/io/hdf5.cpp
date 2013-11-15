@@ -1120,10 +1120,12 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
+    Py_XDECREF(converted);
     return 0;
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "cannot replace object in position %" PY_FORMAT_SIZE_T "d at HDF5 file `%s': unknown exception caught", pos, self->f->filename().c_str());
+    Py_XDECREF(converted);
     return 0;
   }
 
@@ -1531,6 +1533,116 @@ file\n\
 \n\
 ");
 
+template <typename T> static PyObject* PyBobIoHDF5File_ReadScalarAttribute
+(PyBobIoHDF5FileObject* self, const char* path, const char* name,
+ const bob::io::HDF5Type& type) {
+  T value;
+  try {
+    self->f->read_attribute(path, name, type, static_cast<void*>(&value));
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    return 0;
+  }
+  return PyBlitzArrayCxx_FromCScalar(value);
+}
+
+template <> PyObject* PyBobIoHDF5File_ReadScalarAttribute<const char*>
+(PyBobIoHDF5FileObject* self, const char* path, const char* name,
+ const bob::io::HDF5Type& type) {
+  std::string retval;
+  try {
+    self->f->getAttribute(path, name, retval);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading string attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    return 0;
+  }
+  return Py_BuildValue("s", retval.c_str());
+}
+
+static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
+    const char* path, const char* name, const bob::io::HDF5Type& type) {
+
+  //no error detection: this should be done before reaching this method
+
+  const bob::io::HDF5Shape& shape = type.shape();
+
+  if (type.type() == bob::io::s || (shape.n() == 1 && shape[0] == 1)) {
+    //read as scalar
+    switch(type.type()) {
+      case bob::io::s:
+        return PyBobIoHDF5File_ReadScalarAttribute<const char*>(self, path, name, type);
+      case bob::io::b:
+        return PyBobIoHDF5File_ReadScalarAttribute<bool>(self, path, name, type);
+      case bob::io::i8:
+        return PyBobIoHDF5File_ReadScalarAttribute<int8_t>(self, path, name, type);
+      case bob::io::i16:
+        return PyBobIoHDF5File_ReadScalarAttribute<int16_t>(self, path, name, type);
+      case bob::io::i32:
+        return PyBobIoHDF5File_ReadScalarAttribute<int32_t>(self, path, name, type);
+      case bob::io::i64:
+        return PyBobIoHDF5File_ReadScalarAttribute<int64_t>(self, path, name, type);
+      case bob::io::u8:
+        return PyBobIoHDF5File_ReadScalarAttribute<uint8_t>(self, path, name, type);
+      case bob::io::u16:
+        return PyBobIoHDF5File_ReadScalarAttribute<uint16_t>(self, path, name, type);
+      case bob::io::u32:
+        return PyBobIoHDF5File_ReadScalarAttribute<uint32_t>(self, path, name, type);
+      case bob::io::u64:
+        return PyBobIoHDF5File_ReadScalarAttribute<uint64_t>(self, path, name, type);
+      case bob::io::f32:
+        return PyBobIoHDF5File_ReadScalarAttribute<float>(self, path, name, type);
+      case bob::io::f64:
+        return PyBobIoHDF5File_ReadScalarAttribute<double>(self, path, name, type);
+      case bob::io::f128:
+        return PyBobIoHDF5File_ReadScalarAttribute<long double>(self, path, name, type);
+      case bob::io::c64:
+        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<float> >(self, path, name, type);
+      case bob::io::c128:
+        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<double> >(self, path, name, type);
+      case bob::io::c256:
+        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<long double> >(self, path, name, type);
+      default:
+        break;
+    }
+  }
+
+  //read as an numpy array
+  int type_num = PyBobIo_H5AsTypenum(type.type());
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
+
+  npy_intp pyshape[NPY_MAXDIMS];
+  for (int k=0; k<shape.n(); ++k) pyshape[k] = shape.get()[k];
+
+  PyObject* retval = PyArray_SimpleNew(shape.n(), pyshape, type_num);
+  if (!retval) return 0;
+
+  try {
+    self->f->read_attribute(path, name, type, PyArray_DATA((PyArrayObject*)retval));
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    Py_DECREF(retval);
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading array attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    Py_DECREF(retval);
+    return 0;
+  }
+
+  return retval;
+}
+
 static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
   
   /* Parses input arguments in a single shot */
@@ -1541,7 +1653,28 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
-  Py_RETURN_NONE;
+  bob::io::HDF5Type type;
+
+  try {
+    self->f->getAttributeType(path, name, type);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while getting type for attribute `%s' at resource `%s' from HDF5 file `%s'", name, path, self->f->filename().c_str());
+    return 0;
+  }
+
+  if (type.type() == bob::io::unsupported) {
+    boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
+    m % name % path % self->f->filename();
+    PyErr_Warn(PyExc_UserWarning, m.str().c_str());
+    Py_RETURN_NONE;
+  }
+
+  return PyBobIoHDF5File_ReadAttribute(self, path, name, type);
 }
 
 PyDoc_STRVAR(s_get_attribute_str, "get_attribute");
@@ -1577,7 +1710,30 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &path)) return 0;
 
-  Py_RETURN_NONE;
+  std::map<std::string, bob::io::HDF5Type> attributes;
+  self->f->listAttributes(path, attributes);
+  PyObject* retval = PyDict_New();
+  for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
+    PyObject* item = 0;
+    if (k->second.type() == bob::io::unsupported) {
+      boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
+      m % k->first % k->second.str() % self->f->filename();
+      PyErr_Warn(PyExc_UserWarning, m.str().c_str());
+      item = Py_None;
+      Py_INCREF(item);
+      Py_INCREF(Py_None);
+    }
+    else item = PyBobIoHDF5File_ReadAttribute(self, path, k->first.c_str(), k->second);
+    int status = PyDict_SetItemString(retval, k->first.c_str(), item);
+    Py_DECREF(item);
+    if (status != 0) {
+      Py_DECREF(retval);
+      return 0;
+    }
+  }
+
+  return retval;
+
 }
 
 PyDoc_STRVAR(s_get_attributes_str, "get_attributes");
@@ -1600,6 +1756,137 @@ to the value stored inside the HDF5 file. To retrieve only\n\
 a specific attribute, use :py:meth:`HDF5File.get_attribute()`.\n\
 ");
 
+template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
+(PyBobIoHDF5FileObject* self, const char* path, const char* name,
+ const bob::io::HDF5Type& type, PyObject* o) {
+
+  T value = PyBlitzArrayCxx_AsCScalar<T>(o);
+  if (PyErr_Occurred()) return 0;
+
+  try {
+    self->f->write_attribute(path, name, type, static_cast<void*>(&value));
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    return 0;
+  }
+
+  Py_RETURN_NONE;
+
+}
+
+template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
+(PyBobIoHDF5FileObject* self, const char* path, const char* name,
+ const bob::io::HDF5Type& type, PyObject* o) {
+
+  const char* value = PyBobIo_GetString(o);
+  if (!value) return 0;
+
+  try {
+    self->f->write_attribute(path, name, type, static_cast<const void*>(value));
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing string attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    return 0;
+  }
+
+  Py_RETURN_NONE;
+
+}
+
+static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
+    const char* path, const char* name, const bob::io::HDF5Type& type,
+    PyObject* o, int is_array, PyObject* converted) {
+
+  //no error detection: this should be done before reaching this method
+
+  if (!is_array) { //write as a scalar
+    switch(type.type()) {
+      case bob::io::s:
+        return PyBobIoHDF5File_WriteScalarAttribute<const char*>(self, path, name, type, o);
+      case bob::io::b:
+        return PyBobIoHDF5File_WriteScalarAttribute<bool>(self, path, name, type, o);
+      case bob::io::i8:
+        return PyBobIoHDF5File_WriteScalarAttribute<int8_t>(self, path, name, type, o);
+      case bob::io::i16:
+        return PyBobIoHDF5File_WriteScalarAttribute<int16_t>(self, path, name, type, o);
+      case bob::io::i32:
+        return PyBobIoHDF5File_WriteScalarAttribute<int32_t>(self, path, name, type, o);
+      case bob::io::i64:
+        return PyBobIoHDF5File_WriteScalarAttribute<int64_t>(self, path, name, type, o);
+      case bob::io::u8:
+        return PyBobIoHDF5File_WriteScalarAttribute<uint8_t>(self, path, name, type, o);
+      case bob::io::u16:
+        return PyBobIoHDF5File_WriteScalarAttribute<uint16_t>(self, path, name, type, o);
+      case bob::io::u32:
+        return PyBobIoHDF5File_WriteScalarAttribute<uint32_t>(self, path, name, type, o);
+      case bob::io::u64:
+        return PyBobIoHDF5File_WriteScalarAttribute<uint64_t>(self, path, name, type, o);
+      case bob::io::f32:
+        return PyBobIoHDF5File_WriteScalarAttribute<float>(self, path, name, type, o);
+      case bob::io::f64:
+        return PyBobIoHDF5File_WriteScalarAttribute<double>(self, path, name, type, o);
+      case bob::io::f128:
+        return PyBobIoHDF5File_WriteScalarAttribute<long double>(self, path, name, type, o);
+      case bob::io::c64:
+        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<float> >(self, path, name, type, o);
+      case bob::io::c128:
+        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<double> >(self, path, name, type, o);
+      case bob::io::c256:
+        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<long double> >(self, path, name, type, o);
+      default:
+        break;
+    }
+  }
+
+  else { //write as an numpy array
+     
+    try {
+      switch (is_array) {
+
+        case 1: //blitz.array
+          self->f->write_attribute(path, name, type, ((PyBlitzArrayObject*)o)->data);
+          break;
+
+        case 2: //numpy.ndarray
+          self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)o));
+          break;
+
+        case 3: //converted numpy.ndarray
+          self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)converted));
+          Py_DECREF(converted);
+          break;
+
+        default:
+          PyErr_Format(PyExc_NotImplementedError, "error setting attribute `%s' at resource `%s' of HDF5 file `%s': HDF5 attribute setting function is uncovered for array type %d (DEBUG ME)", name, path, self->f->filename().c_str(), is_array);
+          return 0;
+      }
+    }
+    catch (std::exception& e) {
+      PyErr_SetString(PyExc_RuntimeError, e.what());
+      Py_XDECREF(converted);
+      return 0;
+    }
+    catch (...) {
+      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing array attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+      Py_XDECREF(converted);
+      return 0;
+    }
+
+  }
+
+  Py_RETURN_NONE;
+
+}
+
 static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
   
   /* Parses input arguments in a single shot */
@@ -1611,7 +1898,16 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO|s", kwlist, &name, &value, &path)) return 0;
 
-  Py_RETURN_NONE;
+  bob::io::HDF5Type type;
+  PyObject* converted = 0;
+  int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+  if (is_array < 0) { ///< error condition, signal
+    PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), value->ob_type->tp_name);
+    return 0;
+  }
+
+  return PyBobIoHDF5File_WriteAttribute(self, path, name, type, value, is_array, converted);
+
 }
 
 PyDoc_STRVAR(s_set_attribute_str, "set_attribute");
@@ -1660,7 +1956,34 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &attrs, &path)) return 0;
 
+  if (!PyDict_Check(attrs)) {
+    PyErr_SetString(PyExc_TypeError, "parameter `attrs' should be a dictionary where keys are strings and values are the attribute values");
+    return 0;
+  }
+
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(attrs, &pos, &key, &value)) {
+    bob::io::HDF5Type type;
+    PyObject* converted = 0;
+
+    const char* name = PyBobIo_GetString(key);
+    if (!name) return 0;
+
+    int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+    if (is_array < 0) { ///< error condition, signal
+      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), value->ob_type->tp_name);
+      return 0;
+    }
+
+    PyObject* retval = PyBobIoHDF5File_WriteAttribute(self, path, name, type, value, is_array, converted);
+    if (!retval) return 0;
+    Py_DECREF(retval);
+
+  }
+
   Py_RETURN_NONE;
+
 }
 
 PyDoc_STRVAR(s_set_attributes_str, "set_attributes");
@@ -1706,6 +2029,18 @@ static PyObject* PyBobIoHDF5File_DelAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
+  try {
+    self->f->deleteAttribute(path, name);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+    return 0;
+  }
+
   Py_RETURN_NONE;
 }
 
@@ -1741,6 +2076,66 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Os", kwlist, &attrs, &path)) return 0;
 
+  if (attrs && !PyIter_Check(attrs)) {
+    PyErr_SetString(PyExc_TypeError, "parameter `attrs', if set, must be an iterable of strings");
+    return 0;
+  }
+
+  if (attrs) {
+    PyObject* iter = PyObject_GetIter(attrs);
+    if (!iter) return 0;
+    while (PyObject* item = PyIter_Next(iter)) {
+      const char* name = PyBobIo_GetString(item);
+      Py_DECREF(item);
+      if (!name) {
+        Py_DECREF(iter);
+        return 0;
+      }
+      try {
+        self->f->deleteAttribute(path, name);
+      }
+      catch (std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        Py_DECREF(iter);
+        return 0;
+      }
+      catch (...) {
+        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+        Py_DECREF(iter);
+        return 0;
+      }
+    }
+    Py_DECREF(iter);
+    Py_RETURN_NONE;
+  }
+
+  //else, find the attributes and remove all of them
+  std::map<std::string, bob::io::HDF5Type> attributes;
+  try {
+    self->f->listAttributes(path, attributes);
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "cannot list attributes at resource `%s' of HDF5 file `%s': unknown exception caught", path, self->f->filename().c_str());
+    return 0;
+  }
+  for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
+    try {
+      self->f->deleteAttribute(path, k->first);
+    }
+    catch (std::exception& e) {
+      PyErr_SetString(PyExc_RuntimeError, e.what());
+      return 0;
+    }
+    catch (...) {
+      PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", k->first.c_str(), path, self->f->filename().c_str());
+      return 0;
+    }
+  }
+
   Py_RETURN_NONE;
 }
 
@@ -1775,7 +2170,18 @@ static PyObject* PyBobIoHDF5File_HasAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
-  Py_RETURN_NONE;
+  try {
+    if (self->f->hasAttribute(path, name)) Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    PyErr_Format(PyExc_RuntimeError, "cannot verify existence of attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+    return 0;
+  }
 }
 
 PyDoc_STRVAR(s_has_attribute_str, "has_attribute");
