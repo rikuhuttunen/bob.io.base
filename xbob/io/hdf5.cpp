@@ -311,6 +311,24 @@ static bob::io::hdf5type PyBobIo_H5FromTypenum (int type_num) {
 #ifdef NPY_COMPLEX256
     case NPY_COMPLEX256: return bob::io::c256;
 #endif
+    case NPY_LONGLONG:
+                         switch (NPY_BITSOF_LONGLONG) {
+                           case 8: return bob::io::i8;
+                           case 16: return bob::io::i16;
+                           case 32: return bob::io::i32;
+                           case 64: return bob::io::i64;
+                           default: return bob::io::unsupported;
+                         }
+                         break;
+    case NPY_ULONGLONG:
+                         switch (NPY_BITSOF_LONGLONG) {
+                           case 8: return bob::io::u8;
+                           case 16: return bob::io::u16;
+                           case 32: return bob::io::u32;
+                           case 64: return bob::io::u64;
+                           default: return bob::io::unsupported;
+                         }
+                         break;
     default:             return bob::io::unsupported;
   }
 
@@ -766,7 +784,7 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
   Py_ssize_t pos = -1;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|n", kwlist, &key, &pos)) return 0;
 
-  if (pos >= 0) return PyBobIoHDF5File_Xread(self, key, 1, pos);
+  if (pos >= 0) return PyBobIoHDF5File_Xread(self, key, 0, pos);
 
   //otherwise returns as a list
   const std::vector<bob::io::HDF5Descriptor>* D = 0;
@@ -1003,7 +1021,10 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
 
     PyArrayObject* np = reinterpret_cast<PyArrayObject*>(*converted);
     bob::io::hdf5type h5type = PyBobIo_H5FromTypenum(PyArray_DESCR(np)->type_num);
-    if (h5type == bob::io::unsupported) return -1;
+    if (h5type == bob::io::unsupported) {
+      Py_CLEAR(*converted);
+      return -1;
+    }
     bob::io::HDF5Shape h5shape(PyArray_NDIM(np), PyArray_DIMS(np));
     t = bob::io::HDF5Type(h5type, h5shape);
     return 3;
