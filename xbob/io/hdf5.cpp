@@ -1531,6 +1531,273 @@ file\n\
 \n\
 ");
 
+static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"name", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  const char* name = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_get_attribute_str, "get_attribute");
+PyDoc_STRVAR(s_get_attribute_doc,
+"x.get_attribute(name, [path='.']) -> scalar|numpy.ndarray\n\
+\n\
+Retrieve a given attribute from the named resource.\n\
+\n\
+Parameters:\n\
+\n\
+name\n\
+  [str] The name of the attribute to retrieve. If the attribute\n\
+  is not available, a :py:class:`RuntimeError` is raised.\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to get an attribute from.\n\
+  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  raised.\n\
+\n\
+This method returns a single value corresponding to what is\n\
+stored inside the attribute container for the given resource.\n\
+If you would like to retrieve all attributes at once, use\n\
+:py:meth:`HDF5File.get_attributes()` instead.\n\
+");
+
+static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_get_attributes_str, "get_attributes");
+PyDoc_STRVAR(s_get_attributes_doc,
+"x.get_attributes([path='.']) -> dict\n\
+\n\
+All attributes of the given path organized in dictionary\n\
+\n\
+Parameters:\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to get all attributes from.\n\
+  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  raised.\n\
+\n\
+Attributes are returned in a dictionary in which each key\n\
+corresponds to the attribute name and each value corresponds\n\
+to the value stored inside the HDF5 file. To retrieve only\n\
+a specific attribute, use :py:meth:`HDF5File.get_attribute()`.\n\
+");
+
+static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"name", "value", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  const char* name = 0;
+  PyObject* value = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO|s", kwlist, &name, &value, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_set_attribute_str, "set_attribute");
+PyDoc_STRVAR(s_set_attribute_doc,
+"x.set_attribute(name, value, [path='.']) -> None\n\
+\n\
+Sets a given attribute at the named resource.\n\
+\n\
+Parameters:\n\
+\n\
+name\n\
+  [str] The name of the attribute to set.\n\
+\n\
+value\n\
+  [scalar|numpy.ndarray] A simple scalar to set for the given\n\
+  attribute on the named resources (``path``). Only simple\n\
+  scalars (booleans, integers, floats and complex numbers) and\n\
+  arrays of those are supported at the time being. You can use\n\
+  :py:mod:`numpy` scalars to set values with arbitrary\n\
+  precision (e.g. :py:class:`numpy.uint8`).\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to set an attribute at.\n\
+\n\
+.. warning::\n\
+\n\
+   Attributes in HDF5 files are supposed to be small containers or\n\
+   simple scalars that provide extra information about the data\n\
+   stored on the main resource (dataset or group|directory).\n\
+   Attributes cannot be retrieved in chunks, contrary to data in\n\
+   datasets.\n\
+   \n\
+   Currently, *no limitations* for the size of values stored on\n\
+   attributes is imposed.\n\
+\n\
+");
+
+static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"attrs", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  PyObject* attrs = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &attrs, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_set_attributes_str, "set_attributes");
+PyDoc_STRVAR(s_set_attributes_doc,
+"x.set_attributes(attrs, [path='.']) -> None\n\
+\n\
+Sets attributes in a given (existing) path using a dictionary\n\
+\n\
+Parameters:\n\
+\n\
+attrs\n\
+  [dict] A python dictionary containing pairs of strings and\n\
+  values. Each value in the dictionary should be simple scalars\n\
+  (booleans, integers, floats and complex numbers) or arrays of\n\
+  those are supported at the time being. You can use\n\
+  :py:mod:`numpy` scalars to set values with arbitrary precision\n\
+  (e.g. :py:class:`numpy.uint8`).\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to set attributes at.\n\
+\n\
+.. warning::\n\
+\n\
+   Attributes in HDF5 files are supposed to be small containers or\n\
+   simple scalars that provide extra information about the data\n\
+   stored on the main resource (dataset or group|directory).\n\
+   Attributes cannot be retrieved in chunks, contrary to data in\n\
+   datasets.\n\
+   \n\
+   Currently, *no limitations* for the size of values stored on\n\
+   attributes is imposed.\n\
+\n\
+");
+
+static PyObject* PyBobIoHDF5File_DelAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"name", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  const char* name = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_del_attribute_str, "del_attribute");
+PyDoc_STRVAR(s_del_attribute_doc,
+"x.del_attribute(name, [path='.']) -> None\n\
+\n\
+Removes a given attribute at the named resource.\n\
+\n\
+Parameters:\n\
+\n\
+name\n\
+  [str] The name of the attribute to delete. A\n\
+  :py:class:`RuntimeError` is raised if the attribute does\n\
+  not exist.\n\
+\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to set an attribute at.\n\
+  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  raised.\n\
+\n\
+");
+
+static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"attrs", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  PyObject* attrs = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Os", kwlist, &attrs, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_del_attributes_str, "del_attributes");
+PyDoc_STRVAR(s_del_attributes_doc,
+"x.del_attributes([attrs=None, [path='.']]) -> None\n\
+\n\
+Removes attributes in a given (existing) path\n\
+\n\
+Parameters:\n\
+\n\
+attrs\n\
+  [list] An iterable containing the names of the attributes to\n\
+  be removed. If not given or set to :py:class:`None`, then\n\
+  remove all attributes at the named resource.\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to set attributes at.\n\
+  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  raised.\n\
+\n\
+");
+
+static PyObject* PyBobIoHDF5File_HasAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  
+  /* Parses input arguments in a single shot */
+  static const char* const_kwlist[] = {"name", "path", 0};
+  static char** kwlist = const_cast<char**>(const_kwlist);
+
+  const char* name = 0;
+  const char* path = ".";
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
+
+  Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(s_has_attribute_str, "has_attribute");
+PyDoc_STRVAR(s_has_attribute_doc,
+"x.has_attribute(name, [path='.']) -> bool\n\
+\n\
+Checks existence of a given attribute at the named resource.\n\
+\n\
+Parameters:\n\
+\n\
+name\n\
+  [str] The name of the attribute to check.\n\
+\n\
+\n\
+path\n\
+  [str, optional] The path leading to the resource (dataset or\n\
+  group|directory) you would like to set an attribute at.\n\
+  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  raised.\n\
+\n\
+");
+
 static PyMethodDef PyBobIoHDF5File_Methods[] = {
   {
     s_cd_str,
@@ -1634,6 +1901,48 @@ static PyMethodDef PyBobIoHDF5File_Methods[] = {
     METH_VARARGS|METH_KEYWORDS,
     s_copy_doc,
   },
+  {
+    s_get_attribute_str,
+    (PyCFunction)PyBobIoHDF5File_GetAttribute,
+    METH_VARARGS|METH_KEYWORDS,
+    s_get_attribute_doc,
+  },
+  {
+    s_get_attributes_str,
+    (PyCFunction)PyBobIoHDF5File_GetAttributes,
+    METH_VARARGS|METH_KEYWORDS,
+    s_get_attributes_doc,
+  },
+  {
+    s_set_attribute_str,
+    (PyCFunction)PyBobIoHDF5File_SetAttribute,
+    METH_VARARGS|METH_KEYWORDS,
+    s_set_attribute_doc,
+  },
+  {
+    s_set_attributes_str,
+    (PyCFunction)PyBobIoHDF5File_SetAttributes,
+    METH_VARARGS|METH_KEYWORDS,
+    s_set_attributes_doc,
+  },
+  {
+    s_del_attribute_str,
+    (PyCFunction)PyBobIoHDF5File_DelAttribute,
+    METH_VARARGS|METH_KEYWORDS,
+    s_del_attribute_doc,
+  },
+  {
+    s_del_attributes_str,
+    (PyCFunction)PyBobIoHDF5File_DelAttributes,
+    METH_VARARGS|METH_KEYWORDS,
+    s_del_attributes_doc,
+  },
+  {
+    s_has_attribute_str,
+    (PyCFunction)PyBobIoHDF5File_HasAttribute,
+    METH_VARARGS|METH_KEYWORDS,
+    s_has_attribute_doc,
+  },
   {0}  /* Sentinel */
 };
 
@@ -1656,24 +1965,6 @@ static PyGetSetDef PyBobIoHDF5File_getseters[] = {
     },
     {0}  /* Sentinel */
 };
-
-/**
-
-    .def("get_attributes", &hdf5file_get_attributes, hdf5file_get_attributes_overloads((arg("self"), arg("path")="."), "Returns a dictionary containing all attributes related to a particular (existing) path in this file. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
-
-    .def("get_attribute", &hdf5file_get_attribute, hdf5file_get_attribute_overloads((arg("self"), arg("name"), arg("path")="."), "Returns an object representing an attribute attached to a particular (existing) path in this file. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
-
-    .def("set_attributes", &hdf5file_set_attributes, hdf5file_set_attributes_overloads((arg("self"), arg("attrs"), arg("path")="."), "Sets attributes in a given (existing) path using a dictionary containing the names (keys) and values of those attributes. The path may point to a subdirectory or to a particular dataset. Only simple scalars (booleans, integers, floats and complex numbers) and arrays of those are supported at the time being. You can use :py:mod:`numpy` scalars to set values with arbitrary precision (e.g. :py:class:`numpy.uint8`). If the path does not exist, a RuntimeError is raised."))
-
-    .def("set_attribute", &hdf5file_set_attribute, hdf5file_set_attribute_overloads((arg("self"), arg("name"), arg("value"), arg("path")="."), "Sets the attribute in a given (existing) path using the value provided. The path may point to a subdirectory or to a particular dataset. Only simple scalars (booleans, integers, floats and complex numbers) and arrays of those are supported at the time being. You can use :py:mod:`numpy` scalars to set values with arbitrary precision (e.g. :py:class:`numpy.uint8`). If the path does not exist, a RuntimeError is raised."))
-
-    .def("has_attribute", &hdf5file_has_attribute, hdf5file_has_attribute_overloads((arg("self"), arg("name"), arg("path")="."), "Checks if given attribute exists in a given (existing) path. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
-
-    .def("delete_attribute", &hdf5file_del_attribute, hdf5file_del_attribute_overloads((arg("self"), arg("name"), arg("path")="."), "Deletes a given attribute associated to a (existing) path in the file. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
-
-    .def("delete_attributes", &hdf5file_del_attributes, hdf5file_del_attributes_overloads((arg("self"), arg("path")="."), "Deletes **all** attributes associated to a (existing) path in the file. The path may point to a subdirectory or to a particular dataset. If the path does not exist, a RuntimeError is raised."))
-
-**/
 
 PyTypeObject PyBobIoHDF5File_Type = {
     PyObject_HEAD_INIT(0)
