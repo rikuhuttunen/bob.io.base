@@ -40,15 +40,15 @@ implementation uses `FFmpeg <http://ffmpeg.org>`_ (or\n\
 `libav <http://libav.org>`_ if FFmpeg is not available) which is\n\
 a stable freely available video encoding and decoding library,\n\
 designed specifically for these tasks. You can read an entire\n\
-video in memory by using the 'load()' method or use iterators\n\
-to read it frame by frame and avoid overloading your machine\'s\n\
-memory. The maximum precision data `FFmpeg`_ will yield is a 24-bit\n\
-(8-bit per band) representation of each pixel (32-bit depths are\n\
-also supported by `FFmpeg`_, but not by this extension presently).\n\
-So, the output of data is done with ``uint8`` as data type.\n\
-Output will be colored using the RGB standard, with each band\n\
-varying between 0 and 255, with zero meaning pure black and 255,\n\
-pure white (color).\n\
+video in memory by using the :py:meth:`xbob.io.VideoReader.load`\n\
+method or use iterators to read it frame by frame and avoid\n\
+overloading your machine\'s memory. The maximum precision data\n\
+`FFmpeg`_ will yield is a 24-bit (8-bit per band) representation\n\
+of each pixel (32-bit depths are also supported by `FFmpeg`_, but\n\
+not by this extension presently). So, the output of data is done\n\
+with ``uint8`` as data type. Output will be colored using the RGB\n\
+standard, with each band varying between 0 and 255, with zero\n\
+meaning pure black and 255, pure white (color).\n\
 \n\
 ");
 

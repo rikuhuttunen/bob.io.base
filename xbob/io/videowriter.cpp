@@ -42,7 +42,7 @@ bitrate\n\
 \n\
 gop\n\
   [int, optional] Group-of-Pictures (emit one intra frame\n\
-  every `gop' frames at most).\n\
+  every ``gop`` frames at most).\n\
 \n\
 codec\n\
   [str, optional] If you must, specify a valid FFmpeg codec\n\
