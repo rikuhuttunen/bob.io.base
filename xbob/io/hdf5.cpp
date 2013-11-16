@@ -40,7 +40,7 @@ cross-architecture format.\n\
 \n\
 Objects of this class allows users to read and write data from\n\
 and to files in HDF5 format. For an introduction to HDF5, visit\n\
-the `HDF5 Website<http://www.hdfgroup.org/HDF5>`_.\n\
+the `HDF5 Website <http://www.hdfgroup.org/HDF5>`_.\n\
 \n\
 ");
 

@@ -41,14 +41,15 @@ implementation uses `FFmpeg <http://ffmpeg.org>`_ (or\n\
 a stable freely available video encoding and decoding library,\n\
 designed specifically for these tasks. You can read an entire\n\
 video in memory by using the 'load()' method or use iterators\n\
-to read it frame by frame and avoid overloading your machine's\n\
-memory. The maximum precision data `FFmpeg` will yield is a 24-bit\n\
+to read it frame by frame and avoid overloading your machine\'s\n\
+memory. The maximum precision data `FFmpeg`_ will yield is a 24-bit\n\
 (8-bit per band) representation of each pixel (32-bit depths are\n\
-also supported by `FFmpeg`, but not by this extension presently).\n\
+also supported by `FFmpeg`_, but not by this extension presently).\n\
 So, the output of data is done with ``uint8`` as data type.\n\
 Output will be colored using the RGB standard, with each band\n\
 varying between 0 and 255, with zero meaning pure black and 255,\n\
 pure white (color).\n\
+\n\
 ");
 
 /* How to create a new PyBobIoVideoReaderObject */

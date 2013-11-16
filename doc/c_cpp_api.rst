@@ -68,6 +68,7 @@ Generic Functions
    Returns ``0`` in case of failure, or a **new reference** to the tuple
    described above in case of success.
 
+
 Bob File Support
 ----------------
 
@@ -85,5 +86,121 @@ Bob File Support
    .. cpp:member:: boost::shared_ptr<bob::io::File> f
 
       A pointer to a file being read or written.
+
+.. cpp:type:: PyBobIoFileIteratorObject
+
+   The pythonic object representation for an iterator over a ``bob::io::File``
+   object.
+
+   .. code-block:: cpp
+
+      typedef struct {
+        PyObject_HEAD
+        PyBobIoFileObject* pyfile;
+        Py_ssize_t curpos;
+      } PyBobIoFileIteratorObject;
+
+   .. cpp:member:: PyBobIoFileObject* pyfile
+
+      A pointer to the pythonic representation of a file.
+
+   .. cpp:member:: Py_ssize_t curpos
+
+      The current position at the file being pointed to.
+
+
+Bob HDF5 Support
+----------------
+
+.. cpp:type:: PyBobIoHDF5FileObject
+
+   The pythonic object representation for a ``bob::io::HDF5File`` object.
+
+   .. code-block:: cpp
+
+      typedef struct {
+        PyObject_HEAD
+        boost::shared_ptr<bob::io::HDF5File> f;
+      } PyBobIoHDF5FileObject;
+
+   .. cpp:member:: boost::shared_ptr<bob::io::HDF5File> f
+
+      A pointer to a Bob object being used to read/write data into an HDF5
+      file.
+
+
+.. cpp:function:: int PyBobIoHDF5File_Check(PyObject* o)
+
+   Checks if the input object ``o`` is a ``PyBobIoHDF5FileObject``. Returns
+   ``1`` if it is, and ``0`` otherwise.
+
+
+.. cpp:function:: int PyBobIoHDF5File_Converter(PyObject* o, PyBobIoHDF5FileObject** a)
+
+   This function is meant to be used with :c:func:`PyArg_ParseTupleAndKeywords`
+   family of functions in the Python C-API. It checks the input object to be of
+   type ``PyBobIoHDF5FileObject`` and sets a **new reference** to it (in
+   ``*a``) if it is the case. Returns ``0`` in case of failure, ``1`` in case
+   of success.
+
+Bob VideoReader Support
+-----------------------
+
+.. note::
+
+   The video C-API (and Python) is only available if the package was compiled
+   with FFMPEG or LibAV support.
+
+.. cpp:type:: PyBobIoVideoReaderObject
+
+   The pythonic object representation for a ``bob::io::VideoReader`` object.
+
+   .. code-block:: cpp
+
+      typedef struct {
+        PyObject_HEAD
+        boost::shared_ptr<bob::io::VideoReader> v;
+      } PyBobIoVideoReaderObject;
+
+   .. cpp:member:: boost::shared_ptr<bob::io::VideoReader> v
+
+      A pointer to a Bob object being used to read the video contents
+
+.. cpp:type:: PyBobIoVideoReaderIteratorObject
+
+   The pythonic object representation for an iterator over a
+   ``bob::io::VideoReader`` object.
+
+   .. code-block:: cpp
+
+      typedef struct {
+        PyObject_HEAD
+        PyBobIoVideoReaderObject* pyreader;
+        boost::shared_ptr<bob::io::VideoReader::const_iterator> iter;
+      } PyBobIoFileIteratorObject;
+
+   .. cpp:member:: PyBobIoVideoReaderObject* pyreader
+
+      A pointer to the pythonic representation of the video reader.
+
+   .. cpp:member:: boost::shared_ptr<bob::io::VideoReader::const_iterator> iter
+
+      The current position at the file being pointed to, represented by a
+      formal iterator over the VideoReader.
+
+.. cpp:type:: PyBobIoVideoReaderObject
+
+   The pythonic object representation for a ``bob::io::VideoWriter`` object.
+
+   .. code-block:: cpp
+
+      typedef struct {
+        PyObject_HEAD
+        boost::shared_ptr<bob::io::VideoWriter> v;
+      } PyBobIoVideoWriterObject;
+
+   .. cpp:member:: boost::shared_ptr<bob::io::VideoWriter> v
+
+      A pointer to a Bob object being used to write contents to the video.
 
 .. include:: links.rst

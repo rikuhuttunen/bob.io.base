@@ -244,6 +244,7 @@ latex_logo = ''
 # Included after all input documents
 rst_epilog = """
 .. |version| replace:: %s
+.. |project| replace:: Bob
 """ % (version,)
 
 # -- Options for manual page output --------------------------------------------
