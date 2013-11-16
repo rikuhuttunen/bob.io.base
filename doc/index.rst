@@ -18,8 +18,9 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   py_api
+   guide
    video
+   py_api
    c_cpp_api
 
 Indices and tables
