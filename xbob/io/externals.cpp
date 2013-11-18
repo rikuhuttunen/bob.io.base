@@ -950,7 +950,7 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_VERSIONS_MODULE_NAME) (void) {
 
   /* register some constants */
   PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", BOOST_PP_STRINGIZE(XBOB_IO_VERSION));
+  PyModule_AddStringConstant(m, "__version__", XBOB_IO_VERSION);
   PyModule_AddObject(m, "versions", build_version_dictionary());
 
   /* imports the NumPy C-API */

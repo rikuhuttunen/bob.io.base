@@ -11,9 +11,9 @@
 #if WITH_FFMPEG
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
-#include <blitz.array/capi.h>
+#include <xbob.blitz/capi.h>
 #include <stdexcept>
-#include <bobskin.h>
+#include "bobskin.h"
 
 #define VIDEOREADER_NAME VideoReader
 PyDoc_STRVAR(s_videoreader_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOREADER_NAME));

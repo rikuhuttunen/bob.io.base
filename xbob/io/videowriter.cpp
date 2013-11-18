@@ -11,9 +11,9 @@
 #if WITH_FFMPEG
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
-#include <blitz.array/cppapi.h>
+#include <xbob.blitz/cppapi.h>
 #include <stdexcept>
-#include <bobskin.h>
+#include "bobskin.h"
 
 #define VIDEOWRITER_NAME VideoWriter
 PyDoc_STRVAR(s_videowriter_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOWRITER_NAME));

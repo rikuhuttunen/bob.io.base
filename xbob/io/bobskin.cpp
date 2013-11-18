@@ -5,8 +5,8 @@
  * @brief Implementation of our bobskin class
  */
 
-#include <bobskin.h>
 #include <stdexcept>
+#include "bobskin.h"
 
 bobskin::bobskin(PyObject* array, bob::core::array::ElementType eltype) {
 

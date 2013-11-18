@@ -11,7 +11,7 @@
 #ifdef NO_IMPORT_ARRAY
 #undef NO_IMPORT_ARRAY
 #endif
-#include <blitz.array/capi.h>
+#include <xbob.blitz/capi.h>
 
 static PyMethodDef module_methods[] = {
     {0}  /* Sentinel */
@@ -51,7 +51,7 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
 
   /* register some constants */
   PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", BOOST_PP_STRINGIZE(XBOB_IO_VERSION));
+  PyModule_AddStringConstant(m, "__version__", XBOB_IO_VERSION);
 
   /* register the types to python */
   Py_INCREF(&PyBobIoFile_Type);
@@ -125,7 +125,7 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   /* imports the NumPy C-API */
   import_array();
 
-  /* imports blitz.array C-API */
-  import_blitz_array();
+  /* imports xbob.blitz C-API */
+  import_xbob_blitz();
 
 }

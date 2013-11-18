@@ -10,7 +10,7 @@
 
 extern "C" {
 #include <Python.h>
-#include <blitz.array/capi.h>
+#include <xbob.blitz/capi.h>
 }
 
 

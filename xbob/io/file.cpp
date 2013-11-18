@@ -10,9 +10,9 @@
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>
-#include <blitz.array/capi.h>
+#include <xbob.blitz/capi.h>
 #include <stdexcept>
-#include <bobskin.h>
+#include "bobskin.h"
 
 #define FILETYPE_NAME File
 PyDoc_STRVAR(s_file_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILETYPE_NAME));
@@ -443,10 +443,10 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be written into the file. It can be a\n\
-  numpy, a blitz array or any other object which can be\n\
+  numpy, a xbob.blitz.array or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
-  :py:class:`blitz.array`.\n\
+  :py:class:`xbob.blitz.array`.\n\
 \n\
 This method writes data to the file. It acts like the\n\
 given array is the only piece of data that will ever be written\n\
@@ -496,10 +496,10 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be added into the file. It can be a\n\
-  numpy, a blitz array or any other object which can be\n\
+  numpy, a xbob.blitz.array or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
-  :py:class:`blitz.array`.\n\
+  :py:class:`xbob.blitz.array`.\n\
 \n\
 This method appends data to the file. If the file does not\n\
 exist, creates a new file, else, makes sure that the inserted\n\
