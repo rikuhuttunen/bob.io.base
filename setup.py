@@ -4,6 +4,10 @@
 # Mon 16 Apr 08:18:08 2012 CEST
 
 from setuptools import setup, find_packages, dist
+dist.Distribution(dict(setup_requires=['numpy', 'xbob.extension']))
+import numpy
+from xbob.extension import Extension
+from setuptools import setup, find_packages, dist
 from distutils.extension import Extension
 from distutils.version import LooseVersion
 
