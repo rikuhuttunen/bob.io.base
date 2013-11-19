@@ -311,7 +311,7 @@ typedef struct {
 #   endif
           BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX),
           BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME));
-      return -1
+      return -1;
     }
 
     /* Checks that the imported version matches the compiled version */
