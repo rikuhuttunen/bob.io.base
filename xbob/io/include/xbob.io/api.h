@@ -305,9 +305,9 @@ typedef struct {
     if (!XbobIo_API) {
       PyErr_Format(PyExc_ImportError,
 #   if PY_VERSION_HEX >= 0x02070000
-          "cannot find C/C++ API capsule at `%s.%s'",
+          "cannot find C/C++ API capsule at `%s.%s._C_API'",
 #   else
-          "cannot find C/C++ API cobject at `%s.%s'",
+          "cannot find C/C++ API cobject at `%s.%s._C_API'",
 #   endif
           BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX),
           BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME));
