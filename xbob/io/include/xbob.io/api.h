@@ -266,6 +266,8 @@ typedef struct {
 
 # define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
 
+# if !defined(NO_IMPORT_ARRAY)
+
   /**
    * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception
    * if there's an error.
@@ -319,6 +321,8 @@ typedef struct {
     return 0;
 
   }
+
+# endif //!defined(NO_IMPORT_ARRAY)
 
 #endif /* XBOB_IO_MODULE */
 
