@@ -15,6 +15,7 @@
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/format.hpp>
 
+#include <bob/config.h>
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/VideoUtilities.h>
 
