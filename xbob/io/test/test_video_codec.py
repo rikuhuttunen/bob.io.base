@@ -98,14 +98,16 @@ def test_format_codecs():
     distortions['mpeg2video']['color'] = 9.0
     distortions['mpeg2video']['frameskip'] = 1.4
 
-  from .._externals import supported_videowriter_formats
-  SUPPORTED = supported_videowriter_formats()
-  for format in SUPPORTED:
-    for codec in SUPPORTED[format]['supported_codecs']:
-      for method in methods:
-        check_format_codec.description = "%s.test_%s_format_%s_codec_%s" % (__name__, method, format, codec)
-        distortion = distortions.get(codec, distortions['default'])[method]
-        yield check_format_codec, methods[method], shape, framerate, format, codec, distortion
+  from .._externals import versions
+  if versions['FFmpeg']['ffmpeg'] != 'unavailable':
+    from .._externals import supported_videowriter_formats
+    SUPPORTED = supported_videowriter_formats()
+    for format in SUPPORTED:
+      for codec in SUPPORTED[format]['supported_codecs']:
+        for method in methods:
+          check_format_codec.description = "%s.test_%s_format_%s_codec_%s" % (__name__, method, format, codec)
+          distortion = distortions.get(codec, distortions['default'])[method]
+          yield check_format_codec, methods[method], shape, framerate, format, codec, distortion
 
 @testutils.ffmpeg_found()
 def check_user_video(format, codec, maxdist):
@@ -179,10 +181,12 @@ def test_user_video():
       msmpeg4v2  = 2.3,
       )
 
-  from .._externals import supported_videowriter_formats
-  SUPPORTED = supported_videowriter_formats()
-  for format in SUPPORTED:
-    for codec in SUPPORTED[format]['supported_codecs']:
-      check_user_video.description = "%s.test_user_video_format_%s_codec_%s" % (__name__, format, codec)
-      distortion = distortions.get(codec, distortions['default'])
-      yield check_user_video, format, codec, distortion
+  from .._externals import versions
+  if versions['FFmpeg']['ffmpeg'] != 'unavailable':
+    from .._externals import supported_videowriter_formats
+    SUPPORTED = supported_videowriter_formats()
+    for format in SUPPORTED:
+      for codec in SUPPORTED[format]['supported_codecs']:
+        check_user_video.description = "%s.test_user_video_format_%s_codec_%s" % (__name__, format, codec)
+        distortion = distortions.get(codec, distortions['default'])
+        yield check_user_video, format, codec, distortion

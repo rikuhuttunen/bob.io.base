@@ -71,6 +71,7 @@ def ffmpeg_version_lessthan(v):
   indicated as a string parameter.'''
 
   from .._externals import versions
+  if versions['FFmpeg']['ffmpeg'] == 'unavailable': return False
   avcodec_inst= SV(versions['FFmpeg']['avcodec'])
   avcodec_req = ffmpeg_versions[v][0]
   return avcodec_inst < avcodec_req
