@@ -290,19 +290,19 @@ typedef struct {
 
 #   if PY_VERSION_HEX >= 0x02070000
     if (PyCapsule_CheckExact(c_api_object)) {
-      PyBlitzArray_API = (void **)PyCapsule_GetPointer(c_api_object, 
+      PyXbobIo_API = (void **)PyCapsule_GetPointer(c_api_object, 
           PyCapsule_GetName(c_api_object));
     }
 #   else
     if (PyCObject_Check(c_api_object)) {
-      PyBlitzArray_API = (void **)PyCObject_AsVoidPtr(c_api_object);
+      XbobIo_API = (void **)PyCObject_AsVoidPtr(c_api_object);
     }
 #   endif
 
     Py_DECREF(c_api_object);
     Py_DECREF(module);
 
-    if (!PyBlitzArray_API) {
+    if (!XbobIo_API) {
       PyErr_Format(PyExc_ImportError,
 #   if PY_VERSION_HEX >= 0x02070000
           "cannot find C/C++ API capsule at `%s.%s'",
