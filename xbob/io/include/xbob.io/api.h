@@ -302,11 +302,23 @@ typedef struct {
     Py_DECREF(c_api_object);
     Py_DECREF(module);
 
+    if (!PyBlitzArray_API) {
+      PyErr_Format(PyExc_ImportError,
+#   if PY_VERSION_HEX >= 0x02070000
+          "cannot find C/C++ API capsule at `%s.%s'",
+#   else
+          "cannot find C/C++ API cobject at `%s.%s'",
+#   endif
+          BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX),
+          BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME));
+      return -1
+    }
+
     /* Checks that the imported version matches the compiled version */
     int imported_version = *(int*)PyXbobIo_API[PyIo_APIVersion_NUM];
 
     if (XBOB_IO_API_VERSION != imported_version) {
-      PyErr_Format(PyExc_RuntimeError, "%s.%s import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX), BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME), XBOB_IO_API_VERSION, imported_version);
+      PyErr_Format(PyExc_ImportError, "%s.%s import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX), BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME), XBOB_IO_API_VERSION, imported_version);
       return -1;
     }
 
