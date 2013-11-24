@@ -21,10 +21,7 @@ PyDoc_STRVAR(module_docstr, "bob::io classes and methods");
 
 int PyXbobIo_APIVersion = XBOB_IO_API_VERSION;
 
-#define ENTRY_FUNCTION_INNER(a) init ## a
-#define ENTRY_FUNCTION(a) ENTRY_FUNCTION_INNER(a)
-
-PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
+PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyBobIoFile_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyBobIoFile_Type) < 0) return;
@@ -46,12 +43,12 @@ PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_MODULE_NAME) (void) {
   PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return;
 
-  PyObject* m = Py_InitModule3(BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME),
+  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME,
       module_methods, module_docstr);
 
   /* register some constants */
   PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", XBOB_IO_VERSION);
+  PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION);
 
   /* register the types to python */
   Py_INCREF(&PyBobIoFile_Type);

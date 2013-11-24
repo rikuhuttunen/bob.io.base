@@ -15,8 +15,8 @@
 #include <stdexcept>
 #include "bobskin.h"
 
-#define VIDEOWRITER_NAME VideoWriter
-PyDoc_STRVAR(s_videowriter_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOWRITER_NAME));
+#define VIDEOWRITER_NAME "VideoWriter"
+PyDoc_STRVAR(s_videowriter_str, XBOB_EXT_MODULE_PREFIX "." VIDEOWRITER_NAME);
 
 PyDoc_STRVAR(s_videowriter_doc,
 "VideoWriter(filename, height, width, [framerate=25., [bitrate=1500000., [gop=12, [codec='', [format='', [check=True]) -> new bob::io::VideoWriter\n\

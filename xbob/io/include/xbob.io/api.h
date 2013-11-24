@@ -8,6 +8,11 @@
 #ifndef XBOB_IO_H
 #define XBOB_IO_H
 
+/* Define Module Name and Prefix for other Modules
+   Note: We cannot use XBOB_EXT_* macros here, unfortunately */
+#define XBOB_IO_PREFIX    "xbob.io"
+#define XBOB_IO_FULL_NAME "xbob.io._library"
+
 #include <xbob.io/config.h>
 #include <bob/config.h>
 #include <bob/io/File.h>
@@ -21,9 +26,6 @@
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/shared_ptr.hpp>
 #include <Python.h>
-
-#define XBOB_IO_MODULE_PREFIX xbob.io
-#define XBOB_IO_MODULE_NAME _library
 
 /*******************
  * C API functions *
@@ -269,15 +271,14 @@ typedef struct {
 # if !defined(NO_IMPORT_ARRAY)
 
   /**
-   * Returns -1 on error, 0 on success. PyCapsule_Import will set an exception
-   * if there's an error.
+   * Returns -1 on error, 0 on success.
    */
   static int import_xbob_io(void) {
 
     PyObject *c_api_object;
     PyObject *module;
 
-    module = PyImport_ImportModule(BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME));
+    module = PyImport_ImportModule(XBOB_IO_FULL_NAME);
 
     if (module == NULL) return -1;
 
@@ -295,30 +296,29 @@ typedef struct {
     }
 #   else
     if (PyCObject_Check(c_api_object)) {
-      XbobIo_API = (void **)PyCObject_AsVoidPtr(c_api_object);
+      PyXbobIo_API = (void **)PyCObject_AsVoidPtr(c_api_object);
     }
 #   endif
 
     Py_DECREF(c_api_object);
     Py_DECREF(module);
 
-    if (!XbobIo_API) {
-      PyErr_Format(PyExc_ImportError,
+    if (!PyXbobIo_API) {
+      PyErr_SetString(PyExc_ImportError, "cannot find C/C++ API "
 #   if PY_VERSION_HEX >= 0x02070000
-          "cannot find C/C++ API capsule at `%s.%s._C_API'",
+          "capsule"
 #   else
-          "cannot find C/C++ API cobject at `%s.%s._C_API'",
+          "cobject"
 #   endif
-          BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX),
-          BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME));
+          " at `" XBOB_IO_FULL_NAME "._C_API'");
       return -1;
     }
 
     /* Checks that the imported version matches the compiled version */
-    int imported_version = *(int*)PyXbobIo_API[PyIo_APIVersion_NUM];
+    int imported_version = *(int*)PyXbobIo_API[PyXbobIo_APIVersion_NUM];
 
     if (XBOB_IO_API_VERSION != imported_version) {
-      PyErr_Format(PyExc_ImportError, "%s.%s import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX), BOOST_PP_STRINGIZE(XBOB_IO_MODULE_NAME), XBOB_IO_API_VERSION, imported_version);
+      PyErr_Format(PyExc_ImportError, XBOB_IO_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_API_VERSION, imported_version);
       return -1;
     }
 

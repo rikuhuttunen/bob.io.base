@@ -14,8 +14,8 @@
 #include <stdexcept>
 #include "bobskin.h"
 
-#define HDF5FILE_NAME HDF5File
-PyDoc_STRVAR(s_hdf5file_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(HDF5FILE_NAME));
+#define HDF5FILE_NAME "HDF5File"
+PyDoc_STRVAR(s_hdf5file_str, XBOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
 
 PyDoc_STRVAR(s_hdf5file_doc,
 "HDF5File(filename, [mode='r']) -> new bob::io::HDF5File\n\

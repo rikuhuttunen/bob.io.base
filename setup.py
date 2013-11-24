@@ -14,7 +14,6 @@ include_dirs = [package_dir]
 
 packages = ['bob-io >= 1.3']
 version = '2.0.0a0'
-define_macros = [("XBOB_IO_VERSION", '"%s"' % version)]
 
 setup(
 
@@ -46,8 +45,8 @@ setup(
           "xbob/io/externals.cpp",
           ],
         packages = packages,
-        define_macros = define_macros,
         include_dirs = include_dirs,
+        version = version,
         ),
       Extension("xbob.io._library",
         [
@@ -59,8 +58,8 @@ setup(
           "xbob/io/main.cpp",
           ],
         packages = packages,
-        define_macros = define_macros,
         include_dirs = include_dirs,
+        version = version,
         ),
       ],
 

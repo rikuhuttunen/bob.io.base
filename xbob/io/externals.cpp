@@ -942,16 +942,13 @@ PyDoc_STRVAR(module_docstr,
 
 int PyXbobCoreRandom_APIVersion = XBOB_IO_API_VERSION;
 
-#define ENTRY_FUNCTION_INNER(a) init ## a
-#define ENTRY_FUNCTION(a) ENTRY_FUNCTION_INNER(a)
+PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
-PyMODINIT_FUNC ENTRY_FUNCTION(XBOB_IO_VERSIONS_MODULE_NAME) (void) {
-
-  PyObject* m = Py_InitModule3(BOOST_PP_STRINGIZE(XBOB_IO_VERSIONS_MODULE_NAME), module_methods, module_docstr);
+  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, module_methods, module_docstr);
 
   /* register some constants */
   PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", XBOB_IO_VERSION);
+  PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION);
   PyModule_AddObject(m, "versions", build_version_dictionary());
 
   /* imports the NumPy C-API */

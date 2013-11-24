@@ -15,8 +15,8 @@
 #include <stdexcept>
 #include "bobskin.h"
 
-#define VIDEOREADER_NAME VideoReader
-PyDoc_STRVAR(s_videoreader_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOREADER_NAME));
+#define VIDEOREADER_NAME "VideoReader"
+PyDoc_STRVAR(s_videoreader_str, XBOB_EXT_MODULE_PREFIX "." VIDEOREADER_NAME);
 
 PyDoc_STRVAR(s_videoreader_doc,
 "VideoReader(filename, [check=True]) -> new bob::io::VideoReader\n\
@@ -544,8 +544,8 @@ static PyMappingMethods PyBobIoVideoReader_Mapping = {
  * Definition of Iterator to VideoReader *
  *****************************************/
 
-#define VIDEOITERTYPE_NAME VideoReader.iter
-PyDoc_STRVAR(s_videoreaderiterator_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(VIDEOITERTYPE_NAME));
+#define VIDEOITERTYPE_NAME "VideoReader.iter"
+PyDoc_STRVAR(s_videoreaderiterator_str, XBOB_EXT_MODULE_PREFIX "." VIDEOITERTYPE_NAME);
 
 static PyObject* PyBobIoVideoReaderIterator_New(PyTypeObject* type, PyObject*, PyObject*) {
 

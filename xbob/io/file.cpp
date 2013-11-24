@@ -14,8 +14,8 @@
 #include <stdexcept>
 #include "bobskin.h"
 
-#define FILETYPE_NAME File
-PyDoc_STRVAR(s_file_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILETYPE_NAME));
+#define FILETYPE_NAME "File"
+PyDoc_STRVAR(s_file_str, XBOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
 
 PyDoc_STRVAR(s_file_doc,
 "File(filename, [mode='r', [pretend_extension='']]) -> new bob::io::File\n\
@@ -595,8 +595,8 @@ static PyMethodDef PyBobIoFile_Methods[] = {
  * Definition of Iterator to File *
  **********************************/
 
-#define FILEITERTYPE_NAME File.iter
-PyDoc_STRVAR(s_fileiterator_str, BOOST_PP_STRINGIZE(XBOB_IO_MODULE_PREFIX) "." BOOST_PP_STRINGIZE(FILEITERTYPE_NAME));
+#define FILEITERTYPE_NAME "File.iter"
+PyDoc_STRVAR(s_fileiterator_str, XBOB_EXT_MODULE_PREFIX "." FILEITERTYPE_NAME);
 
 /* How to create a new PyBobIoFileIteratorObject */
 static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject*) {
