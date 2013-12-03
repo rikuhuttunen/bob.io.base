@@ -23,7 +23,6 @@
 #include <bob/io/VideoWriter.h>
 #endif /* WITH_FFMPEG */
 
-#include <boost/preprocessor/stringize.hpp>
 #include <boost/shared_ptr.hpp>
 #include <Python.h>
 
