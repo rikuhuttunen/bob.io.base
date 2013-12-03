@@ -119,6 +119,21 @@ PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyXbobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
 
+#if PY_VERSION_HEX >= 0x02070000
+
+  /* defines the PyCapsule */
+
+  PyObject* c_api_object = PyCapsule_New((void *)PyXbobIo_API,
+      XBOB_EXT_MODULE_PREFIX "." XBOB_EXT_MODULE_NAME "._C_API", 0);
+
+#else
+
+  PyObject* c_api_object = PyCObject_FromVoidPtr((void *)PyXbobIo_API, 0);
+
+#endif
+
+  if (c_api_object) PyModule_AddObject(m, "_C_API", c_api_object);
+
   /* imports the NumPy C-API */
   import_array();
 
