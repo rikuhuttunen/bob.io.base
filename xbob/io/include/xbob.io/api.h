@@ -198,7 +198,7 @@ typedef struct {
 
 #else
 
-  /* This section is used in modules that use `blitz.array's' C-API */
+  /* This section is used in modules that use `xbob.io's' C-API */
 
 /************************************************************************
  * Macros to avoid symbol collision and allow for separate compilation. *
