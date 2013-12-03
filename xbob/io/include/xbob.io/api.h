@@ -151,7 +151,7 @@ typedef struct {
 
 #ifdef XBOB_IO_MODULE
 
-  /* This section is used when compiling `xbob.core.random' itself */
+  /* This section is used when compiling `xbob.io' itself */
 
   /**************
    * Versioning *
