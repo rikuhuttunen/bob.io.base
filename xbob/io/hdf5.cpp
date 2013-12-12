@@ -75,7 +75,7 @@ static void PyBobIoHDF5File_Delete (PyBobIoHDF5FileObject* o) {
 }
 
 /* The __init__(self) method */
-static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self, 
+static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     PyObject *args, PyObject* kwds) {
 
   /* Parses input arguments in a single shot */
@@ -118,7 +118,7 @@ static PyObject* PyBobIoHDF5File_Repr(PyBobIoHDF5FileObject* self) {
 }
 
 static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -166,7 +166,7 @@ defined by the ``cwd`` property of this object.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_HasGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -207,7 +207,7 @@ to the current working directory.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_CreateGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -248,7 +248,7 @@ directory. If the directory already exists (check it with\n\
 ");
 
 static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -383,7 +383,7 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::HDF5Type& t) {
   }
 
   PyObject* shape = PyTuple_GET_ITEM(retval, 1);
-  for (Py_ssize_t i=0; i<ndim; ++i) {
+  for (Py_ssize_t i=0; i<(Py_ssize_t)ndim; ++i) {
     PyTuple_SET_ITEM(shape, i, Py_BuildValue("n", shptr[i]));
   }
 
@@ -404,7 +404,7 @@ static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::HDF5Descriptor& d
 }
 
 static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -456,7 +456,7 @@ formats.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_Unlink(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -498,7 +498,7 @@ object using copy(), for example.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_Rename(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"from", "to", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -539,7 +539,7 @@ to\n\
 ");
 
 static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"relative", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -593,7 +593,7 @@ otherwise they are absolute.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"relative", "recursive", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -649,7 +649,7 @@ recursive\n\
 \n\
 ");
 
-static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self, 
+static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     const char* p, int descriptor, int pos) {
 
   const std::vector<bob::io::HDF5Descriptor>* D = 0;
@@ -724,7 +724,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
   npy_intp pyshape[NPY_MAXDIMS];
-  for (int k=0; k<shape.n(); ++k) pyshape[k] = shape.get()[k];
+  for (size_t k=0; k<shape.n(); ++k) pyshape[k] = shape.get()[k];
 
   PyObject* retval = PyArray_SimpleNew(shape.n(), pyshape, type_num);
   if (!retval) return 0;
@@ -747,7 +747,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
 }
 
 static PyObject* PyBobIoHDF5File_Read(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"key", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -775,7 +775,7 @@ key\n\
 ");
 
 static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"key", "pos", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -930,55 +930,55 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
     else if (PyLong_Check(o))
       return PyBobIoHDF5File_SetType<int64_t>(t);
 
-    else if (PyFloat_Check(o)) 
+    else if (PyFloat_Check(o))
       return PyBobIoHDF5File_SetType<double>(t);
 
-    else if (PyComplex_Check(o)) 
+    else if (PyComplex_Check(o))
       return PyBobIoHDF5File_SetType<std::complex<double> >(t);
 
-    else if (PyArray_IsScalar(o, Bool)) 
+    else if (PyArray_IsScalar(o, Bool))
       return PyBobIoHDF5File_SetType<bool>(t);
 
-    else if (PyArray_IsScalar(o, Int8)) 
+    else if (PyArray_IsScalar(o, Int8))
       return PyBobIoHDF5File_SetType<int8_t>(t);
 
-    else if (PyArray_IsScalar(o, UInt8)) 
+    else if (PyArray_IsScalar(o, UInt8))
       return PyBobIoHDF5File_SetType<uint8_t>(t);
 
-    else if (PyArray_IsScalar(o, Int16)) 
+    else if (PyArray_IsScalar(o, Int16))
       return PyBobIoHDF5File_SetType<int16_t>(t);
 
-    else if (PyArray_IsScalar(o, UInt16)) 
+    else if (PyArray_IsScalar(o, UInt16))
       return PyBobIoHDF5File_SetType<uint16_t>(t);
 
-    else if (PyArray_IsScalar(o, Int32)) 
+    else if (PyArray_IsScalar(o, Int32))
       return PyBobIoHDF5File_SetType<int32_t>(t);
 
     else if (PyArray_IsScalar(o, UInt32))
       return PyBobIoHDF5File_SetType<uint32_t>(t);
 
-    else if (PyArray_IsScalar(o, Int64)) 
+    else if (PyArray_IsScalar(o, Int64))
       return PyBobIoHDF5File_SetType<int64_t>(t);
 
-    else if (PyArray_IsScalar(o, UInt64)) 
+    else if (PyArray_IsScalar(o, UInt64))
       return PyBobIoHDF5File_SetType<uint64_t>(t);
 
     else if (PyArray_IsScalar(o, Float))
       return PyBobIoHDF5File_SetType<float>(t);
 
-    else if (PyArray_IsScalar(o, Double)) 
+    else if (PyArray_IsScalar(o, Double))
       return PyBobIoHDF5File_SetType<double>(t);
 
-    else if (PyArray_IsScalar(o, LongDouble)) 
+    else if (PyArray_IsScalar(o, LongDouble))
       return PyBobIoHDF5File_SetType<long double>(t);
 
-    else if (PyArray_IsScalar(o, CFloat)) 
+    else if (PyArray_IsScalar(o, CFloat))
       return PyBobIoHDF5File_SetType<std::complex<float> >(t);
 
-    else if (PyArray_IsScalar(o, CDouble)) 
+    else if (PyArray_IsScalar(o, CDouble))
       return PyBobIoHDF5File_SetType<std::complex<double> >(t);
 
-    else if (PyArray_IsScalar(o, CLongDouble)) 
+    else if (PyArray_IsScalar(o, CLongDouble))
       return PyBobIoHDF5File_SetType<std::complex<long double> >(t);
 
     //if you get to this, point, it is an unsupported scalar
@@ -1010,11 +1010,11 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
 
   else if (converted) {
 
-    *converted = PyArray_FromAny(o, 0, 1, 0, 
+    *converted = PyArray_FromAny(o, 0, 1, 0,
 #if     NPY_FEATURE_VERSION >= NUMPY17_API /* NumPy C-API version >= 1.7 */
-        NPY_ARRAY_CARRAY_RO, 
+        NPY_ARRAY_CARRAY_RO,
 #       else
-        NPY_CARRAY_RO, 
+        NPY_CARRAY_RO,
 #       endif
         0);
     if (!*converted) return -1; ///< error condition
@@ -1049,7 +1049,7 @@ static PyObject* PyBobIoHDF5File_ReplaceScalar(PyBobIoHDF5FileObject* self,
 }
 
 static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", "pos", "data", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1066,7 +1066,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
     PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, self->f->filename().c_str(), data->ob_type->tp_name);
     return 0;
   }
-  
+
   try {
 
     if (!is_array) { //write as a scalar
@@ -1200,7 +1200,7 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
     PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), data->ob_type->tp_name);
     return 0;
   }
-  
+
   try {
 
     if (!is_array) { //write as a scalar
@@ -1290,7 +1290,7 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
 }
 
 static PyObject* PyBobIoHDF5File_Append(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
- 
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", "data", "compression", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1370,7 +1370,7 @@ static PyObject* PyBobIoHDF5File_SetScalar(PyBobIoHDF5FileObject* self,
 }
 
 static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", "data", "compression", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1392,7 +1392,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), data->ob_type->tp_name);
     return 0;
   }
-  
+
   try {
 
     if (!is_array) { //write as a scalar
@@ -1516,7 +1516,7 @@ exist, we append the new scalar or array.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_Copy(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"file", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1642,7 +1642,7 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
   if (type_num == NPY_NOTYPE) return 0; ///< failure
 
   npy_intp pyshape[NPY_MAXDIMS];
-  for (int k=0; k<shape.n(); ++k) pyshape[k] = shape.get()[k];
+  for (size_t k=0; k<shape.n(); ++k) pyshape[k] = shape.get()[k];
 
   PyObject* retval = PyArray_SimpleNew(shape.n(), pyshape, type_num);
   if (!retval) return 0;
@@ -1665,7 +1665,7 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
 }
 
 static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"name", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1723,7 +1723,7 @@ If you would like to retrieve all attributes at once, use\n\
 ");
 
 static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1869,7 +1869,7 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
   }
 
   else { //write as an numpy array
-     
+
     try {
       switch (is_array) {
 
@@ -1909,7 +1909,7 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
 }
 
 static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"name", "value", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1968,7 +1968,7 @@ path\n\
 ");
 
 static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"attrs", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -2041,7 +2041,7 @@ path\n\
 ");
 
 static PyObject* PyBobIoHDF5File_DelAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"name", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -2088,7 +2088,7 @@ path\n\
 ");
 
 static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"attrs", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -2182,7 +2182,7 @@ path\n\
 ");
 
 static PyObject* PyBobIoHDF5File_HasAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"name", "path", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -2384,7 +2384,7 @@ PyDoc_STRVAR(s_cwd_doc,
 
 static PyGetSetDef PyBobIoHDF5File_getseters[] = {
     {
-      s_cwd_str, 
+      s_cwd_str,
       (getter)PyBobIoHDF5File_Cwd,
       0,
       s_cwd_doc,

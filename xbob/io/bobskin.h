@@ -1,15 +1,16 @@
 /**
  * @author Andre Anjos <andre.anjos@idiap.ch>
- * @date Tue  5 Nov 22:09:07 2013 
+ * @date Tue  5 Nov 22:09:07 2013
  *
  * @brief A pythonic version of bob::core::array::interface, with minimal
  * functionality.
  */
 
+#include <Python.h>
+
 #include <bob/core/array.h>
 
 extern "C" {
-#include <Python.h>
 #include <xbob.blitz/capi.h>
 }
 
@@ -37,7 +38,7 @@ class bobskin: public bob::core::array::interface {
     bobskin(PyBlitzArrayObject* array);
 
     /**
-     * @brief By default, the interface is never freed. You must override 
+     * @brief By default, the interface is never freed. You must override
      * this method to do something special for your class type.
      */
     virtual ~bobskin();
@@ -64,9 +65,9 @@ class bobskin: public bob::core::array::interface {
     virtual const bob::core::array::typeinfo& type() const { return m_type; }
 
     /**
-     * @brief Borrows a reference from the underlying memory. This means 
-     * this object continues to be responsible for deleting the memory and 
-     * you should make sure that it outlives the usage of the returned 
+     * @brief Borrows a reference from the underlying memory. This means
+     * this object continues to be responsible for deleting the memory and
+     * you should make sure that it outlives the usage of the returned
      * pointer.
      */
     virtual void* ptr() { return m_ptr; }

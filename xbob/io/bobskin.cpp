@@ -5,8 +5,8 @@
  * @brief Implementation of our bobskin class
  */
 
-#include <stdexcept>
 #include "bobskin.h"
+#include <stdexcept>
 
 bobskin::bobskin(PyObject* array, bob::core::array::ElementType eltype) {
 
@@ -15,7 +15,7 @@ bobskin::bobskin(PyObject* array, bob::core::array::ElementType eltype) {
     throw std::runtime_error("error is already set");
   }
 
-  m_type.set<npy_intp>(eltype, PyArray_NDIM((PyArrayObject*)array), 
+  m_type.set<npy_intp>(eltype, PyArray_NDIM((PyArrayObject*)array),
       PyArray_DIMS((PyArrayObject*)array),
       PyArray_STRIDES((PyArrayObject*)array));
 
@@ -25,7 +25,7 @@ bobskin::bobskin(PyObject* array, bob::core::array::ElementType eltype) {
 
 bobskin::bobskin(PyArrayObject* array, bob::core::array::ElementType eltype) {
 
-  m_type.set<npy_intp>(eltype, PyArray_NDIM((PyArrayObject*)array), 
+  m_type.set<npy_intp>(eltype, PyArray_NDIM((PyArrayObject*)array),
       PyArray_DIMS((PyArrayObject*)array),
       PyArray_STRIDES((PyArrayObject*)array));
 

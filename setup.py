@@ -47,6 +47,7 @@ setup(
         packages = packages,
         include_dirs = include_dirs,
         version = version,
+        define_macros = [('__STDC_CONSTANT_MACROS', None)],
         ),
       Extension("xbob.io._library",
         [
@@ -60,6 +61,7 @@ setup(
         packages = packages,
         include_dirs = include_dirs,
         version = version,
+        define_macros = [('__STDC_CONSTANT_MACROS', None)],
         ),
       ],
 

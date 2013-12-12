@@ -1,6 +1,6 @@
 /**
  * @author Andre Anjos <andre.anjos@idiap.ch>
- * @date Tue  5 Nov 12:22:48 2013 
+ * @date Tue  5 Nov 12:22:48 2013
  *
  * @brief C/C++ API for bob::io
  */
@@ -13,6 +13,8 @@
 #define XBOB_IO_PREFIX    "xbob.io"
 #define XBOB_IO_FULL_NAME "xbob.io._library"
 
+#include <Python.h>
+
 #include <xbob.io/config.h>
 #include <bob/config.h>
 #include <bob/io/File.h>
@@ -24,7 +26,6 @@
 #endif /* WITH_FFMPEG */
 
 #include <boost/shared_ptr.hpp>
-#include <Python.h>
 
 /*******************
  * C API functions *
@@ -55,7 +56,7 @@ typedef struct {
 
 typedef struct {
   PyObject_HEAD
-  
+
   /* Type-specific fields go here. */
   PyBobIoFileObject* pyfile;
   Py_ssize_t curpos;
@@ -171,7 +172,7 @@ typedef struct {
    ************************/
 
   PyBobIo_AsTypenum_RET PyBobIo_AsTypenum PyBobIo_AsTypenum_PROTO;
-  
+
   PyBobIo_TypeInfoAsTuple_RET PyBobIo_TypeInfoAsTuple PyBobIo_TypeInfoAsTuple_PROTO;
 
 #if WITH_FFMPEG
@@ -290,7 +291,7 @@ typedef struct {
 
 #   if PY_VERSION_HEX >= 0x02070000
     if (PyCapsule_CheckExact(c_api_object)) {
-      PyXbobIo_API = (void **)PyCapsule_GetPointer(c_api_object, 
+      PyXbobIo_API = (void **)PyCapsule_GetPointer(c_api_object,
           PyCapsule_GetName(c_api_object));
     }
 #   else

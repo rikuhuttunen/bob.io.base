@@ -6,13 +6,13 @@
  */
 
 #define XBOB_IO_MODULE
+#include "bobskin.h"
 #include <xbob.io/api.h>
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/capi.h>
 #include <stdexcept>
-#include "bobskin.h"
 
 #define FILETYPE_NAME "File"
 PyDoc_STRVAR(s_file_str, XBOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
@@ -133,14 +133,14 @@ library."
 
 static PyGetSetDef PyBobIoFile_getseters[] = {
     {
-      s_filename_str, 
+      s_filename_str,
       (getter)PyBobIoFile_Filename,
       0,
       s_filename_doc,
       0,
     },
     {
-      s_codec_name_str, 
+      s_codec_name_str,
       (getter)PyBobIoFile_CodecName,
       0,
       s_codec_name_doc,
@@ -203,7 +203,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
   if (i < 0) i += self->f->size(); ///< adjust for negative indexing
 
-  if (i < 0 || i >= self->f->size()) {
+  if (i < 0 || (size_t)i >= self->f->size()) {
     PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
     return 0;
   }
@@ -211,7 +211,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
   const bob::core::array::typeinfo& info = self->f->type();
 
   npy_intp shape[NPY_MAXDIMS];
-  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
+  for (size_t k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
@@ -254,7 +254,7 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
 
   npy_intp shape[NPY_MAXDIMS];
   shape[0] = slicelength;
-  for (int k=0; k<info.nd; ++k) shape[k+1] = info.shape[k];
+  for (size_t k=0; k<info.nd; ++k) shape[k+1] = info.shape[k];
 
   PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
   if (!retval) return 0;
@@ -336,7 +336,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
 
     if (i < 0) i += self->f->size();
 
-    if (i < 0 || i >= self->f->size()) {
+    if (i < 0 || (size_t)i >= self->f->size()) {
       PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
       return 0;
     }
@@ -350,7 +350,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
   const bob::core::array::typeinfo& info = self->f->type_all();
 
   npy_intp shape[NPY_MAXDIMS];
-  for (int k=0; k<info.nd; ++k) shape[k] = info.shape[k];
+  for (size_t k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
   int type_num = PyBobIo_AsTypenum(info.dtype);
   if (type_num == NPY_NOTYPE) return 0; ///< failure
@@ -404,7 +404,7 @@ not specified, reads the whole contents of the file into a\n\
 );
 
 static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"array", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -456,7 +456,7 @@ this method.\n\
 );
 
 static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"array", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -514,7 +514,7 @@ PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti) {
   int type_num = PyBobIo_AsTypenum(ti.dtype);
   if (type_num == NPY_NOTYPE) return 0;
 
-  PyObject* retval = Py_BuildValue("NNN", 
+  PyObject* retval = Py_BuildValue("NNN",
       reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num)),
       PyTuple_New(ti.nd), //shape
       PyTuple_New(ti.nd)  //strides
@@ -523,7 +523,7 @@ PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti) {
 
   PyObject* shape = PyTuple_GET_ITEM(retval, 1);
   PyObject* stride = PyTuple_GET_ITEM(retval, 2);
-  for (Py_ssize_t i=0; i<ti.nd; ++i) {
+  for (Py_ssize_t i=0; (size_t)i<ti.nd; ++i) {
     PyTuple_SET_ITEM(shape, i, Py_BuildValue("n", ti.shape[i]));
     PyTuple_SET_ITEM(stride, i, Py_BuildValue("n", ti.stride[i]));
   }
@@ -533,7 +533,7 @@ PyObject* PyBobIo_TypeInfoAsTuple (const bob::core::array::typeinfo& ti) {
 }
 
 static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-  
+
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"all", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -613,7 +613,7 @@ static PyObject* PyBobIoFileIterator_Iter (PyBobIoFileIteratorObject* self) {
 }
 
 static PyObject* PyBobIoFileIterator_Next (PyBobIoFileIteratorObject* self) {
-  if (self->curpos >= self->pyfile->f->size()) {
+  if ((size_t)self->curpos >= self->pyfile->f->size()) {
     Py_XDECREF((PyObject*)self->pyfile);
     self->pyfile = 0;
     return 0;

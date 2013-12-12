@@ -6,6 +6,7 @@
  */
 
 #define XBOB_IO_MODULE
+#include "bobskin.h"
 #include <xbob.io/api.h>
 
 #if WITH_FFMPEG
@@ -13,7 +14,6 @@
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/cppapi.h>
 #include <stdexcept>
-#include "bobskin.h"
 
 #define VIDEOWRITER_NAME "VideoWriter"
 PyDoc_STRVAR(s_videowriter_str, XBOB_EXT_MODULE_PREFIX "." VIDEOWRITER_NAME);
@@ -90,7 +90,7 @@ static void PyBobIoVideoWriter_Delete (PyBobIoVideoWriterObject* o) {
 }
 
 /* The __init__(self) method */
-static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self, 
+static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
     PyObject *args, PyObject* kwds) {
 
   /* Parses input arguments in a single shot */
@@ -112,7 +112,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
   PyObject* pycheck = 0;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "snn|ddnssO", kwlist,
-        &filename, &height, &width, &framerate, &bitrate, &gop, &codec, 
+        &filename, &height, &width, &framerate, &bitrate, &gop, &codec,
         &format, &pycheck)) return -1;
 
   if (pycheck && PyObject_IsTrue(pycheck)) {
@@ -414,7 +414,7 @@ static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObj
     Py_DECREF(frame);
     return 0;
   }
-  
+
   if (frame->type_num != NPY_UINT8) {
     PyErr_Format(PyExc_TypeError, "input array should have dtype `uint8', but you passed an array with dtype == `%s'", PyBlitzArray_TypenumAsString(frame->type_num));
     Py_DECREF(frame);
@@ -470,7 +470,7 @@ static PyObject* PyBobIoVideoWriter_Close(PyBobIoVideoWriterObject* self) {
 }
 
 PyDoc_STRVAR(s_close_str, "close");
-PyDoc_STRVAR(s_close_doc, 
+PyDoc_STRVAR(s_close_doc,
 "x.close() -> None\n\
 \n\
 Closes the current video stream and forces writing the trailer.\n\

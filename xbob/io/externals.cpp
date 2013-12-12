@@ -5,6 +5,8 @@
  * @brief Binds configuration information available from bob
  */
 
+#include <Python.h>
+
 #define XBOB_IO_MODULE
 #include <xbob.io/config.h>
 
@@ -21,8 +23,6 @@
 
 extern "C" {
 
-#include <Python.h>
-
 #ifdef NO_IMPORT_ARRAY
 #undef NO_IMPORT_ARRAY
 #endif
@@ -34,7 +34,7 @@ extern "C" {
 
 #define PNG_SKIP_SETJMP_CHECK
 // #define requires because of the problematic pngconf.h.
-// Look at the thread here: 
+// Look at the thread here:
 // https://bugs.launchpad.net/ubuntu/+source/libpng/+bug/218409
 #include <png.h>
 
@@ -45,7 +45,10 @@ extern "C" {
 #  include <libswscale/swscale.h>
 #  include <libavutil/opt.h>
 #  include <libavutil/pixdesc.h>
-#endif 
+#  if !HAVE_FFMPEG_AVCODEC_AVCODECID
+#    define AVCodecID CodecID
+#  endif
+#endif
 
 #include <gif_lib.h>
 
@@ -231,12 +234,12 @@ static PyObject* libtiff_version() {
 
   // Remove first part if it starts with "LIBTIFF, Version "
   if(vtiff.compare(0, beg_len, beg_str) == 0)
-    vtiff = vtiff.substr(beg_len); 
+    vtiff = vtiff.substr(beg_len);
 
   // Remove multiple (copyright) lines if any
   size_t end_line = vtiff.find("\n");
   if(end_line != std::string::npos)
-    vtiff = vtiff.substr(0,end_line); 
+    vtiff = vtiff.substr(0,end_line);
 
   return Py_BuildValue("s", vtiff.c_str());
 
@@ -358,7 +361,7 @@ static PyObject* describe_codec(const AVCodec* codec) {
 
     unsigned int i=0;
     while(codec->pix_fmts[i] != -1) {
-      if (!list_append(pixfmt.get(), 
+      if (!list_append(pixfmt.get(),
 #if LIBAVUTIL_VERSION_INT >= 0x320f01 //50.15.1 @ ffmpeg-0.6
             av_get_pix_fmt_name
 #else
@@ -386,7 +389,7 @@ static PyObject* describe_codec(const AVCodec* codec) {
   }
   rates.reset(PySequence_Tuple(rates.get()), &pyobject_deleter);
   if (!rates) return 0;
-    
+
   if (!dict_set_string(retval, "specific_framerates_hz", rates.get())) return 0;
 
   /* Other codec capabilities */
@@ -429,7 +432,7 @@ static PyObject* PyBobIo_DescribeEncoder(PyObject*, PyObject *args, PyObject* kw
   }
 
   if (PyNumber_Check(key)) {
-    
+
     /* If you get to this point, the user passed a number - re-parse */
     int id = 0;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &id)) return 0;
@@ -488,7 +491,7 @@ static PyObject* PyBobIo_DescribeDecoder(PyObject*, PyObject *args, PyObject* kw
   }
 
   if (PyNumber_Check(key)) {
-    
+
     /* If you get to this point, the user passed a number - re-parse */
     int id = 0;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &id)) return 0;
@@ -530,10 +533,10 @@ the given decoder.\n\
 ");
 
 static PyObject* get_video_codecs(void (*f)(std::map<std::string, const AVCodec*>&)) {
-  
+
   std::map<std::string, const AVCodec*> m;
   f(m);
-  
+
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
 
@@ -588,7 +591,7 @@ static PyObject* get_video_iformats(void (*f)(std::map<std::string, AVInputForma
 
   std::map<std::string, AVInputFormat*> m;
   f(m);
-  
+
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
 
@@ -605,7 +608,7 @@ static PyObject* get_video_iformats(void (*f)(std::map<std::string, AVInputForma
       Py_DECREF(retval);
       return 0;
     }
-    
+
     if (!dict_set(property, "long_name", k->second->long_name)) {
       Py_DECREF(property);
       Py_DECREF(retval);
@@ -615,7 +618,7 @@ static PyObject* get_video_iformats(void (*f)(std::map<std::string, AVInputForma
     // get extensions
     std::vector<std::string> exts;
     bob::io::detail::ffmpeg::tokenize_csv(k->second->extensions, exts);
-    
+
     PyObject* ext_list = PyList_New(0);
     if (!ext_list) {
       Py_DECREF(property);
@@ -650,11 +653,11 @@ static PyObject* get_video_iformats(void (*f)(std::map<std::string, AVInputForma
 }
 
 static PyObject* PyBobIo_SupportedInputFormats(PyObject*) {
-  return get_video_iformats(&bob::io::detail::ffmpeg::iformats_supported); 
+  return get_video_iformats(&bob::io::detail::ffmpeg::iformats_supported);
 }
 
 static PyObject* PyBobIo_AvailableInputFormats(PyObject*) {
-  return get_video_iformats(&bob::io::detail::ffmpeg::iformats_installed); 
+  return get_video_iformats(&bob::io::detail::ffmpeg::iformats_installed);
 }
 
 PyDoc_STRVAR(s_supported_iformats_str, "supported_videoreader_formats");
@@ -683,7 +686,7 @@ static PyObject* get_video_oformats(bool supported) {
   std::map<std::string, AVOutputFormat*> m;
   if (supported) bob::io::detail::ffmpeg::oformats_supported(m);
   else bob::io::detail::ffmpeg::oformats_installed(m);
-  
+
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
 
@@ -700,7 +703,7 @@ static PyObject* get_video_oformats(bool supported) {
       Py_DECREF(retval);
       return 0;
     }
-    
+
     if (!dict_set(property, "long_name", k->second->long_name)) {
       Py_DECREF(property);
       Py_DECREF(retval);
@@ -716,7 +719,7 @@ static PyObject* get_video_oformats(bool supported) {
     // get extensions
     std::vector<std::string> exts;
     bob::io::detail::ffmpeg::tokenize_csv(k->second->extensions, exts);
-    
+
     PyObject* ext_list = PyList_New(0);
     if (!ext_list) {
       Py_DECREF(property);
@@ -809,7 +812,7 @@ static PyObject* get_video_oformats(bool supported) {
   return retval;
 
 }
-  
+
 static PyObject* PyBobIo_SupportedOutputFormats(PyObject*) {
   return get_video_oformats(true);
 }
