@@ -26,13 +26,13 @@ the import function:
 
      if (!m) return;
 
-     // imports the NumPy C-API 
+     // imports the NumPy C-API
      import_array();
 
      // imports blitz.array C-API
-     import_blitz_array();
+     import_xbob_blitz();
 
-     // imports xbob.core.random C-API
+     // imports xbob.io C-API
      import_xbob_io();
 
    }
