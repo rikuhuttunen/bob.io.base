@@ -941,8 +941,6 @@ PyDoc_STRVAR(module_docstr,
 "Information about software used to compile the C++ Bob API"
 );
 
-int PyXbobCoreRandom_APIVersion = XBOB_IO_API_VERSION;
-
 PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, module_methods, module_docstr);
