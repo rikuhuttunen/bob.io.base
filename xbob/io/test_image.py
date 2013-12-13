@@ -20,15 +20,14 @@
 """Runs some image tests
 """
 
-from . import utils as testutils
+from . import load, test_utils
 
 # These are some global parameters for the test.
-PNG_INDEXED_COLOR = testutils.datafile('img_indexed_color.png', __name__)
+PNG_INDEXED_COLOR = test_utils.datafile('img_indexed_color.png', __name__)
 
 def test_png_indexed_color():
 
   # Read an indexed color PNG image, and compared with hardcoded values
-  from .. import load
   img = load(PNG_INDEXED_COLOR)
   assert img.shape == (3,22,32)
   assert img[0,0,0] == 255

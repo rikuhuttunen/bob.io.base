@@ -70,7 +70,7 @@ def ffmpeg_version_lessthan(v):
   '''Returns true if the version of ffmpeg compiled-in is at least the version
   indicated as a string parameter.'''
 
-  from .._externals import versions
+  from ._externals import versions
   if versions['FFmpeg']['ffmpeg'] == 'unavailable': return False
   avcodec_inst= SV(versions['FFmpeg']['avcodec'])
   avcodec_req = ffmpeg_versions[v][0]
@@ -101,7 +101,7 @@ def ffmpeg_found(version_geq=None):
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
       try:
-        from .._externals import versions
+        from ._externals import versions
         avcodec_inst = SV(versions['FFmpeg']['avcodec'])
         avformat_inst = SV(versions['FFmpeg']['avformat'])
         avutil_inst = SV(versions['FFmpeg']['avutil'])
@@ -124,7 +124,7 @@ def codec_available(codec):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from ..io import supported_video_codecs
+      from ._externals import supported_video_codecs
       d = supported_video_codecs()
       if codec in d and d[codec]['encode'] and d[codec]['decode']:
         return test(*args, **kwargs)
@@ -142,7 +142,7 @@ def extension_available(extension):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from .._externals import extensions
+      from ._externals import extensions
       if extension in extensions():
         return test(*args, **kwargs)
       else:

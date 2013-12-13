@@ -10,16 +10,16 @@
 
 import numpy
 import nose.tools
-from . import utils as testutils
+from . import test_utils
 
 # These are some global parameters for the test.
-INPUT_VIDEO = testutils.datafile('test.mov', __name__)
+INPUT_VIDEO = test_utils.datafile('test.mov', __name__)
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_codec_support():
 
   # Describes all encoders
-  from .._externals import describe_encoder, describe_decoder, supported_video_codecs
+  from ._externals import describe_encoder, describe_decoder, supported_video_codecs
 
   supported = supported_video_codecs()
 
@@ -34,11 +34,11 @@ def test_codec_support():
     assert supported[codec]['encode']
     assert supported[codec]['decode']
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_input_format_support():
 
   # Describes all encoders
-  from .._externals import supported_videoreader_formats
+  from ._externals import supported_videoreader_formats
 
   supported = supported_videoreader_formats()
 
@@ -46,11 +46,11 @@ def test_input_format_support():
   for fmt in ('avi', 'mov', 'mp4'):
     assert fmt in supported
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_output_format_support():
 
   # Describes all encoders
-  from .._externals import supported_videowriter_formats
+  from ._externals import supported_videowriter_formats
 
   supported = supported_videowriter_formats()
 
@@ -58,10 +58,10 @@ def test_output_format_support():
   for fmt in ('avi', 'mov', 'mp4'):
     assert fmt in supported
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_video_reader_attributes():
 
-  from .. import VideoReader
+  from . import VideoReader
 
   iv = VideoReader(INPUT_VIDEO)
 
@@ -88,19 +88,19 @@ def test_video_reader_attributes():
   nose.tools.eq_(len(iv.video_type[2]), len(iv.frame_type[2])+1)
   assert isinstance(iv.info, str)
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_video_reader_str():
 
-  from .. import VideoReader
+  from . import VideoReader
 
   iv = VideoReader(INPUT_VIDEO)
   assert repr(iv)
   assert str(iv)
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_can_iterate():
 
-  from .. import VideoReader
+  from . import VideoReader
   video = VideoReader(INPUT_VIDEO)
   counter = 0
   for frame in video:
@@ -113,10 +113,10 @@ def test_can_iterate():
 
   assert counter == len(video) #we have gone through all frames
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_iteration():
- 
-  from .. import load, VideoReader
+
+  from . import load, VideoReader
   f = VideoReader(INPUT_VIDEO)
   objs = load(INPUT_VIDEO)
 
@@ -124,10 +124,10 @@ def test_iteration():
   for l, i in zip(objs, f):
     assert numpy.allclose(l, i)
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_indexing():
 
-  from .. import VideoReader
+  from . import VideoReader
   f = VideoReader(INPUT_VIDEO)
 
   nose.tools.eq_(len(f), 375)
@@ -143,30 +143,30 @@ def test_indexing():
   assert numpy.allclose(f[len(f)-1], f[-1])
   assert numpy.allclose(f[len(f)-2], f[-2])
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_empty():
 
-  from .. import load, VideoReader
+  from . import load, VideoReader
   f = VideoReader(INPUT_VIDEO)
 
   objs = f[1:1]
   assert objs.shape == tuple()
   assert objs.dtype == numpy.uint8
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_0():
 
-  from .. import load, VideoReader
+  from . import load, VideoReader
   f = VideoReader(INPUT_VIDEO)
 
   objs = f[:]
   for i, k in enumerate(load(INPUT_VIDEO)):
     assert numpy.allclose(k, objs[i])
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_1():
 
-  from .. import VideoReader
+  from . import VideoReader
   f = VideoReader(INPUT_VIDEO)
 
   s = f[3:10:2]
@@ -176,10 +176,10 @@ def test_slicing_1():
   assert numpy.allclose(s[2], f[7])
   assert numpy.allclose(s[3], f[9])
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_2():
 
-  from .. import VideoReader
+  from . import VideoReader
   f = VideoReader(INPUT_VIDEO)
 
   s = f[-10:-2:3]
@@ -188,10 +188,10 @@ def test_slicing_2():
   assert numpy.allclose(s[1], f[len(f)-7])
   assert numpy.allclose(s[2], f[len(f)-4])
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_3():
 
-  from .. import VideoReader
+  from . import VideoReader
   f = VideoReader(INPUT_VIDEO)
   objs = f.load()
 
@@ -203,10 +203,10 @@ def test_slicing_3():
   assert numpy.allclose(s[2], f[14])
   assert numpy.allclose(s[3], f[11])
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_slicing_4():
 
-  from .. import VideoReader
+  from . import VideoReader
   f = VideoReader(INPUT_VIDEO)
   objs = f[:21]
 
@@ -219,10 +219,10 @@ def test_slicing_4():
   assert numpy.allclose(s[3], f[len(f)-19])
 
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def test_can_use_array_interface():
 
-  from .. import load, VideoReader
+  from . import load, VideoReader
   array = load(INPUT_VIDEO)
   iv = VideoReader(INPUT_VIDEO)
 

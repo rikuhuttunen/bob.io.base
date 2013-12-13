@@ -26,8 +26,7 @@ import numpy
 import random
 import nose.tools
 
-from .. import HDF5File, load, save, peek_all
-from . import utils as testutils
+from . import HDF5File, load, save, peek_all, test_utils
 
 def read_write_check(outfile, dname, data, dtype=None):
   """Tests scalar input/output on HDF5 files"""
@@ -93,7 +92,7 @@ def test_can_create():
 
     # Now we create a new binary output file in a temporary location and save
     # the data there.
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     outfile.append('testdata', arrays)
 
@@ -147,7 +146,7 @@ def test_type_support():
 
     N = 100
 
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
 
     data = [bool(int(random.uniform(0,2))) for z in range(N)]
@@ -215,7 +214,7 @@ def test_dataset_management():
     # Let's just create some dummy data to play with
     N = 100
 
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
 
     data = [int(random.uniform(0,N)) for z in range(N)]
@@ -258,7 +257,7 @@ def test_resize_and_preserve():
     array = numpy.array(data, 'int32').reshape(SHAPE)
 
     # Try to save a slice
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     save(array[:,0], tmpname)
 
   finally:
@@ -269,42 +268,42 @@ def test_can_load_hdf5_from_matlab():
   # shows we can load a 2D matlab array and interpret it as a bunch of 1D
   # arrays, correctly
 
-  t = load(testutils.datafile('matlab_1d.hdf5', __name__))
+  t = load(test_utils.datafile('matlab_1d.hdf5', __name__))
   nose.tools.eq_(t.shape, (512,))
   nose.tools.eq_(t.dtype, numpy.float64)
 
-  t = load(testutils.datafile('matlab_2d.hdf5', __name__))
+  t = load(test_utils.datafile('matlab_2d.hdf5', __name__))
   nose.tools.eq_(t.shape, (512, 2))
   nose.tools.eq_(t.dtype, numpy.float64)
 
   # interestingly enough, if you load those files as arrays, you will read
   # the whole data at once:
 
-  dtype, shape, stride = peek_all(testutils.datafile('matlab_1d.hdf5', __name__))
+  dtype, shape, stride = peek_all(test_utils.datafile('matlab_1d.hdf5', __name__))
   nose.tools.eq_(shape, (512,))
   nose.tools.eq_(dtype, numpy.dtype('float64'))
 
-  dtype, shape, stride = peek_all(testutils.datafile('matlab_2d.hdf5', __name__))
+  dtype, shape, stride = peek_all(test_utils.datafile('matlab_2d.hdf5', __name__))
   nose.tools.eq_(shape, (512, 2))
   nose.tools.eq_(dtype, numpy.dtype('float64'))
 
 def test_matlab_import():
 
   # This test verifies we can import HDF5 datasets generated in Matlab
-  mfile = HDF5File(testutils.datafile('matlab_1d.hdf5', __name__))
+  mfile = HDF5File(test_utils.datafile('matlab_1d.hdf5', __name__))
   nose.tools.eq_(mfile.paths(), ('/array',))
 
 def test_ioload_unlimited():
 
   # This test verifies that a 3D array whose first dimension is unlimited
   # and size equal to 1 can be read as a 2D array
-  mfile = load(testutils.datafile('test7_unlimited.hdf5', __name__))
+  mfile = load(test_utils.datafile('test7_unlimited.hdf5', __name__))
   nose.tools.eq_(mfile.ndim, 2)
 
 def test_attribute_version():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     outfile.set_attribute('version', 32)
     nose.tools.eq_(outfile.get_attribute('version'), 32)
@@ -315,7 +314,7 @@ def test_attribute_version():
 def test_string_support():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     attribute = 'this is my long test string with \nNew lines'
     outfile.set('string', attribute)
@@ -329,7 +328,7 @@ def test_string_support():
 def test_string_attribute_support():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     attribute = 'this is my long test string with \nNew lines'
     outfile.set_attribute('string', attribute)
@@ -348,7 +347,7 @@ def test_string_attribute_support():
 def test_can_use_set_with_iterables():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     data = [1, 34.5, True]
     outfile.set('data', data)
@@ -360,7 +359,7 @@ def test_can_use_set_with_iterables():
 def test_has_attribute():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     i = 35
     f = 3.14
@@ -377,7 +376,7 @@ def test_has_attribute():
 def test_get_attributes():
 
   try:
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     nothing = outfile.get_attributes()
     nose.tools.eq_(len(nothing), 0)
@@ -397,7 +396,7 @@ def test_set_compression():
 
   try:
 
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     data = numpy.random.random((50,50))
     outfile.set('data', data, compression=9)
@@ -413,7 +412,7 @@ def test_append_compression():
 
   try:
 
-    tmpname = testutils.temporary_filename()
+    tmpname = test_utils.temporary_filename()
     outfile = HDF5File(tmpname, 'w')
     data = numpy.random.random((50,50))
     for k in range(len(data)): outfile.append('data', data[k], compression=9)

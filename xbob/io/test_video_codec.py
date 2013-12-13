@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 :
 # Andre Anjos <andre.anjos@idiap.ch>
-# Tue 12 Nov 09:25:56 2013 
+# Tue 12 Nov 09:25:56 2013
 
 """Runs quality tests on video codecs supported
 """
@@ -9,17 +9,17 @@
 import os
 import numpy
 import nose.tools
-from . import utils as testutils
-from ..utils import color_distortion, frameskip_detection, quality_degradation
+from . import test_utils
+from .utils import color_distortion, frameskip_detection, quality_degradation
 
 # These are some global parameters for the test.
-INPUT_VIDEO = testutils.datafile('test.mov', __name__)
+INPUT_VIDEO = test_utils.datafile('test.mov', __name__)
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def check_format_codec(function, shape, framerate, format, codec, maxdist):
 
   length, height, width = shape
-  fname = testutils.temporary_filename(suffix='.%s' % format)
+  fname = test_utils.temporary_filename(suffix='.%s' % format)
 
   try:
     orig, framerate, encoded = function(shape, framerate, format, codec, fname)
@@ -90,7 +90,7 @@ def test_format_codecs():
       )
 
   # some exceptions
-  if testutils.ffmpeg_version_lessthan('0.6'):
+  if test_utils.ffmpeg_version_lessthan('0.6'):
     distortions['ffv1']['frameskip'] = 0.55
     distortions['mpeg1video']['frameskip'] = 1.5
     distortions['mpegvideo']['color'] = 9.0
@@ -98,9 +98,9 @@ def test_format_codecs():
     distortions['mpeg2video']['color'] = 9.0
     distortions['mpeg2video']['frameskip'] = 1.4
 
-  from .._externals import versions
+  from ._externals import versions
   if versions['FFmpeg']['ffmpeg'] != 'unavailable':
-    from .._externals import supported_videowriter_formats
+    from ._externals import supported_videowriter_formats
     SUPPORTED = supported_videowriter_formats()
     for format in SUPPORTED:
       for codec in SUPPORTED[format]['supported_codecs']:
@@ -109,11 +109,11 @@ def test_format_codecs():
           distortion = distortions.get(codec, distortions['default'])[method]
           yield check_format_codec, methods[method], shape, framerate, format, codec, distortion
 
-@testutils.ffmpeg_found()
+@test_utils.ffmpeg_found()
 def check_user_video(format, codec, maxdist):
 
-  from .. import VideoReader, VideoWriter
-  fname = testutils.temporary_filename(suffix='.%s' % format)
+  from . import VideoReader, VideoWriter
+  fname = test_utils.temporary_filename(suffix='.%s' % format)
   MAXLENTH = 10 #use only the first 10 frames
 
   try:
@@ -181,9 +181,9 @@ def test_user_video():
       msmpeg4v2  = 2.3,
       )
 
-  from .._externals import versions
+  from ._externals import versions
   if versions['FFmpeg']['ffmpeg'] != 'unavailable':
-    from .._externals import supported_videowriter_formats
+    from ._externals import supported_videowriter_formats
     SUPPORTED = supported_videowriter_formats()
     for format in SUPPORTED:
       for codec in SUPPORTED[format]['supported_codecs']:

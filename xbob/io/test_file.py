@@ -14,18 +14,17 @@ import sys
 import numpy
 import nose.tools
 
-from .. import load, write, peek, peek_all, File
-from . import utils as testutils
+from . import load, write, peek, peek_all, File, test_utils
 
 def test_peek():
-  
-  f = testutils.datafile('test1.hdf5', __name__)
+
+  f = test_utils.datafile('test1.hdf5', __name__)
   assert peek(f) == (numpy.uint16, (3,), (1,))
   assert peek_all(f) == (numpy.uint16, (3,3), (3,1))
 
 def test_iteration():
- 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
   nose.tools.eq_(len(f), 512)
 
@@ -35,8 +34,8 @@ def test_iteration():
     assert numpy.allclose(l, i)
 
 def test_indexing():
- 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
   nose.tools.eq_(len(f), 512)
 
@@ -51,7 +50,7 @@ def test_indexing():
 
 def test_slicing_empty():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   objs = f[1:1]
@@ -59,7 +58,7 @@ def test_slicing_empty():
 
 def test_slicing_0():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   objs = f[:]
@@ -68,7 +67,7 @@ def test_slicing_0():
 
 def test_slicing_1():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   # get slice
@@ -81,7 +80,7 @@ def test_slicing_1():
 
 def test_slicing_2():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   # get negative slicing
@@ -93,7 +92,7 @@ def test_slicing_2():
 
 def test_slicing_3():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   # get negative stepping slice
@@ -106,7 +105,7 @@ def test_slicing_3():
 
 def test_slicing_4():
 
-  fname = testutils.datafile('matlab_2d.hdf5', __name__)
+  fname = test_utils.datafile('matlab_2d.hdf5', __name__)
   f = File(fname, 'r')
 
   # get all negative slice
@@ -119,28 +118,28 @@ def test_slicing_4():
 
 @nose.tools.raises(TypeError)
 def test_indexing_type_check():
-  
-  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+
+  f = File(test_utils.datafile('matlab_2d.hdf5', __name__), 'r')
   nose.tools.eq_(len(f), 512)
   f[4.5]
 
 @nose.tools.raises(IndexError)
 def test_indexing_boundaries():
-  
-  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+
+  f = File(test_utils.datafile('matlab_2d.hdf5', __name__), 'r')
   nose.tools.eq_(len(f), 512)
   f[512]
 
 @nose.tools.raises(IndexError)
 def test_indexing_negative_boundaries():
-  f = File(testutils.datafile('matlab_2d.hdf5', __name__), 'r')
+  f = File(test_utils.datafile('matlab_2d.hdf5', __name__), 'r')
   nose.tools.eq_(len(f), 512)
   f[-513]
 
 def transcode(filename):
   """Runs a complete transcoding test, to and from the binary format."""
 
-  tmpname = testutils.temporary_filename(suffix=os.path.splitext(filename)[1])
+  tmpname = test_utils.temporary_filename(suffix=os.path.splitext(filename)[1])
 
   try:
     # transcode from test format into the test format -- test array access modes
@@ -171,7 +170,7 @@ def transcode(filename):
 
 def array_readwrite(extension, arr, close=False):
   """Runs a read/write verify step using the given numpy data"""
-  tmpname = testutils.temporary_filename(suffix=extension)
+  tmpname = test_utils.temporary_filename(suffix=extension)
   try:
     write(arr, tmpname)
     reloaded = load(tmpname)
@@ -182,7 +181,7 @@ def array_readwrite(extension, arr, close=False):
 
 def arrayset_readwrite(extension, arrays, close=False):
   """Runs a read/write verify step using the given numpy data"""
-  tmpname = testutils.temporary_filename(suffix=extension)
+  tmpname = test_utils.temporary_filename(suffix=extension)
   try:
     f = File(tmpname, 'w')
     for k in arrays:
@@ -227,11 +226,11 @@ def test_hdf5():
   arrayset_readwrite(".h5", a4)
 
   # complete transcoding tests
-  transcode(testutils.datafile('test1.hdf5', __name__))
-  transcode(testutils.datafile('matlab_1d.hdf5', __name__))
-  transcode(testutils.datafile('matlab_2d.hdf5', __name__))
+  transcode(test_utils.datafile('test1.hdf5', __name__))
+  transcode(test_utils.datafile('matlab_1d.hdf5', __name__))
+  transcode(test_utils.datafile('matlab_2d.hdf5', __name__))
 
-@testutils.extension_available('.bindata')
+@test_utils.extension_available('.bindata')
 def test_torch3_binary():
 
   # array writing tests
@@ -262,9 +261,9 @@ def test_torch3_binary():
   nose.tools.assert_raises(RuntimeError, arrayset_readwrite, ".bindata", a4)
 
   # complete transcoding test
-  transcode(testutils.datafile('torch3.bindata', __name__))
+  transcode(test_utils.datafile('torch3.bindata', __name__))
 
-@testutils.extension_available('.mat')
+@test_utils.extension_available('.mat')
 def test_mat_file_io():
 
   # array writing tests
@@ -295,23 +294,23 @@ def test_mat_file_io():
   arrayset_readwrite(".mat", a4)
 
   # complete transcoding tests
-  transcode(testutils.datafile('test_1d.mat', __name__)) #pseudo 1D - matlab does not support true 1D
-  transcode(testutils.datafile('test_2d.mat', __name__))
-  transcode(testutils.datafile('test_3d.mat', __name__))
-  transcode(testutils.datafile('test_4d.mat', __name__))
-  transcode(testutils.datafile('test_1d_cplx.mat', __name__)) #pseudo 1D - matlab does not support 1D
-  transcode(testutils.datafile('test_2d_cplx.mat', __name__))
-  transcode(testutils.datafile('test_3d_cplx.mat', __name__))
-  transcode(testutils.datafile('test_4d_cplx.mat', __name__))
-  transcode(testutils.datafile('test.mat', __name__)) #3D complex, large
+  transcode(test_utils.datafile('test_1d.mat', __name__)) #pseudo 1D - matlab does not support true 1D
+  transcode(test_utils.datafile('test_2d.mat', __name__))
+  transcode(test_utils.datafile('test_3d.mat', __name__))
+  transcode(test_utils.datafile('test_4d.mat', __name__))
+  transcode(test_utils.datafile('test_1d_cplx.mat', __name__)) #pseudo 1D - matlab does not support 1D
+  transcode(test_utils.datafile('test_2d_cplx.mat', __name__))
+  transcode(test_utils.datafile('test_3d_cplx.mat', __name__))
+  transcode(test_utils.datafile('test_4d_cplx.mat', __name__))
+  transcode(test_utils.datafile('test.mat', __name__)) #3D complex, large
 
 @nose.tools.nottest
-@testutils.extension_available('.mat')
+@test_utils.extension_available('.mat')
 def test_mat_file_io_does_not_crash():
 
-  data = load(testutils.datafile('test_cell.mat', __name__))
+  data = load(test_utils.datafile('test_cell.mat', __name__))
 
-@testutils.extension_available('.tensor')
+@test_utils.extension_available('.tensor')
 def test_tensorfile():
 
   # array writing tests
@@ -337,16 +336,16 @@ def test_tensorfile():
   arrayset_readwrite(".tensor", a3)
 
   # complete transcoding test
-  transcode(testutils.datafile('torch.tensor', __name__))
+  transcode(test_utils.datafile('torch.tensor', __name__))
 
-@testutils.extension_available('.pgm')
-@testutils.extension_available('.pbm')
-@testutils.extension_available('.ppm')
+@test_utils.extension_available('.pgm')
+@test_utils.extension_available('.pbm')
+@test_utils.extension_available('.ppm')
 def test_netpbm():
 
   def image_transcode(filename):
 
-    tmpname = testutils.temporary_filename(suffix=os.path.splitext(filename)[1])
+    tmpname = test_utils.temporary_filename(suffix=os.path.splitext(filename)[1])
 
     try:
       # complete transcoding test
@@ -363,12 +362,12 @@ def test_netpbm():
     finally:
       if os.path.exists(tmpname): os.unlink(tmpname)
 
-  image_transcode(testutils.datafile('test.pgm', __name__)) #indexed, works fine
-  image_transcode(testutils.datafile('test.pbm', __name__)) #indexed, works fine
-  image_transcode(testutils.datafile('test.ppm', __name__)) #indexed, works fine
-  #image_transcode(testutils.datafile('test.jpg', __name__)) #does not work because of re-compression
+  image_transcode(test_utils.datafile('test.pgm', __name__)) #indexed, works fine
+  image_transcode(test_utils.datafile('test.pbm', __name__)) #indexed, works fine
+  image_transcode(test_utils.datafile('test.ppm', __name__)) #indexed, works fine
+  #image_transcode(test_utils.datafile('test.jpg', __name__)) #does not work because of re-compression
 
-@testutils.extension_available('.csv')
+@test_utils.extension_available('.csv')
 def test_csv():
 
   # array writing tests

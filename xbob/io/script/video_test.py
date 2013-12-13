@@ -25,7 +25,7 @@ import numpy
 # internal
 from .. import utils, create_directories_save
 from .. import save as save_to_file
-from ..test import utils as test_utils
+from .. import test_utils
 
 def list_codecs(*args, **kwargs):
 
