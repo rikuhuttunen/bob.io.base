@@ -10,8 +10,6 @@
 #define XBOB_IO_MODULE
 #include <xbob.io/config.h>
 
-#define XBOB_IO_VERSIONS_MODULE_NAME _externals
-
 #include <string>
 #include <cstdlib>
 #include <boost/preprocessor/stringize.hpp>
