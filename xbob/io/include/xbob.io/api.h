@@ -223,8 +223,6 @@ typedef struct {
 #    endif
 #  endif
 
-  static void **PyXbobIo_API;
-
   /**************
    * Versioning *
    **************/
