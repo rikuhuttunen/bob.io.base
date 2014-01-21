@@ -21,30 +21,71 @@ PyDoc_STRVAR(module_docstr, "bob::io classes and methods");
 
 int PyXbobIo_APIVersion = XBOB_IO_API_VERSION;
 
+#if PY_VERSION_HEX >= 0x03000000
+static PyModuleDef module_definition = {
+  PyModuleDef_HEAD_INIT,
+  XBOB_EXT_MODULE_NAME,
+  module_docstr,
+  -1,
+  module_methods, 
+  0, 0, 0, 0
+};
+#endif
+
 PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyBobIoFile_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFile_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoFile_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 
   PyBobIoFileIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 
 #if WITH_FFMPEG
   PyBobIoVideoReader_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReader_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoVideoReader_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 
   PyBobIoVideoReaderIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 
   PyBobIoVideoWriter_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 #endif /* WITH_FFMPEG */
 
   PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return;
+  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return
+# if PY_VERSION_HEX >= 0x03000000
+    0
+# endif
+    ;
 
-  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME,
+# if PY_VERSION_HEX >= 0x03000000
+  PyObject* m = PyModule_Create(&module_definition);
+  if (!m) return 0;
+# else
+  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, 
       module_methods, module_docstr);
+  if (!m) return;
+# endif
 
   /* register some constants */
   PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
@@ -139,5 +180,9 @@ PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   /* imports xbob.blitz C-API */
   import_xbob_blitz();
+
+# if PY_VERSION_HEX >= 0x03000000
+  return m;
+# endif
 
 }

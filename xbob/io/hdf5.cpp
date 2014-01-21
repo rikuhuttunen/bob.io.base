@@ -70,7 +70,7 @@ static PyObject* PyBobIoHDF5File_New(PyTypeObject* type, PyObject*, PyObject*) {
 static void PyBobIoHDF5File_Delete (PyBobIoHDF5FileObject* o) {
 
   o->f.reset();
-  o->ob_type->tp_free((PyObject*)o);
+  Py_TYPE(o)->tp_free((PyObject*)o);
 
 }
 
@@ -114,7 +114,7 @@ static PyObject* PyBobIoHDF5File_Repr(PyBobIoHDF5FileObject* self) {
 # else
   PyString_FromFormat
 # endif
-  ("%s(filename='%s')", s_hdf5file_str, self->f->filename().c_str());
+  ("%s(filename='%s')", Py_TYPE(self)->tp_name, self->f->filename().c_str());
 }
 
 static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
@@ -1063,7 +1063,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, self->f->filename().c_str(), data->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1197,7 +1197,7 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), data->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1389,7 +1389,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), data->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1923,7 +1923,7 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), value->ob_type->tp_name);
+    PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
     return 0;
   }
 
@@ -1993,7 +1993,7 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
 
     int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
     if (is_array < 0) { ///< error condition, signal
-      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), value->ob_type->tp_name);
+      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
       return 0;
     }
 
@@ -2394,8 +2394,7 @@ static PyGetSetDef PyBobIoHDF5File_getseters[] = {
 };
 
 PyTypeObject PyBobIoHDF5File_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /*ob_size*/
+    PyVarObject_HEAD_INIT(0, 0)
     s_hdf5file_str,                             /*tp_name*/
     sizeof(PyBobIoHDF5FileObject),              /*tp_basicsize*/
     0,                                          /*tp_itemsize*/

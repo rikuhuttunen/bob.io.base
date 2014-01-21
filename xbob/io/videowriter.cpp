@@ -85,7 +85,7 @@ static PyObject* PyBobIoVideoWriter_New(PyTypeObject* type, PyObject*, PyObject*
 static void PyBobIoVideoWriter_Delete (PyBobIoVideoWriterObject* o) {
 
   o->v.reset();
-  o->ob_type->tp_free((PyObject*)o);
+  Py_TYPE(o)->tp_free((PyObject*)o);
 
 }
 
@@ -397,7 +397,7 @@ static PyObject* PyBobIoVideoWriter_Repr(PyBobIoVideoWriterObject* self) {
 # else
   PyString_FromFormat
 # endif
-  ("%s(filename='%s', height=%" PY_FORMAT_SIZE_T "d, width=%" PY_FORMAT_SIZE_T "d, framerate=%g, bitrate=%g, gop=%" PY_FORMAT_SIZE_T "d, codec='%s', format='%s')", s_videowriter_str, self->v->filename().c_str(), self->v->height(), self->v->width(), self->v->frameRate(), self->v->bitRate(), self->v->gop(), self->v->codecName().c_str(), self->v->formatName().c_str());
+  ("%s(filename='%s', height=%" PY_FORMAT_SIZE_T "d, width=%" PY_FORMAT_SIZE_T "d, framerate=%g, bitrate=%g, gop=%" PY_FORMAT_SIZE_T "d, codec='%s', format='%s')", Py_TYPE(self)->tp_name, self->v->filename().c_str(), self->v->height(), self->v->width(), self->v->frameRate(), self->v->bitRate(), self->v->gop(), self->v->codecName().c_str(), self->v->formatName().c_str());
 }
 
 static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObject *args, PyObject* kwds) {
@@ -501,8 +501,7 @@ static PyMappingMethods PyBobIoVideoWriter_Mapping = {
 };
 
 PyTypeObject PyBobIoVideoWriter_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /*ob_size*/
+    PyVarObject_HEAD_INIT(0, 0)
     s_videowriter_str,                          /*tp_name*/
     sizeof(PyBobIoVideoWriterObject),           /*tp_basicsize*/
     0,                                          /*tp_itemsize*/

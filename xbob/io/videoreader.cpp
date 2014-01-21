@@ -66,7 +66,7 @@ static PyObject* PyBobIoVideoReader_New(PyTypeObject* type, PyObject*, PyObject*
 static void PyBobIoVideoReader_Delete (PyBobIoVideoReaderObject* o) {
 
   o->v.reset();
-  o->ob_type->tp_free((PyObject*)o);
+  Py_TYPE(o)->tp_free((PyObject*)o);
 
 }
 
@@ -307,7 +307,7 @@ static PyObject* PyBobIoVideoReader_Repr(PyBobIoVideoReaderObject* self) {
 # else
   PyString_FromFormat
 # endif
-  ("%s(filename='%s')", s_videoreader_str, self->v->filename().c_str());
+  ("%s(filename='%s')", Py_TYPE(self)->tp_name, self->v->filename().c_str());
 }
 
 /**
@@ -447,8 +447,8 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
 static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, PySliceObject* slice) {
 
   Py_ssize_t start, stop, step, slicelength;
-  if (PySlice_GetIndicesEx(slice, self->v->numberOfFrames(),
-        &start, &stop, &step, &slicelength) < 0) return 0;
+  if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice), 
+        self->v->numberOfFrames(), &start, &stop, &step, &slicelength) < 0) return 0;
 
   //creates the return array
   const bob::core::array::typeinfo& info = self->v->frame_type();
@@ -528,8 +528,8 @@ static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, PyO
      return PyBobIoVideoReader_GetSlice(self, (PySliceObject*)item);
    }
    else {
-     PyErr_Format(PyExc_TypeError, "VideoReader indices must be integers, not %.200s",
-         item->ob_type->tp_name);
+     PyErr_Format(PyExc_TypeError, "VideoReader indices must be integers, not `%s'",
+         Py_TYPE(item)->tp_name);
      return 0;
    }
 }
@@ -602,9 +602,12 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
 
 }
 
+#if PY_VERSION_HEX >= 0x03000000
+#  define Py_TPFLAGS_HAVE_ITER 0
+#endif
+
 PyTypeObject PyBobIoVideoReaderIterator_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /* ob_size */
+    PyVarObject_HEAD_INIT(0, 0)
     s_videoreaderiterator_str,                  /* tp_name */
     sizeof(PyBobIoVideoReaderIteratorObject),   /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -646,8 +649,7 @@ static PyObject* PyBobIoVideoReader_Iter (PyBobIoVideoReaderObject* self) {
 }
 
 PyTypeObject PyBobIoVideoReader_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /*ob_size*/
+    PyVarObject_HEAD_INIT(0, 0)
     s_videoreader_str,                          /*tp_name*/
     sizeof(PyBobIoVideoReaderObject),           /*tp_basicsize*/
     0,                                          /*tp_itemsize*/

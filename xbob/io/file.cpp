@@ -58,7 +58,7 @@ static PyObject* PyBobIoFile_New(PyTypeObject* type, PyObject*, PyObject*) {
 static void PyBobIoFile_Delete (PyBobIoFileObject* o) {
 
   o->f.reset();
-  o->ob_type->tp_free((PyObject*)o);
+  Py_TYPE(o)->tp_free((PyObject*)o);
 
 }
 
@@ -107,8 +107,8 @@ static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
 # else
   PyString_FromFormat
 # endif
-  ("%s(filename='%s', codec='%s')", s_file_str, self->f->filename().c_str(),
-   self->f->name().c_str());
+  ("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name, 
+   self->f->filename().c_str(), self->f->name().c_str());
 }
 
 static PyObject* PyBobIoFile_Filename(PyBobIoFileObject* self) {
@@ -241,8 +241,8 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* slice) {
 
   Py_ssize_t start, stop, step, slicelength;
-  if (PySlice_GetIndicesEx(slice, self->f->size(),
-        &start, &stop, &step, &slicelength) < 0) return 0;
+  if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice),
+        self->f->size(), &start, &stop, &step, &slicelength) < 0) return 0;
 
   //creates the return array
   const bob::core::array::typeinfo& info = self->f->type();
@@ -310,7 +310,7 @@ static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, PyObject* item) {
    }
    else {
      PyErr_Format(PyExc_TypeError, "File indices must be integers, not %s",
-         item->ob_type->tp_name);
+         Py_TYPE(item)->tp_name);
      return 0;
    }
 }
@@ -621,9 +621,12 @@ static PyObject* PyBobIoFileIterator_Next (PyBobIoFileIteratorObject* self) {
   return PyBobIoFile_GetIndex(self->pyfile, self->curpos++);
 }
 
+#if PY_VERSION_HEX >= 0x03000000
+#  define Py_TPFLAGS_HAVE_ITER 0
+#endif
+
 PyTypeObject PyBobIoFileIterator_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /* ob_size */
+    PyVarObject_HEAD_INIT(0, 0)
     s_fileiterator_str,                         /* tp_name */
     sizeof(PyBobIoFileIteratorObject),          /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -662,8 +665,7 @@ static PyObject* PyBobIoFile_Iter (PyBobIoFileObject* self) {
 }
 
 PyTypeObject PyBobIoFile_Type = {
-    PyObject_HEAD_INIT(0)
-    0,                                          /*ob_size*/
+    PyVarObject_HEAD_INIT(0, 0)
     s_file_str,                                 /*tp_name*/
     sizeof(PyBobIoFileObject),                  /*tp_basicsize*/
     0,                                          /*tp_itemsize*/
