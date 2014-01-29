@@ -33,6 +33,7 @@ setup(
     install_requires=[
       'setuptools',
       'xbob.blitz',
+      'pillow',
     ],
 
     namespace_packages=[

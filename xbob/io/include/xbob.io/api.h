@@ -78,6 +78,33 @@ typedef struct {
 #define PyBobIo_TypeInfoAsTuple_RET PyObject*
 #define PyBobIo_TypeInfoAsTuple_PROTO (const bob::core::array::typeinfo& ti)
 
+#define PyBobIo_FilenameConverter_NUM 5
+#define PyBobIo_FilenameConverter_RET int
+#define PyBobIo_FilenameConverter_PROTO (PyObject* o, PyObject** b)
+
+/*****************
+ * HDF5 bindings *
+ *****************/
+
+typedef struct {
+  PyObject_HEAD
+
+  /* Type-specific fields go here. */
+  boost::shared_ptr<bob::io::HDF5File> f;
+
+} PyBobIoHDF5FileObject;
+
+#define PyBobIoHDF5File_Type_NUM 6
+#define PyBobIoHDF5File_Type_TYPE PyTypeObject
+
+#define PyBobIoHDF5File_Check_NUM 7
+#define PyBobIoHDF5File_Check_RET int
+#define PyBobIoHDF5File_Check_PROTO (PyObject* o)
+
+#define PyBobIoHDF5File_Converter_NUM 8
+#define PyBobIoHDF5File_Converter_RET int
+#define PyBobIoHDF5File_Converter_PROTO (PyObject* o, PyBobIoHDF5FileObject** a)
+
 #if WITH_FFMPEG
 
 /******************
@@ -92,7 +119,7 @@ typedef struct {
 
 } PyBobIoVideoReaderObject;
 
-#define PyBobIoVideoReader_Type_NUM 5
+#define PyBobIoVideoReader_Type_NUM 9
 #define PyBobIoVideoReader_Type_TYPE PyTypeObject
 
 typedef struct {
@@ -104,7 +131,7 @@ typedef struct {
 
 } PyBobIoVideoReaderIteratorObject;
 
-#define PyBobIoVideoReaderIterator_Type_NUM 5
+#define PyBobIoVideoReaderIterator_Type_NUM 10
 #define PyBobIoVideoReaderIterator_Type_TYPE PyTypeObject
 
 typedef struct {
@@ -115,39 +142,16 @@ typedef struct {
 
 } PyBobIoVideoWriterObject;
 
-#define PyBobIoVideoWriter_Type_NUM 6
+#define PyBobIoVideoWriter_Type_NUM 11
 #define PyBobIoVideoWriter_Type_TYPE PyTypeObject
 
 #endif /* WITH_FFMPEG */
 
-/*****************
- * HDF5 bindings *
- *****************/
-
-typedef struct {
-  PyObject_HEAD
-
-  /* Type-specific fields go here. */
-  boost::shared_ptr<bob::io::HDF5File> f;
-
-} PyBobIoHDF5FileObject;
-
-#define PyBobIoHDF5File_Type_NUM 7
-#define PyBobIoHDF5File_Type_TYPE PyTypeObject
-
-#define PyBobIoHDF5File_Check_NUM 8
-#define PyBobIoHDF5File_Check_RET int
-#define PyBobIoHDF5File_Check_PROTO (PyObject* o)
-
-#define PyBobIoHDF5File_Converter_NUM 9
-#define PyBobIoHDF5File_Converter_RET int
-#define PyBobIoHDF5File_Converter_PROTO (PyObject* o, PyBobIoHDF5FileObject** a)
-
 /* Total number of C API pointers */
 #if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 10
+#  define PyXbobIo_API_pointers 12
 #else
-#  define PyXbobIo_API_pointers 11
+#  define PyXbobIo_API_pointers 9
 #endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
@@ -175,6 +179,18 @@ typedef struct {
 
   PyBobIo_TypeInfoAsTuple_RET PyBobIo_TypeInfoAsTuple PyBobIo_TypeInfoAsTuple_PROTO;
 
+  PyBobIo_FilenameConverter_RET PyBobIo_FilenameConverter PyBobIo_FilenameConverter_PROTO;
+
+/*****************
+ * HDF5 bindings *
+ *****************/
+
+  extern PyBobIoHDF5File_Type_TYPE PyBobIoHDF5File_Type;
+
+  PyBobIoHDF5File_Check_RET PyBobIoHDF5File_Check PyBobIoHDF5File_Check_PROTO;
+
+  PyBobIoHDF5File_Converter_RET PyBobIoHDF5File_Converter PyBobIoHDF5File_Converter_PROTO;
+
 #if WITH_FFMPEG
   /******************
    * Video bindings *
@@ -186,16 +202,6 @@ typedef struct {
 
   extern PyBobIoVideoWriter_Type_TYPE PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
-
-/*****************
- * HDF5 bindings *
- *****************/
-
-  extern PyBobIoHDF5File_Type_TYPE PyBobIoHDF5File_Type;
-
-  PyBobIoHDF5File_Check_RET PyBobIoHDF5File_Check PyBobIoHDF5File_Check_PROTO;
-
-  PyBobIoHDF5File_Converter_RET PyBobIoHDF5File_Converter PyBobIoHDF5File_Converter_PROTO;
 
 #else
 
@@ -244,6 +250,18 @@ typedef struct {
 
 # define PyBobIo_TypeInfoAsTuple (*(PyBobIo_TypeInfoAsTuple_RET (*)PyBobIo_TypeInfoAsTuple_PROTO) PyXbobIo_API[PyBobIo_TypeInfoAsTuple_NUM])
 
+# define PyBobIo_FilenameConverter (*(PyBobIo_FilenameConverter_RET (*)PyBobIo_FilenameConverter_PROTO) PyXbobIo_API[PyBobIo_FilenameConverter_NUM])
+
+  /*****************
+   * HDF5 bindings *
+   *****************/
+
+# define PyBobIoHDF5File_Type (*(PyBobIoHDF5File_Type_TYPE *)PyXbobIo_API[PyBobIoHDF5File_Type_NUM])
+
+# define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyXbobIo_API[PyBobIoHDF5File_Check_NUM])
+
+# define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
+
 #if WITH_FFMPEG
   /******************
    * Video bindings *
@@ -256,17 +274,9 @@ typedef struct {
 # define PyBobIoVideoWriterIterator_Type (*(PyBobIoVideoWriterIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoWriterIterator_Type_NUM])
 #endif /* WITH_FFMPEG */
 
-  /*****************
-   * HDF5 bindings *
-   *****************/
-
-# define PyBobIoHDF5File_Type (*(PyBobIoHDF5File_Type_TYPE *)PyXbobIo_API[PyBobIoHDF5File_Type_NUM])
-
-# define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyXbobIo_API[PyBobIoHDF5File_Check_NUM])
-
-# define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
-
 # if !defined(NO_IMPORT_ARRAY)
+
+#include <xbob.blitz/capi.h>
 
   /**
    * Returns -1 on error, 0 on success.
@@ -317,6 +327,13 @@ typedef struct {
 
     if (XBOB_IO_API_VERSION != imported_version) {
       PyErr_Format(PyExc_ImportError, XBOB_IO_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_API_VERSION, imported_version);
+      return -1;
+    }
+
+    /* Imports the xbob.blitz C-API */
+    if (import_xbob_blitz() < 0) {
+      PyErr_Print();
+      PyErr_SetString(PyExc_ImportError, "xbob.blitz failed to import");
       return -1;
     }
 

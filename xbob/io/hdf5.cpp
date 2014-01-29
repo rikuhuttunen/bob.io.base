@@ -11,7 +11,9 @@
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/cppapi.h>
+#include <xbob.blitz/cleanup.h>
 #include <stdexcept>
+#include <cstring>
 #include "bobskin.h"
 
 #define HDF5FILE_NAME "HDF5File"
@@ -82,25 +84,44 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   static const char* const_kwlist[] = {"filename", "mode", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  const char* filename = 0;
+  PyObject* filename = 0;
+
+#if PY_VERSION_HEX >= 0x03000000
+#  define MODE_CHAR "C"
+  int mode = 'r';
+#else
+#  define MODE_CHAR "c"
   char mode = 'r';
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|c", kwlist, &filename, &mode))
+#endif
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|" MODE_CHAR, kwlist,
+        &PyBobIo_FilenameConverter, &filename, &mode))
     return -1;
+
+#undef MODE_CHAR
+
+  auto filename_ = make_safe(filename);
 
   if (mode != 'r' && mode != 'w' && mode != 'a' && mode != 'x') {
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write), 'a' (append), 'x' (exclusive)");
     return -1;
   }
 
+#if PY_VERSION_HEX >= 0x03000000
+  const char* c_filename = PyBytes_AS_STRING(filename);
+#else
+  const char* c_filename = PyString_AS_STRING(filename);
+#endif
+
   try {
-    self->f.reset(new bob::io::HDF5File(filename, mode));
+    self->f.reset(new bob::io::HDF5File(c_filename, mode));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", filename, mode);
+    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", c_filename, mode);
     return -1;
   }
 
@@ -846,18 +867,48 @@ value >= 0, or a list of arrays otherwise.\n\
  * simple scalar.
  */
 
-static char* PyBobIo_GetString(PyObject* o) {
+static void null_char_array_deleter(char*) {}
+static void char_array_deleter(char* o) { delete[] o; }
+
+static std::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
+
 #if PY_VERSION_HEX < 0x03000000
-  return PyString_AsString(o);
+
+  return std::shared_ptr<char>(PyString_AsString(o), null_char_array_deleter);
+
 #else
-  return PyBytes_AsString(o);
+
+  if (PyBytes_Check(o)) {
+    //fast way out
+    return std::shared_ptr<char>(PyBytes_AsString(o), null_char_array_deleter);
+  }
+
+  PyObject* bytes = 0;
+
+  if (PyUnicode_Check(o)) {
+    //re-encode using utf-8
+    bytes = PyUnicode_AsEncodedString(o, "utf-8", "strict");
+  }
+  else {
+    //tries coercion
+    bytes = PyObject_Bytes(o);
+  }
+  auto bytes_ = make_safe(bytes); ///< protects acquired resource
+
+  Py_ssize_t length = PyBytes_GET_SIZE(bytes)+1;
+  char* copy = new char[length];
+  std::strncpy(copy, PyBytes_AsString(bytes), length);
+
+  return std::shared_ptr<char>(copy, char_array_deleter);
+
 #endif
+
 }
 
 static int PyBobIoHDF5File_SetStringType(bob::io::HDF5Type& t, PyObject* o) {
-  const char* value = PyBobIo_GetString(o);
+  auto value = PyBobIo_GetString(o);
   if (!value) return -1;
-  t = bob::io::HDF5Type(value);
+  t = bob::io::HDF5Type(value.get());
   return 0;
 }
 
@@ -1074,9 +1125,9 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
       switch(type.type()) {
         case bob::io::s:
           {
-            const char* value = PyBobIo_GetString(data);
+            auto value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->replace<std::string>(path, pos, value);
+            self->f->replace<std::string>(path, pos, value.get());
             Py_RETURN_NONE;
           }
         case bob::io::b:
@@ -1208,9 +1259,9 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
       switch(type.type()) {
         case bob::io::s:
           {
-            const char* value = PyBobIo_GetString(data);
+            auto value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->append<std::string>(path, value);
+            self->f->append<std::string>(path, value.get());
             return 1;
           }
         case bob::io::b:
@@ -1400,9 +1451,9 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
       switch(type.type()) {
         case bob::io::s:
           {
-            const char* value = PyBobIo_GetString(data);
+            auto value = PyBobIo_GetString(data);
             if (!value) return 0;
-            self->f->set<std::string>(path, value);
+            self->f->set<std::string>(path, value.get());
             Py_RETURN_NONE;
           }
           break;
@@ -1804,11 +1855,11 @@ template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
  const bob::io::HDF5Type& type, PyObject* o) {
 
-  const char* value = PyBobIo_GetString(o);
+  auto value = PyBobIo_GetString(o);
   if (!value) return 0;
 
   try {
-    self->f->write_attribute(path, name, type, static_cast<const void*>(value));
+    self->f->write_attribute(path, name, type, static_cast<const void*>(value.get()));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -1988,16 +2039,16 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
     bob::io::HDF5Type type;
     PyObject* converted = 0;
 
-    const char* name = PyBobIo_GetString(key);
+    auto name = PyBobIo_GetString(key);
     if (!name) return 0;
 
     int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
     if (is_array < 0) { ///< error condition, signal
-      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
+      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name.get(), path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
       return 0;
     }
 
-    PyObject* retval = PyBobIoHDF5File_WriteAttribute(self, path, name, type, value, is_array, converted);
+    PyObject* retval = PyBobIoHDF5File_WriteAttribute(self, path, name.get(), type, value, is_array, converted);
     if (!retval) return 0;
     Py_DECREF(retval);
 
@@ -2106,14 +2157,14 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
     PyObject* iter = PyObject_GetIter(attrs);
     if (!iter) return 0;
     while (PyObject* item = PyIter_Next(iter)) {
-      const char* name = PyBobIo_GetString(item);
+      auto name = PyBobIo_GetString(item);
       Py_DECREF(item);
       if (!name) {
         Py_DECREF(iter);
         return 0;
       }
       try {
-        self->f->deleteAttribute(path, name);
+        self->f->deleteAttribute(path, name.get());
       }
       catch (std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -2121,7 +2172,7 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
         return 0;
       }
       catch (...) {
-        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name.get(), path, self->f->filename().c_str());
         Py_DECREF(iter);
         return 0;
       }

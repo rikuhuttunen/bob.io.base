@@ -13,6 +13,7 @@
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/capi.h>
+#include <xbob.blitz/cleanup.h>
 #include <stdexcept>
 
 #define VIDEOREADER_NAME "VideoReader"
@@ -78,23 +79,32 @@ static int PyBobIoVideoReader_Init(PyBobIoVideoReaderObject* self,
   static const char* const_kwlist[] = {"filename", "check", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* filename = 0;
+  PyObject* filename = 0;
+
   PyObject* pycheck = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|O", kwlist,
-        &filename, &pycheck)) return -1;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O", kwlist,
+        &PyBobIo_FilenameConverter, &filename, &pycheck)) return -1;
+
+  auto filename_ = make_safe(filename);
 
   bool check = false;
   if (pycheck && PyObject_IsTrue(pycheck)) check = true;
 
+#if PY_VERSION_HEX >= 0x03000000
+  const char* c_filename = PyBytes_AS_STRING(filename);
+#else
+  const char* c_filename = PyString_AS_STRING(filename);
+#endif
+
   try {
-    self->v = boost::make_shared<bob::io::VideoReader>(filename, check);
+    self->v = boost::make_shared<bob::io::VideoReader>(c_filename, check);
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
     return -1;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: unknown exception caught", filename);
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for reading: unknown exception caught", c_filename);
     return -1;
   }
 

@@ -13,6 +13,7 @@
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/cppapi.h>
+#include <xbob.blitz/cleanup.h>
 #include <stdexcept>
 
 #define VIDEOWRITER_NAME "VideoWriter"
@@ -100,7 +101,8 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
     0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* filename = 0;
+  PyObject* filename = 0;
+
   Py_ssize_t height = 0;
   Py_ssize_t width = 0;
 
@@ -111,9 +113,12 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
   char* format = 0;
   PyObject* pycheck = 0;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "snn|ddnssO", kwlist,
-        &filename, &height, &width, &framerate, &bitrate, &gop, &codec,
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&nn|ddnssO", kwlist,
+        &PyBobIo_FilenameConverter, &filename, 
+        &height, &width, &framerate, &bitrate, &gop, &codec,
         &format, &pycheck)) return -1;
+
+  auto filename_ = make_safe(filename);
 
   if (pycheck && PyObject_IsTrue(pycheck)) {
     PyErr_SetString(PyExc_TypeError, "argument to `check' must be a boolean");
@@ -123,8 +128,14 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
   bool check = false;
   if (pycheck && (pycheck == Py_True)) check = true;
 
+#if PY_VERSION_HEX >= 0x03000000
+  const char* c_filename = PyBytes_AS_STRING(filename);
+#else
+  const char* c_filename = PyString_AS_STRING(filename);
+#endif
+
   try {
-    self->v = boost::make_shared<bob::io::VideoWriter>(filename, height, width,
+    self->v = boost::make_shared<bob::io::VideoWriter>(c_filename, height, width,
         framerate, bitrate, gop, codec, format, check);
   }
   catch (std::exception& e) {
@@ -132,7 +143,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
     return -1;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: unknown exception caught", filename);
+    PyErr_Format(PyExc_RuntimeError, "cannot open video file `%s' for writing: unknown exception caught", c_filename);
     return -1;
   }
 

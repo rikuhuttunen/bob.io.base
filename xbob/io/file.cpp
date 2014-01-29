@@ -12,6 +12,7 @@
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>
 #include <xbob.blitz/capi.h>
+#include <xbob.blitz/cleanup.h>
 #include <stdexcept>
 
 #define FILETYPE_NAME "File"
@@ -62,6 +63,25 @@ static void PyBobIoFile_Delete (PyBobIoFileObject* o) {
 
 }
 
+int PyBobIo_FilenameConverter (PyObject* o, PyObject** b) {
+#if PY_VERSION_HEX >= 0x03020000
+  if (!PyUnicode_FSConverter(o, b)) return 0;
+#else
+  if (PyUnicode_Check(o)) {
+    *b = PyUnicode_AsEncodedString(o, Py_FileSystemDefaultEncoding, "strict");
+  }
+  else {
+#if PY_VERSION_HEX >= 0x03000000
+    *b = PyObject_Bytes(o);
+#else
+    *b = PyObject_Str(o);
+#endif
+  }
+  if (!b) return 0;
+#endif
+  return 1;
+}
+
 /* The __init__(self) method */
 static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
 
@@ -69,23 +89,41 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
   static const char* const_kwlist[] = {"filename", "mode", "pretend_extension", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
 
-  char* filename = 0;
-  char mode = 'r';
+  PyObject* filename = 0;
   char* pretend_extension = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|cs", kwlist, &filename,
-        &mode, &pretend_extension)) return -1;
+
+#if PY_VERSION_HEX >= 0x03000000
+#  define MODE_CHAR "C"
+  int mode = 'r';
+#else
+#  define MODE_CHAR "c"
+  char mode = 'r';
+#endif
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|" MODE_CHAR "s", kwlist,
+        &PyBobIo_FilenameConverter, &filename, &mode, &pretend_extension)) return -1;
+
+#undef MODE_CHAR
+
+  auto filename_ = make_safe(filename);
 
   if (mode != 'r' && mode != 'w' && mode != 'a') {
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write) or 'a' (append)");
     return -1;
   }
 
+#if PY_VERSION_HEX >= 0x03000000
+  const char* c_filename = PyBytes_AS_STRING(filename);
+#else
+  const char* c_filename = PyString_AS_STRING(filename);
+#endif
+
   try {
     if (pretend_extension) {
-      self->f = bob::io::open(filename, mode, pretend_extension);
+      self->f = bob::io::open(c_filename, mode, pretend_extension);
     }
     else {
-      self->f = bob::io::open(filename, mode);
+      self->f = bob::io::open(c_filename, mode);
     }
   }
   catch (std::exception& e) {
@@ -93,7 +131,7 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
     return -1;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", filename, mode);
+    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", c_filename, mode);
     return -1;
   }
 
@@ -107,7 +145,7 @@ static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
 # else
   PyString_FromFormat
 # endif
-  ("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name, 
+  ("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name,
    self->f->filename().c_str(), self->f->name().c_str());
 }
 

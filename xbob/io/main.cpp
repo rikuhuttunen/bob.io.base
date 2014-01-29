@@ -12,6 +12,7 @@
 #undef NO_IMPORT_ARRAY
 #endif
 #include <xbob.blitz/capi.h>
+#include <xbob.blitz/cleanup.h>
 
 static PyMethodDef module_methods[] = {
     {0}  /* Sentinel */
@@ -32,85 +33,60 @@ static PyModuleDef module_definition = {
 };
 #endif
 
-PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
+static PyObject* create_module (void) {
 
   PyBobIoFile_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFile_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
+  if (PyType_Ready(&PyBobIoFile_Type) < 0) return 0;
 
   PyBobIoFileIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
+  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0) return 0;
+
+  PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return 0;
 
 #if WITH_FFMPEG
   PyBobIoVideoReader_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReader_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
+  if (PyType_Ready(&PyBobIoVideoReader_Type) < 0) return 0;
 
   PyBobIoVideoReaderIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
+  if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return 0;
 
   PyBobIoVideoWriter_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
+  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return 0;
 #endif /* WITH_FFMPEG */
-
-  PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return
-# if PY_VERSION_HEX >= 0x03000000
-    0
-# endif
-    ;
 
 # if PY_VERSION_HEX >= 0x03000000
   PyObject* m = PyModule_Create(&module_definition);
-  if (!m) return 0;
 # else
-  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, 
-      module_methods, module_docstr);
-  if (!m) return;
+  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, module_methods, module_docstr);
 # endif
+  if (!m) return 0;
+  auto m_ = make_safe(m);
 
   /* register some constants */
-  PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION);
+  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0) return 0;
+  if (PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION) < 0) return 0;
 
   /* register the types to python */
   Py_INCREF(&PyBobIoFile_Type);
-  PyModule_AddObject(m, "File", (PyObject *)&PyBobIoFile_Type);
+  if (PyModule_AddObject(m, "File", (PyObject *)&PyBobIoFile_Type) < 0) return 0;
 
   Py_INCREF(&PyBobIoFileIterator_Type);
-  PyModule_AddObject(m, "File.iter", (PyObject *)&PyBobIoFileIterator_Type);
+  if (PyModule_AddObject(m, "File.iter", (PyObject *)&PyBobIoFileIterator_Type) < 0) return 0;
+
+  Py_INCREF(&PyBobIoHDF5File_Type);
+  if (PyModule_AddObject(m, "HDF5File", (PyObject *)&PyBobIoHDF5File_Type) < 0) return 0;
 
 #if WITH_FFMPEG
   Py_INCREF(&PyBobIoVideoReader_Type);
-  PyModule_AddObject(m, "VideoReader", (PyObject *)&PyBobIoVideoReader_Type);
+  if (PyModule_AddObject(m, "VideoReader", (PyObject *)&PyBobIoVideoReader_Type) < 0) return 0;
 
   Py_INCREF(&PyBobIoVideoReaderIterator_Type);
-  PyModule_AddObject(m, "VideoReader.iter", (PyObject *)&PyBobIoVideoReaderIterator_Type);
+  if (PyModule_AddObject(m, "VideoReader.iter", (PyObject *)&PyBobIoVideoReaderIterator_Type) < 0) return 0;
 
   Py_INCREF(&PyBobIoVideoWriter_Type);
-  PyModule_AddObject(m, "VideoWriter", (PyObject *)&PyBobIoVideoWriter_Type);
+  if (PyModule_AddObject(m, "VideoWriter", (PyObject *)&PyBobIoVideoWriter_Type) < 0) return 0;
 #endif /* WITH_FFMPEG */
-
-  Py_INCREF(&PyBobIoHDF5File_Type);
-  PyModule_AddObject(m, "HDF5File", (PyObject *)&PyBobIoHDF5File_Type);
 
   static void* PyXbobIo_API[PyXbobIo_API_pointers];
 
@@ -138,6 +114,18 @@ PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyXbobIo_API[PyBobIo_TypeInfoAsTuple_NUM] = (void *)PyBobIo_TypeInfoAsTuple;
 
+  PyXbobIo_API[PyBobIo_FilenameConverter_NUM] = (void *)PyBobIo_FilenameConverter;
+
+  /*****************
+   * HDF5 bindings *
+   *****************/
+
+  PyXbobIo_API[PyBobIoHDF5File_Type_NUM] = (void *)&PyBobIoHDF5File_Type;
+  
+  PyXbobIo_API[PyBobIoHDF5File_Check_NUM] = (void *)&PyBobIoHDF5File_Check;
+
+  PyXbobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
+
 #if WITH_FFMPEG
   /******************
    * Video bindings *
@@ -149,16 +137,6 @@ PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
   PyXbobIo_API[PyBobIoVideoWriter_Type_NUM] = (void *)&PyBobIoVideoWriter_Type;
 #endif /* WITH_FFMPEG */
-
-  /*****************
-   * HDF5 bindings *
-   *****************/
-
-  PyXbobIo_API[PyBobIoHDF5File_Type_NUM] = (void *)&PyBobIoHDF5File_Type;
-  
-  PyXbobIo_API[PyBobIoHDF5File_Check_NUM] = (void *)&PyBobIoHDF5File_Check;
-
-  PyXbobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
 
 #if PY_VERSION_HEX >= 0x02070000
 
@@ -173,16 +151,21 @@ PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
 
 #endif
 
-  if (c_api_object) PyModule_AddObject(m, "_C_API", c_api_object);
+  if (!c_api_object) return 0;
 
-  /* imports the NumPy C-API */
-  import_array();
+  if (PyModule_AddObject(m, "_C_API", c_api_object) < 0) return 0;
 
-  /* imports xbob.blitz C-API */
-  import_xbob_blitz();
+  /* imports xbob.blitz C-API + dependencies */
+  if (import_xbob_blitz() < 0) return 0;
 
-# if PY_VERSION_HEX >= 0x03000000
+  Py_INCREF(m);
   return m;
-# endif
 
+}
+
+PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
+# if PY_VERSION_HEX >= 0x03000000
+  return
+# endif
+    create_module();
 }
