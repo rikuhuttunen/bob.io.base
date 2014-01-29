@@ -457,7 +457,11 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
 static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, PySliceObject* slice) {
 
   Py_ssize_t start, stop, step, slicelength;
-  if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice), 
+#if PY_VERSION_HEX < 0x03000000
+  if (PySlice_GetIndicesEx(slice, 
+#else
+  if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice),
+#endif
         self->v->numberOfFrames(), &start, &stop, &step, &slicelength) < 0) return 0;
 
   //creates the return array

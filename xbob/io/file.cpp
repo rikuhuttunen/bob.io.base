@@ -279,7 +279,11 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* slice) {
 
   Py_ssize_t start, stop, step, slicelength;
+#if PY_VERSION_HEX < 0x03000000
+  if (PySlice_GetIndicesEx(slice,
+#else
   if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice),
+#endif
         self->f->size(), &start, &stop, &step, &slicelength) < 0) return 0;
 
   //creates the return array

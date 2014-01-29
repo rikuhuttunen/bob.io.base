@@ -868,7 +868,10 @@ value >= 0, or a list of arrays otherwise.\n\
  */
 
 static void null_char_array_deleter(char*) {}
+
+#if PY_VERSION_HEX >= 0x03000000
 static void char_array_deleter(char* o) { delete[] o; }
+#endif
 
 static std::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
 
