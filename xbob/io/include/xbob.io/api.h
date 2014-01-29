@@ -264,8 +264,6 @@ typedef struct {
 
 # if !defined(NO_IMPORT_ARRAY)
 
-#include <xbob.blitz/capi.h>
-
   /**
    * Returns -1 on error, 0 on success.
    */
@@ -315,13 +313,6 @@ typedef struct {
 
     if (XBOB_IO_API_VERSION != imported_version) {
       PyErr_Format(PyExc_ImportError, XBOB_IO_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_API_VERSION, imported_version);
-      return -1;
-    }
-
-    /* Imports the xbob.blitz C-API */
-    if (import_xbob_blitz() < 0) {
-      PyErr_Print();
-      PyErr_SetString(PyExc_ImportError, "xbob.blitz failed to import");
       return -1;
     }
 
