@@ -256,6 +256,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     bobskin skin((PyArrayObject*)retval, info.dtype);
@@ -263,15 +264,14 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -300,23 +300,19 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
 
   PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   Py_ssize_t counter = 0;
   for (auto i = start; (start<=stop)?i<stop:i>stop; i+=step) {
 
     //get slice to fill
     PyObject* islice = Py_BuildValue("n", counter++);
-    if (!islice) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!islice) return 0;
+    auto islice_ = make_safe(islice);
 
     PyObject* item = PyObject_GetItem(retval, islice);
-    Py_DECREF(islice);
-    if (!item) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!item) return 0;
+    auto item_ = make_safe(item);
 
     try {
       bobskin skin((PyArrayObject*)item, info.dtype);
@@ -324,19 +320,16 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
     }
     catch (std::exception& e) {
       if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-      Py_DECREF(retval);
-      Py_DECREF(item);
       return 0;
     }
     catch (...) {
       if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
-      Py_DECREF(retval);
-      Py_DECREF(item);
       return 0;
     }
 
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -399,6 +392,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     bobskin skin((PyArrayObject*)retval, info.dtype);
@@ -406,20 +400,18 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
   }
   catch (std::runtime_error& e) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading all contents of file `%s': %s", self->f->filename().c_str(), e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while reading all contents of file `%s'", self->f->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }

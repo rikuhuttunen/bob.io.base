@@ -384,6 +384,7 @@ static int PyBobIo_H5AsTypenum (bob::io::hdf5type type) {
 }
 
 static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::HDF5Type& t) {
+
   const bob::io::HDF5Shape& sh = t.shape();
   size_t ndim = sh.n();
   const hsize_t* shptr = sh.get();
@@ -397,18 +398,22 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::HDF5Type& t) {
   PyObject* dtype = reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num));
   if (!dtype) return 0;
 
-  PyObject* retval = Py_BuildValue("NN", dtype, PyTuple_New(ndim));
-  if (!retval) {
-    Py_DECREF(dtype);
-    return 0;
-  }
+  PyObject* shape = PyTuple_New(ndim);
+  if (!shape) return 0;
 
-  PyObject* shape = PyTuple_GET_ITEM(retval, 1);
+  PyObject* retval = Py_BuildValue("NN", dtype, shape); //steals references
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
+
   for (Py_ssize_t i=0; i<(Py_ssize_t)ndim; ++i) {
-    PyTuple_SET_ITEM(shape, i, Py_BuildValue("n", shptr[i]));
+    PyObject* value = Py_BuildValue("n", shptr[i]);
+    if (!value) return 0;
+    PyTuple_SET_ITEM(shape, i, value);
   }
 
+  Py_INCREF(retval);
   return retval;
+
 }
 
 static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::HDF5Descriptor& d) {
@@ -416,11 +421,14 @@ static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::HDF5Descriptor& d
   PyObject* type = PyBobIo_HDF5TypeAsTuple(d.type);
   if (!type) return 0;
   PyObject* size = Py_BuildValue("n", d.size);
-  if (!type) return 0;
+  if (!size) {
+    Py_DECREF(type);
+    return 0;
+  }
   PyObject* expand = d.expandable? Py_True : Py_False;
   Py_INCREF(expand);
 
-  return Py_BuildValue("NNN", type, size, expand);
+  return Py_BuildValue("NNN", type, size, expand); //steals references
 
 }
 
@@ -434,26 +442,29 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   PyObject* retval = 0;
+  std::shared_ptr<PyObject> retval_;
 
   try {
     const std::vector<bob::io::HDF5Descriptor>& dv = self->f->describe(key);
     retval = PyTuple_New(dv.size());
+    retval_ = make_safe(retval);
+
     for (size_t k=0; k<dv.size(); ++k) {
       PyObject* entry = PyBobIo_HDF5DescriptorAsTuple(dv[k]);
-      if (!entry) {
-        Py_DECREF(retval);
-        return 0;
-      }
+      if (!entry) return 0;
       PyTuple_SET_ITEM(retval, k, entry);
     }
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "unknown exception caught while getting description for dataset `%s' in HDF5 file `%s'", key, self->f->filename().c_str());
+    return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -572,11 +583,14 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
   if (pyrel && PyObject_IsTrue(pyrel)) relative = true;
 
   PyObject* retval = 0;
+  std::shared_ptr<PyObject> retval_;
 
   try {
     std::vector<std::string> values;
     self->f->paths(values, relative);
     retval = PyTuple_New(values.size());
+    if (!retval) return 0;
+    retval_ = make_safe(retval);
     for (size_t i=0; i<values.size(); ++i) {
       PyTuple_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
     }
@@ -590,6 +604,7 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -749,21 +764,21 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
 
   PyObject* retval = PyArray_SimpleNew(shape.n(), pyshape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     self->f->read_buffer(p, pos, type, PyArray_DATA((PyArrayObject*)retval));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading dataset `%s' at position %d with descriptor `%s' from HDF5 file `%s'", p, pos, type.str().c_str(), self->f->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -823,16 +838,15 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
 
   PyObject* retval = PyTuple_New((*D)[0].size);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   for (uint64_t k=0; k<(*D)[0].size; ++k) {
     PyObject* item = PyBobIoHDF5File_Xread(self, key, 0, k);
-    if (!item) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!item) return 0;
     PyTuple_SET_ITEM(retval, k, item);
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -1116,6 +1130,8 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   bob::io::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  auto converted_ = make_xsafe(converted);
+
   if (is_array < 0) { ///< error condition, signal
     PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
@@ -1182,7 +1198,6 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
 
         case 3: //converted numpy.ndarray
           self->f->write_buffer(path, pos, type, PyArray_DATA((PyArrayObject*)converted));
-          Py_DECREF(converted);
           break;
 
         default:
@@ -1195,12 +1210,10 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_XDECREF(converted);
     return 0;
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "cannot replace object in position %" PY_FORMAT_SIZE_T "d at HDF5 file `%s': unknown exception caught", pos, self->f->filename().c_str());
-    Py_XDECREF(converted);
     return 0;
   }
 
@@ -1250,6 +1263,8 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
   bob::io::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  auto converted_ = make_xsafe(converted);
+
   if (is_array < 0) { ///< error condition, signal
     PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
@@ -1319,7 +1334,6 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
         case 3: //converted numpy.ndarray
           if (!self->f->contains(path)) self->f->create(path, type, true, compression);
           self->f->extend_buffer(path, type, PyArray_DATA((PyArrayObject*)converted));
-          Py_DECREF(converted);
           break;
 
         default:
@@ -1363,15 +1377,12 @@ static PyObject* PyBobIoHDF5File_Append(PyBobIoHDF5FileObject* self, PyObject *a
   if (PyTuple_Check(data) || PyList_Check(data)) {
     PyObject* iter = PyObject_GetIter(data);
     if (!iter) return 0;
+    auto iter_ = make_safe(iter);
     while (PyObject* item = PyIter_Next(iter)) {
+      auto item_ = make_safe(item);
       int ok = PyBobIoHDF5File_InnerAppend(self, path, item, compression);
-      Py_DECREF(item);
-      if (!ok) {
-        Py_DECREF(iter);
-        return 0;
-      }
+      if (!ok) return 0;
     }
-    Py_DECREF(iter);
     Py_RETURN_NONE;
   }
 
@@ -1442,6 +1453,8 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
   bob::io::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  auto converted_ = make_xsafe(converted);
+
   if (is_array < 0) { ///< error condition, signal
     PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
     return 0;
@@ -1512,7 +1525,6 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
         case 3: //converted numpy.ndarray
           if (!self->f->contains(path)) self->f->create(path, type, false, compression);
           self->f->write_buffer(path, 0, type, PyArray_DATA((PyArrayObject*)converted));
-          Py_DECREF(converted);
           break;
 
         default:
@@ -1700,21 +1712,21 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
 
   PyObject* retval = PyArray_SimpleNew(shape.n(), pyshape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     self->f->read_attribute(path, name, type, PyArray_DATA((PyArrayObject*)retval));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading array attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -1788,6 +1800,9 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
   std::map<std::string, bob::io::HDF5Type> attributes;
   self->f->listAttributes(path, attributes);
   PyObject* retval = PyDict_New();
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
+
   for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
     PyObject* item = 0;
     if (k->second.type() == bob::io::unsupported) {
@@ -1799,14 +1814,14 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
       Py_INCREF(Py_None);
     }
     else item = PyBobIoHDF5File_ReadAttribute(self, path, k->first.c_str(), k->second);
-    int status = PyDict_SetItemString(retval, k->first.c_str(), item);
-    Py_DECREF(item);
-    if (status != 0) {
-      Py_DECREF(retval);
-      return 0;
-    }
+
+    if (!item) return 0;
+    auto item_ = make_safe(item);
+
+    if (PyDict_SetItemString(retval, k->first.c_str(), item) != 0) return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -1937,7 +1952,6 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
 
         case 3: //converted numpy.ndarray
           self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)converted));
-          Py_DECREF(converted);
           break;
 
         default:
@@ -1947,12 +1961,10 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
     }
     catch (std::exception& e) {
       PyErr_SetString(PyExc_RuntimeError, e.what());
-      Py_XDECREF(converted);
       return 0;
     }
     catch (...) {
       PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing array attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
-      Py_XDECREF(converted);
       return 0;
     }
 
@@ -1976,6 +1988,8 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   bob::io::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+  auto converted_ = make_xsafe(converted);
+  
   if (is_array < 0) { ///< error condition, signal
     PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
     return 0;
@@ -2046,6 +2060,8 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
     if (!name) return 0;
 
     int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+    auto converted_ = make_xsafe(converted);
+
     if (is_array < 0) { ///< error condition, signal
       PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name.get(), path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
       return 0;
@@ -2159,28 +2175,23 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
   if (attrs) {
     PyObject* iter = PyObject_GetIter(attrs);
     if (!iter) return 0;
+    auto iter_ = make_safe(iter);
     while (PyObject* item = PyIter_Next(iter)) {
+      auto item_ = make_safe(item);
       auto name = PyBobIo_GetString(item);
-      Py_DECREF(item);
-      if (!name) {
-        Py_DECREF(iter);
-        return 0;
-      }
+      if (!name) return 0;
       try {
         self->f->deleteAttribute(path, name.get());
       }
       catch (std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
-        Py_DECREF(iter);
         return 0;
       }
       catch (...) {
         PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name.get(), path, self->f->filename().c_str());
-        Py_DECREF(iter);
         return 0;
       }
     }
-    Py_DECREF(iter);
     Py_RETURN_NONE;
   }
 

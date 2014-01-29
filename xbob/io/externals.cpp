@@ -7,6 +7,9 @@
 
 #include <Python.h>
 
+#ifdef NO_IMPORT_ARRAY
+#undef NO_IMPORT_ARRAY
+#endif
 #define XBOB_IO_MODULE
 #include <xbob.io/config.h>
 
@@ -18,6 +21,9 @@
 #include <bob/config.h>
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/VideoUtilities.h>
+
+#include <xbob.blitz/capi.h>
+#include <xbob.blitz/cleanup.h>
 
 extern "C" {
 
@@ -61,16 +67,16 @@ extern "C" {
 static int dict_set(PyObject* d, const char* key, const char* value) {
   PyObject* v = Py_BuildValue("s", value);
   if (!v) return 0;
+  auto v_ = make_safe(v);
   int retval = PyDict_SetItemString(d, key, v);
-  Py_DECREF(v);
   if (retval == 0) return 1; //all good
   return 0; //a problem occurred
 }
 
 static int dict_steal(PyObject* d, const char* key, PyObject* value) {
   if (!value) return 0;
+  auto value_ = make_safe(value);
   int retval = PyDict_SetItemString(d, key, value);
-  Py_DECREF(value);
   if (retval == 0) return 1; //all good
   return 0; //a problem occurred
 }
@@ -169,38 +175,32 @@ static PyObject* hdf5_version() {
 static PyObject* ffmpeg_version() {
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
 #if WITH_FFMPEG
 # if defined(FFMPEG_VERSION)
   if (std::strlen(FFMPEG_VERSION)) {
-    if (!dict_set(retval, "ffmpeg", FFMPEG_VERSION)) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(retval, "ffmpeg", FFMPEG_VERSION)) return 0;
   }
 # endif
   if (!dict_set(retval, "avformat", BOOST_PP_STRINGIZE(LIBAVFORMAT_VERSION))) {
-    Py_DECREF(retval);
     return 0;
   }
   if (!dict_set(retval, "avcodec", BOOST_PP_STRINGIZE(LIBAVCODEC_VERSION))) {
-    Py_DECREF(retval);
     return 0;
   }
   if (!dict_set(retval, "avutil", BOOST_PP_STRINGIZE(LIBAVUTIL_VERSION))) {
-    Py_DECREF(retval);
     return 0;
   }
   if (!dict_set(retval, "swscale", BOOST_PP_STRINGIZE(LIBSWSCALE_VERSION))) {
-    Py_DECREF(retval);
     return 0;
   }
 #else
   if (!dict_set(retval, "ffmpeg", "unavailable")) {
-    Py_DECREF(retval);
     return 0;
   }
 #endif
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -278,47 +278,25 @@ static PyObject* build_version_dictionary() {
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
-  if (!dict_steal(retval, "HDF5", hdf5_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "HDF5", hdf5_version())) return 0;
 
-  if (!dict_steal(retval, "FFmpeg", ffmpeg_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "FFmpeg", ffmpeg_version())) return 0;
 
-  if (!dict_steal(retval, "libjpeg", libjpeg_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "libjpeg", libjpeg_version())) return 0;
 
-  if (!dict_set(retval, "libnetpbm", "Unknown version")) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_set(retval, "libnetpbm", "Unknown version")) return 0;
 
-  if (!dict_steal(retval, "libpng", libpng_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "libpng", libpng_version())) return 0;
 
-  if (!dict_steal(retval, "libtiff", libtiff_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "libtiff", libtiff_version())) return 0;
 
-  if (!dict_steal(retval, "giflib", giflib_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "giflib", giflib_version())) return 0;
 
-  if (!dict_steal(retval, "MatIO", matio_version())) {
-    Py_DECREF(retval);
-    return 0;
-  }
+  if (!dict_steal(retval, "MatIO", matio_version())) return 0;
 
+  Py_INCREF(retval);
   return retval;
 }
 
@@ -537,21 +515,16 @@ static PyObject* get_video_codecs(void (*f)(std::map<std::string, const AVCodec*
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   for (auto k=m.begin(); k!=m.end(); ++k) {
     PyObject* pyvalue = describe_codec(k->second);
-    if (!pyvalue) {
-      Py_DECREF(retval);
-      return 0;
-    }
-    if (PyDict_SetItemString(retval, k->first.c_str(), pyvalue) != 0) {
-      Py_DECREF(pyvalue);
-      Py_DECREF(retval);
-      return 0;
-    }
-    Py_DECREF(pyvalue);
+    if (!pyvalue) return 0;
+    auto pyvalue_ = make_safe(pyvalue);
+    if (PyDict_SetItemString(retval, k->first.c_str(), pyvalue) != 0) return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -592,60 +565,39 @@ static PyObject* get_video_iformats(void (*f)(std::map<std::string, AVInputForma
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   for (auto k=m.begin(); k!=m.end(); ++k) {
 
     PyObject* property = PyDict_New();
-    if (!property) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!property) return 0;
+    auto property_ = make_safe(property);
 
-    if (!dict_set(property, "name", k->second->name)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(property, "name", k->second->name)) return 0;
 
-    if (!dict_set(property, "long_name", k->second->long_name)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(property, "long_name", k->second->long_name)) return 0;
 
     // get extensions
     std::vector<std::string> exts;
     bob::io::detail::ffmpeg::tokenize_csv(k->second->extensions, exts);
 
     PyObject* ext_list = PyList_New(0);
-    if (!ext_list) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!ext_list) return 0;
+    auto ext_list_ = make_safe(ext_list);
 
     for (auto ext=exts.begin(); ext!=exts.end(); ++ext) {
-      if (!list_append(ext_list, ext->c_str())) {
-        Py_DECREF(ext_list);
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
+      if (!list_append(ext_list, ext->c_str())) return 0;
     }
 
-    if (!dict_steal(property, "extensions", ext_list)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    Py_INCREF(ext_list);
+    if (!dict_steal(property, "extensions", ext_list)) return 0;
 
-    if (!dict_steal(retval, k->first.c_str(), property)) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    Py_INCREF(property);
+    if (!dict_steal(retval, k->first.c_str(), property)) return 0;
 
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -687,59 +639,34 @@ static PyObject* get_video_oformats(bool supported) {
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   for (auto k=m.begin(); k!=m.end(); ++k) {
 
     PyObject* property = PyDict_New();
-    if (!property) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!property) return 0;
+    auto property_ = make_safe(property);
 
-    if (!dict_set(property, "name", k->second->name)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(property, "name", k->second->name)) return 0;
 
-    if (!dict_set(property, "long_name", k->second->long_name)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(property, "long_name", k->second->long_name)) return 0;
 
-    if (!dict_set(property, "mime_type", k->second->mime_type)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_set(property, "mime_type", k->second->mime_type)) return 0;
 
     // get extensions
     std::vector<std::string> exts;
     bob::io::detail::ffmpeg::tokenize_csv(k->second->extensions, exts);
 
     PyObject* ext_list = PyList_New(0);
-    if (!ext_list) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!ext_list) return 0;
+    auto ext_list_ = make_safe(ext_list);
 
     for (auto ext=exts.begin(); ext!=exts.end(); ++ext) {
-
-      if (!list_append(ext_list, ext->c_str())) {
-        Py_DECREF(ext_list);
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
+      if (!list_append(ext_list, ext->c_str())) return 0;
     }
 
-    if (!dict_steal(property, "extensions", ext_list)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    Py_INCREF(ext_list);
+    if (!dict_steal(property, "extensions", ext_list)) return 0;
 
     /**  get recommended codec **/
     PyObject* default_codec = 0;
@@ -747,11 +674,7 @@ static PyObject* get_video_oformats(bool supported) {
       AVCodec* codec = avcodec_find_encoder(k->second->video_codec);
       if (codec) {
         default_codec = describe_codec(codec);
-        if (!default_codec) {
-          Py_DECREF(property);
-          Py_DECREF(retval);
-          return 0;
-        }
+        if (!default_codec) return 0;
       }
     }
 
@@ -760,11 +683,7 @@ static PyObject* get_video_oformats(bool supported) {
       default_codec = Py_None;
     }
 
-    if (!dict_steal(property, "default_codec", default_codec)) {
-      Py_DECREF(property);
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!dict_steal(property, "default_codec", default_codec)) return 0;
 
     /** get supported codec list **/
     if (supported) {
@@ -772,41 +691,27 @@ static PyObject* get_video_oformats(bool supported) {
       bob::io::detail::ffmpeg::oformat_supported_codecs(k->second->name, codecs);
 
       PyObject* supported_codecs = PyDict_New();
-      if (!supported_codecs) {
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
+      if (!supported_codecs) return 0;
+      auto supported_codecs_ = make_safe(supported_codecs);
 
       for (auto c=codecs.begin(); c!=codecs.end(); ++c) {
         PyObject* codec_descr = describe_codec(*c);
-        if (!codec_descr) {
-          Py_DECREF(supported_codecs);
-          Py_DECREF(property);
-          Py_DECREF(retval);
-          return 0;
-        }
-        if (!dict_steal(supported_codecs, (*c)->name, codec_descr)) {
-          Py_DECREF(property);
-          Py_DECREF(retval);
-          return 0;
-        }
+        auto codec_descr_ = make_safe(codec_descr);
+        if (!codec_descr) return 0;
+        Py_INCREF(codec_descr);
+        if (!dict_steal(supported_codecs, (*c)->name, codec_descr)) return 0;
       }
 
-      if (!dict_steal(property, "supported_codecs", supported_codecs)) {
-        Py_DECREF(property);
-        Py_DECREF(retval);
-        return 0;
-      }
+      Py_INCREF(supported_codecs);
+      if (!dict_steal(property, "supported_codecs", supported_codecs)) return 0;
     }
 
-    if (!dict_steal(retval, k->first.c_str(), property)) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    Py_INCREF(property);
+    if (!dict_steal(retval, k->first.c_str(), property)) return 0;
 
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -849,19 +754,13 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   for (auto it=table.begin(); it!=table.end(); ++it) {
     PyObject* pyvalue = make_object(it->second.c_str());
-    if (!pyvalue) {
-      Py_DECREF(retval);
-      return 0;
-    }
-    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) {
-      Py_DECREF(pyvalue);
-      Py_DECREF(retval);
-      return 0;
-    }
-    Py_DECREF(pyvalue);
+    if (!pyvalue) return 0;
+    auto pyvalue_ = make_safe(retval);
+    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) return 0;
   }
   return retval;
 
@@ -952,27 +851,34 @@ static PyModuleDef module_definition = {
 };
 #endif
 
-PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
+static PyObject* create_module (void) {
 
 # if PY_VERSION_HEX >= 0x03000000
   PyObject* m = PyModule_Create(&module_definition);
-  if (!m) return 0;
 # else
-  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, 
-      module_methods, module_docstr);
-  if (!m) return;
+  PyObject* m = Py_InitModule3(XBOB_EXT_MODULE_NAME, module_methods, module_docstr);
 # endif
+  if (!m) return 0;
+  auto m_ = make_safe(m); ///< protects against early returns
 
-  /* register some constants */
-  PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION);
-  PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION);
-  PyModule_AddObject(m, "versions", build_version_dictionary());
+  /* register version numbers and constants */
+  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0) 
+    return 0;
+  if (PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION) < 0)
+    return 0;
+  if (PyModule_AddObject(m, "versions", build_version_dictionary()) < 0) return 0;
 
-  /* imports the NumPy C-API */
-  import_array();
+  /* imports xbob.blitz C-API + dependencies */
+  if (import_xbob_blitz() < 0) return 0;
 
-# if PY_VERSION_HEX >= 0x03000000
+  Py_INCREF(m);
   return m;
-# endif
 
+}
+
+PyMODINIT_FUNC XBOB_EXT_ENTRY_NAME (void) {
+# if PY_VERSION_HEX >= 0x03000000
+  return
+# endif
+    create_module();
 }

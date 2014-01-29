@@ -353,6 +353,7 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   Py_ssize_t frames_read = 0;
 
@@ -362,12 +363,10 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading video from file `%s'", self->v->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
@@ -380,6 +379,7 @@ static PyObject* PyBobIoVideoReader_Load(PyBobIoVideoReaderObject* self, PyObjec
     PyArray_Resize((PyArrayObject*)retval, &newshape, 1, NPY_ANYORDER);
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -432,6 +432,7 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     auto it = self->v->begin();
@@ -441,15 +442,14 @@ static PyObject* PyBobIoVideoReader_GetIndex (PyBobIoVideoReaderObject* self, Py
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->v->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -478,6 +478,7 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
 
   PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   Py_ssize_t counter;
   Py_ssize_t lo, hi, st;
@@ -496,17 +497,12 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
     //get slice to fill
     PyObject* islice = Py_BuildValue("n", counter);
     counter = (st == -step)? counter-1 : counter+1;
-    if (!islice) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!islice) return 0;
+    auto islice_ = make_safe(islice);
 
     PyObject* item = PyObject_GetItem(retval, islice);
-    Py_DECREF(islice);
-    if (!item) {
-      Py_DECREF(retval);
-      return 0;
-    }
+    if (!item) return 0;
+    auto item_ = make_safe(item);
 
     try {
       bobskin skin((PyArrayObject*)item, info.dtype);
@@ -515,19 +511,16 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
     }
     catch (std::exception& e) {
       if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-      Py_DECREF(retval);
-      Py_DECREF(item);
       return 0;
     }
     catch (...) {
       if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->v->filename().c_str());
-      Py_DECREF(retval);
-      Py_DECREF(item);
       return 0;
     }
 
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -596,6 +589,7 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
 
   PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
   try {
     bobskin skin((PyArrayObject*)retval, info.dtype);
@@ -603,15 +597,14 @@ static PyObject* PyBobIoVideoReaderIterator_Next (PyBobIoVideoReaderIteratorObje
   }
   catch (std::exception& e) {
     if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    Py_DECREF(retval);
     return 0;
   }
   catch (...) {
     if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading frame #%" PY_FORMAT_SIZE_T "d from file `%s'", self->iter->cur(), self->pyreader->v->filename().c_str());
-    Py_DECREF(retval);
     return 0;
   }
 
+  Py_INCREF(retval);
   return retval;
 
 }

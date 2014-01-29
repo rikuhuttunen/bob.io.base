@@ -207,18 +207,6 @@ typedef struct {
 
   /* This section is used in modules that use `xbob.io's' C-API */
 
-/************************************************************************
- * Macros to avoid symbol collision and allow for separate compilation. *
- * We pig-back on symbols already defined for NumPy and apply the same  *
- * set of rules here, creating our own API symbol names.                *
- ************************************************************************/
-
-#  if defined(PY_ARRAY_UNIQUE_SYMBOL)
-#    define XBOB_IO_MAKE_API_NAME_INNER(a) XBOB_IO_ ## a
-#    define XBOB_IO_MAKE_API_NAME(a) XBOB_IO_MAKE_API_NAME_INNER(a)
-#    define PyXbobIo_API XBOB_IO_MAKE_API_NAME(PY_ARRAY_UNIQUE_SYMBOL)
-#  endif
-
 #  if defined(NO_IMPORT_ARRAY)
   extern void **PyXbobIo_API;
 #  else
