@@ -442,7 +442,7 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   PyObject* retval = 0;
-  std::shared_ptr<PyObject> retval_;
+  boost::shared_ptr<PyObject> retval_;
 
   try {
     const std::vector<bob::io::HDF5Descriptor>& dv = self->f->describe(key);
@@ -583,7 +583,7 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
   if (pyrel && PyObject_IsTrue(pyrel)) relative = true;
 
   PyObject* retval = 0;
-  std::shared_ptr<PyObject> retval_;
+  boost::shared_ptr<PyObject> retval_;
 
   try {
     std::vector<std::string> values;
@@ -887,17 +887,17 @@ static void null_char_array_deleter(char*) {}
 static void char_array_deleter(char* o) { delete[] o; }
 #endif
 
-static std::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
+static boost::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
 
 #if PY_VERSION_HEX < 0x03000000
 
-  return std::shared_ptr<char>(PyString_AsString(o), null_char_array_deleter);
+  return boost::shared_ptr<char>(PyString_AsString(o), null_char_array_deleter);
 
 #else
 
   if (PyBytes_Check(o)) {
     //fast way out
-    return std::shared_ptr<char>(PyBytes_AsString(o), null_char_array_deleter);
+    return boost::shared_ptr<char>(PyBytes_AsString(o), null_char_array_deleter);
   }
 
   PyObject* bytes = 0;
@@ -916,7 +916,7 @@ static std::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
   char* copy = new char[length];
   std::strncpy(copy, PyBytes_AsString(bytes), length);
 
-  return std::shared_ptr<char>(copy, char_array_deleter);
+  return boost::shared_ptr<char>(copy, char_array_deleter);
 
 #endif
 
