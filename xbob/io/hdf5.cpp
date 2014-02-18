@@ -332,6 +332,7 @@ static bob::io::hdf5type PyBobIo_H5FromTypenum (int type_num) {
 #ifdef NPY_COMPLEX256
     case NPY_COMPLEX256: return bob::io::c256;
 #endif
+#if define(__LP64__) || defined(__APPLE__)
     case NPY_LONGLONG:
                          switch (NPY_BITSOF_LONGLONG) {
                            case 8: return bob::io::i8;
@@ -350,6 +351,7 @@ static bob::io::hdf5type PyBobIo_H5FromTypenum (int type_num) {
                            default: return bob::io::unsupported;
                          }
                          break;
+#endif
     default:             return bob::io::unsupported;
   }
 
@@ -1989,7 +1991,7 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
   auto converted_ = make_xsafe(converted);
-  
+
   if (is_array < 0) { ///< error condition, signal
     PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
     return 0;
