@@ -120,11 +120,6 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
 
   auto filename_ = make_safe(filename);
 
-  if (pycheck && PyObject_IsTrue(pycheck)) {
-    PyErr_SetString(PyExc_TypeError, "argument to `check' must be a boolean");
-    return -1;
-  }
-
   std::string codec_str = codec?codec:"";
   std::string format_str = format?format:"";
   bool check = PyObject_IsTrue(pycheck);
