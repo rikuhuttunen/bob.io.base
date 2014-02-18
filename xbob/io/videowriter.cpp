@@ -114,7 +114,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
   PyObject* pycheck = 0;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&nn|ddnssO", kwlist,
-        &PyBobIo_FilenameConverter, &filename, 
+        &PyBobIo_FilenameConverter, &filename,
         &height, &width, &framerate, &bitrate, &gop, &codec,
         &format, &pycheck)) return -1;
 
@@ -125,8 +125,9 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
     return -1;
   }
 
-  bool check = false;
-  if (pycheck && (pycheck == Py_True)) check = true;
+  std::string codec_str = codec?codec:"";
+  std::string format_str = format?format:"";
+  bool check = PyObject_IsTrue(pycheck);
 
 #if PY_VERSION_HEX >= 0x03000000
   const char* c_filename = PyBytes_AS_STRING(filename);
@@ -136,7 +137,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
 
   try {
     self->v = boost::make_shared<bob::io::VideoWriter>(c_filename, height, width,
-        framerate, bitrate, gop, codec, format, check);
+        framerate, bitrate, gop, codec_str, format_str, check);
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
