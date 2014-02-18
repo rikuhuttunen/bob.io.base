@@ -6,8 +6,7 @@
  Python bindings for bob.io
 ============================
 
-This package contains a set of Pythonic bindings for Bob's io packages and
-functionality.
+This package contains a set of Pythonic bindings for Bob's I/O functionality.
 
 Installation
 ------------
