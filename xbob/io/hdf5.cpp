@@ -332,7 +332,7 @@ static bob::io::hdf5type PyBobIo_H5FromTypenum (int type_num) {
 #ifdef NPY_COMPLEX256
     case NPY_COMPLEX256: return bob::io::c256;
 #endif
-#if define(__LP64__) || defined(__APPLE__)
+#if defined(__LP64__) || defined(__APPLE__)
     case NPY_LONGLONG:
                          switch (NPY_BITSOF_LONGLONG) {
                            case 8: return bob::io::i8;
