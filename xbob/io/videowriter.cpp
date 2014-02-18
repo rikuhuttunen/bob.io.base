@@ -111,7 +111,7 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
   Py_ssize_t gop = 12;
   char* codec = 0;
   char* format = 0;
-  PyObject* pycheck = 0;
+  PyObject* pycheck = Py_True;
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&nn|ddnssO", kwlist,
         &PyBobIo_FilenameConverter, &filename,
