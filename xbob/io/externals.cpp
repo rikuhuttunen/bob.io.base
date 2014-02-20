@@ -759,9 +759,12 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
   for (auto it=table.begin(); it!=table.end(); ++it) {
     PyObject* pyvalue = make_object(it->second.c_str());
     if (!pyvalue) return 0;
-    auto pyvalue_ = make_safe(retval);
-    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) return 0;
+    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) {
+      return 0;
+    }
   }
+
+  Py_INCREF(retval);
   return retval;
 
 }
@@ -846,7 +849,7 @@ static PyModuleDef module_definition = {
   XBOB_EXT_MODULE_NAME,
   module_docstr,
   -1,
-  module_methods, 
+  module_methods,
   0, 0, 0, 0
 };
 #endif
@@ -862,7 +865,7 @@ static PyObject* create_module (void) {
   auto m_ = make_safe(m); ///< protects against early returns
 
   /* register version numbers and constants */
-  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0) 
+  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0)
     return 0;
   if (PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION) < 0)
     return 0;
