@@ -305,7 +305,7 @@ Saving arrays to the :py:class:`xbob.io.File` is as easy, just call the
 .. doctest::
 
   >>> f = xbob.io.File('copy1.hdf5', 'w')
-  >>> f.write(a)
+  >>> f.write(array)
 
 Numpy ndarray shortcuts
 -----------------------
