@@ -135,8 +135,8 @@ PyDoc_STRVAR(s_width_str, "width");
 PyDoc_STRVAR(s_width_doc,
 "[int] The width of each frame in the video (a multiple of 2)");
 
-Py_ssize_t PyBobIoVideoReader_Len(PyBobIoVideoReaderObject* self) {
-  return self->v->numberOfFrames();
+PyObject* PyBobIoVideoReader_NumberOfFrames(PyBobIoVideoReaderObject* self) {
+  return Py_BuildValue("n", self->v->numberOfFrames());
 }
 
 PyDoc_STRVAR(s_number_of_frames_str, "number_of_frames");
@@ -239,7 +239,7 @@ static PyGetSetDef PyBobIoVideoReader_getseters[] = {
     },
     {
       s_number_of_frames_str,
-      (getter)PyBobIoVideoReader_Len,
+      (getter)PyBobIoVideoReader_NumberOfFrames,
       0,
       s_number_of_frames_doc,
       0,
@@ -458,7 +458,7 @@ static PyObject* PyBobIoVideoReader_GetSlice (PyBobIoVideoReaderObject* self, Py
 
   Py_ssize_t start, stop, step, slicelength;
 #if PY_VERSION_HEX < 0x03000000
-  if (PySlice_GetIndicesEx(slice, 
+  if (PySlice_GetIndicesEx(slice,
 #else
   if (PySlice_GetIndicesEx(reinterpret_cast<PyObject*>(slice),
 #endif
@@ -539,6 +539,10 @@ static PyObject* PyBobIoVideoReader_GetItem (PyBobIoVideoReaderObject* self, PyO
          Py_TYPE(item)->tp_name);
      return 0;
    }
+}
+
+Py_ssize_t PyBobIoVideoReader_Len(PyBobIoVideoReaderObject* self) {
+  return self->v->numberOfFrames();
 }
 
 static PyMappingMethods PyBobIoVideoReader_Mapping = {

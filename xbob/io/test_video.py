@@ -8,6 +8,7 @@
 """Runs some video tests
 """
 
+import os
 import numpy
 import nose.tools
 from . import test_utils
@@ -228,3 +229,97 @@ def test_can_use_array_interface():
 
   for frame_id, frame in zip(range(array.shape[0]), iv.__iter__()):
     assert numpy.array_equal(array[frame_id,:,:,:], frame)
+
+@test_utils.ffmpeg_found()
+def test_video_reading_after_writing():
+
+  from . import test_utils
+  tmpname = test_utils.temporary_filename(suffix='.avi')
+
+  from . import VideoWriter, VideoReader
+
+  try:
+
+    width = 20
+    height = 20
+    framerate = 24
+
+    outv = VideoWriter(tmpname, height, width, framerate)
+    for i in range(0, 3):
+      newframe = (numpy.random.random_integers(0,255,(3,height,width)))
+      outv.append(newframe.astype('uint8'))
+    outv.close()
+
+    # this should not crash
+    i = VideoReader(tmpname)
+    nose.tools.eq_(i.number_of_frames, 3)
+    nose.tools.eq_(i.width, width)
+    nose.tools.eq_(i.height, height)
+
+  finally:
+    # And we erase both files after this
+    if os.path.exists(tmpname): os.unlink(tmpname)
+
+@test_utils.ffmpeg_found()
+def test_video_writer_close():
+
+  from . import test_utils
+  tmpname = test_utils.temporary_filename(suffix='.avi')
+
+  from . import VideoWriter, VideoReader
+
+  try:
+
+    width = 20
+    height = 20
+    framerate = 24
+
+    outv = VideoWriter(tmpname, height, width, framerate)
+    for i in range(0, 3):
+      newframe = (numpy.random.random_integers(0,255,(3,height,width)))
+      outv.append(newframe.astype('uint8'))
+    outv.close()
+
+    # this should not crash
+    nose.tools.eq_(outv.filename, tmpname)
+    nose.tools.eq_(outv.width, width)
+    nose.tools.eq_(outv.height, height)
+    nose.tools.eq_(len(outv), 3)
+    nose.tools.eq_(outv.number_of_frames, len(outv))
+    nose.tools.eq_(outv.frame_rate, framerate)
+    assert outv.bit_rate
+    assert outv.gop
+
+  finally:
+    # And we erase both files after this
+    if os.path.exists(tmpname): os.unlink(tmpname)
+
+@test_utils.ffmpeg_found()
+def test_closed_video_writer_raises():
+
+  from . import test_utils
+  tmpname = test_utils.temporary_filename(suffix='.avi')
+
+  from . import VideoWriter
+
+  try:
+
+    width = 20
+    height = 20
+    framerate = 24
+
+    outv = VideoWriter(tmpname, height, width, framerate)
+    for i in range(0, 3):
+      newframe = (numpy.random.random_integers(0,255,(3,height,width)))
+      outv.append(newframe.astype('uint8'))
+    outv.close()
+
+    nose.tools.assert_raises(RuntimeError, outv.__str__)
+    nose.tools.assert_raises(RuntimeError, outv.__repr__)
+    nose.tools.assert_raises(RuntimeError, outv.append, newframe)
+
+    del outv
+
+  finally:
+    # And we erase both files after this
+    if os.path.exists(tmpname): os.unlink(tmpname)

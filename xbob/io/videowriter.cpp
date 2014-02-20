@@ -131,8 +131,8 @@ static int PyBobIoVideoWriter_Init(PyBobIoVideoWriterObject* self,
 #endif
 
   try {
-    self->v = boost::make_shared<bob::io::VideoWriter>(c_filename, height, width,
-        framerate, bitrate, gop, codec_str, format_str, check);
+    self->v = boost::make_shared<bob::io::VideoWriter>(c_filename,
+        height, width, framerate, bitrate, gop, codec_str, format_str, check);
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -170,8 +170,8 @@ PyDoc_STRVAR(s_width_str, "width");
 PyDoc_STRVAR(s_width_doc,
 "[int] The width of each frame in the video (a multiple of 2)");
 
-Py_ssize_t PyBobIoVideoWriter_Len(PyBobIoVideoWriterObject* self) {
-  return self->v->numberOfFrames();
+PyObject* PyBobIoVideoWriter_NumberOfFrames(PyBobIoVideoWriterObject* self) {
+  return Py_BuildValue("n", self->v->numberOfFrames());
 }
 
 PyDoc_STRVAR(s_number_of_frames_str, "number_of_frames");
@@ -187,6 +187,11 @@ PyDoc_STRVAR(s_duration_doc,
 "[int] Total duration of this video file in microseconds (long)");
 
 PyObject* PyBobIoVideoWriter_FormatName(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
   return Py_BuildValue("s", self->v->formatName().c_str());
 }
 
@@ -195,6 +200,11 @@ PyDoc_STRVAR(s_format_name_doc,
 "[str] Short name of the format in which this video file was recorded in");
 
 PyObject* PyBobIoVideoWriter_FormatLongName(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
   return Py_BuildValue("s", self->v->formatLongName().c_str());
 }
 
@@ -203,6 +213,11 @@ PyDoc_STRVAR(s_format_long_name_doc,
 "[str] Full name of the format in which this video file was recorded in");
 
 PyObject* PyBobIoVideoWriter_CodecName(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
   return Py_BuildValue("s", self->v->codecName().c_str());
 }
 
@@ -211,6 +226,11 @@ PyDoc_STRVAR(s_codec_name_doc,
 "[str] Short name of the codec in which this video file was recorded in");
 
 PyObject* PyBobIoVideoWriter_CodecLongName(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
   return Py_BuildValue("s", self->v->codecLongName().c_str());
 }
 
@@ -264,6 +284,12 @@ PyDoc_STRVAR(s_frame_type_doc,
 "[tuple] Typing information to load each frame separatedly");
 
 static PyObject* PyBobIoVideoWriter_Print(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
+
   return Py_BuildValue("s", self->v->info().c_str());
 }
 
@@ -305,7 +331,7 @@ static PyGetSetDef PyBobIoVideoWriter_getseters[] = {
     },
     {
       s_number_of_frames_str,
-      (getter)PyBobIoVideoWriter_Len,
+      (getter)PyBobIoVideoWriter_NumberOfFrames,
       0,
       s_number_of_frames_doc,
       0,
@@ -398,6 +424,12 @@ static PyGetSetDef PyBobIoVideoWriter_getseters[] = {
 };
 
 static PyObject* PyBobIoVideoWriter_Repr(PyBobIoVideoWriterObject* self) {
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
+
   return
 # if PY_VERSION_HEX >= 0x03000000
   PyUnicode_FromFormat
@@ -408,6 +440,12 @@ static PyObject* PyBobIoVideoWriter_Repr(PyBobIoVideoWriterObject* self) {
 }
 
 static PyObject* PyBobIoVideoWriter_Append(PyBobIoVideoWriterObject* self, PyObject *args, PyObject* kwds) {
+
+  if (!self->v->is_opened()) {
+    PyErr_Format(PyExc_RuntimeError, "`%s' for `%s' is closed",
+        Py_TYPE(self)->tp_name, self->v->filename().c_str());
+    return 0;
+  }
 
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"frame", 0};
@@ -496,6 +534,10 @@ static PyMethodDef PyBobIoVideoWriter_Methods[] = {
     },
     {0}  /* Sentinel */
 };
+
+Py_ssize_t PyBobIoVideoWriter_Len(PyBobIoVideoWriterObject* self) {
+  return self->v->numberOfFrames();
+}
 
 static PyMappingMethods PyBobIoVideoWriter_Mapping = {
     (lenfunc)PyBobIoVideoWriter_Len, //mp_lenght
