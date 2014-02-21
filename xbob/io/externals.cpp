@@ -45,6 +45,10 @@ extern "C" {
 #if WITH_FFMPEG
 #  include <libavformat/avformat.h>
 #  include <libavcodec/avcodec.h>
+#  if LIBAVUTIL_VERSION_INT >= 0x320f01 //50.15.1 @ ffmpeg-0.6
+#    include <libavutil/opt.h>
+#    include <libavutil/pixdesc.h>
+#  endif
 #  include <libavutil/avutil.h>
 #  include <libswscale/swscale.h>
 #  if !HAVE_FFMPEG_AVCODEC_AVCODECID
