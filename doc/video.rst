@@ -1,20 +1,8 @@
 .. vim: set fileencoding=utf-8 :
 .. Andre Anjos <andre.anjos@idiap.ch>
-.. Wed 20 Mar 2013 11:30:02 CET 
-.. 
-.. Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
-.. 
-.. This program is free software: you can redistribute it and/or modify
-.. it under the terms of the GNU General Public License as published by
-.. the Free Software Foundation, version 3 of the License.
-.. 
-.. This program is distributed in the hope that it will be useful,
-.. but WITHOUT ANY WARRANTY; without even the implied warranty of
-.. MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-.. GNU General Public License for more details.
-.. 
-.. You should have received a copy of the GNU General Public License
-.. along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.. Wed 20 Mar 2013 11:30:02 CET
+..
+.. Copyright (C) 2011-2014 Idiap Research Institute, Martigny, Switzerland
 
 =============================
  Using Videos with |project|
@@ -57,7 +45,7 @@ To get a list of all FFmpeg_ (or libav_) supported formats for a given build of
 .. code-block:: sh
 
   $ bob_video_test.py --list-all-codecs # lists all codecs available
-  
+
   $ bob_video_test.py --list-all-formats # lists all formats available
 
 These listings represent all that is compiled with your current installation of
@@ -67,7 +55,7 @@ another set of command-line options:
 .. code-block:: sh
 
   $ bob_video_test.py --list-codecs # lists all codecs currently supported
-  
+
   $ bob_video_test.py --list-formats # lists all formats currently supported
 
 The program ``bob_video_test.py`` can be used to run a sequence of tests using
@@ -98,12 +86,12 @@ output:
   Running 4 test(s)...CSNU
 
   =========== ===== ======= =======================================
-   test        fmt   codec   figure (lower means better quality)           
+   test        fmt   codec   figure (lower means better quality)
   =========== ===== ======= =======================================
    color       mov   h264    4.603 min=0.890@22 max=8.387@9
    frameskip   mov   h264    0.108 min=0.009@11 max=0.344@0
    noise       mov   h264    44.900 min=43.916@4 max=46.103@29
-   user        mov   h264    1.983 min=1.525@0 max=2.286@7 
+   user        mov   h264    1.983 min=1.525@0 max=2.286@7
   =========== ===== ======= =======================================
 
 Each line in the output table represents the average distortion patterns for
@@ -140,7 +128,7 @@ format (``--format``), the codec (``--codec``) and the tests to execute. For
 example:
 
 .. code-block:: sh
-  
+
   # execute only the user video test with a user provided video and
   # using the H.264 built-in codec and a MOV output file format.
   $ xbob_video_test.py --format mov --codec h264 --user-video=test_sample.avi -- user
@@ -203,176 +191,176 @@ Idiap Linux (Xubuntu), version 12.10 + libav 0.8.3
 ==================================================
 
 =========== ===== ============ ================================================
- test        fmt     codec      figure (lower means better quality)           
+ test        fmt     codec      figure (lower means better quality)
 =========== ===== ============ ================================================
- color       avi   ffv1         4.569 min=0.888\@22 max=8.377\@9                
- color       avi   h264         4.603 min=0.890\@22 max=8.388\@9                
- color       avi   libvpx       4.657 min=0.955\@26 max=8.528\@9                
- color       avi   libx264      4.603 min=0.890\@22 max=8.388\@9                
- color       avi   mjpeg        4.676 min=0.965\@22 max=8.469\@9                
- color       avi   mpeg1video   4.781 min=1.103\@28 max=8.483\@9                
- color       avi   mpeg2video   4.741 min=1.004\@16 max=8.466\@9                
- color       avi   mpeg4        4.892 min=1.087\@24 max=8.658\@9                
- color       avi   msmpeg4      4.921 min=1.073\@24 max=8.717\@9                
- color       avi   msmpeg4v2    4.921 min=1.073\@24 max=9.181\@17               
- color       avi   vp8          4.657 min=0.955\@26 max=8.528\@9                
- color       avi   wmv1         4.871 min=1.087\@24 max=8.729\@9                
- color       avi   wmv2         4.884 min=1.093\@24 max=8.823\@9                
- color       avi   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- color       mov   ffv1         4.569 min=0.888\@22 max=8.377\@9                
- color       mov   h264         4.603 min=0.890\@22 max=8.387\@9                
- color       mov   libvpx       4.657 min=0.955\@26 max=8.528\@9                
- color       mov   libx264      4.603 min=0.890\@22 max=8.387\@9                
- color       mov   mjpeg        4.676 min=0.965\@22 max=8.469\@9                
- color       mov   mpeg1video   4.781 min=1.103\@28 max=8.483\@9                
- color       mov   mpeg2video   4.741 min=1.004\@16 max=8.466\@9                
- color       mov   mpeg4        4.892 min=1.087\@24 max=8.658\@9                
- color       mov   msmpeg4      4.921 min=1.073\@24 max=8.717\@9                
- color       mov   msmpeg4v2    4.921 min=1.073\@24 max=9.181\@17               
- color       mov   vp8          4.657 min=0.955\@26 max=8.528\@9                
- color       mov   wmv1         4.871 min=1.087\@24 max=8.729\@9                
- color       mov   wmv2         4.884 min=1.093\@24 max=8.823\@9                
- color       mov   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- color       mp4   ffv1         format+codec unsupported                      
- color       mp4   h264         4.603 min=0.890\@22 max=8.387\@9                
- color       mp4   libvpx       format+codec unsupported                      
- color       mp4   libx264      4.603 min=0.890\@22 max=8.387\@9                
- color       mp4   mjpeg        4.676 min=0.965\@22 max=8.469\@9                
- color       mp4   mpeg1video   4.781 min=1.103\@28 max=8.483\@9                
- color       mp4   mpeg2video   4.741 min=1.004\@16 max=8.466\@9                
- color       mp4   mpeg4        4.892 min=1.087\@24 max=8.658\@9                
- color       mp4   msmpeg4      format+codec unsupported                      
- color       mp4   msmpeg4v2    format+codec unsupported                      
- color       mp4   vp8          format+codec unsupported                      
- color       mp4   wmv1         format+codec unsupported                      
- color       mp4   wmv2         format+codec unsupported                      
- color       mp4   zlib         format+codec unsupported                      
- frameskip   avi   ffv1         0.018 min=0.002\@11 max=0.029\@8                
- frameskip   avi   h264         0.108 min=0.009\@11 max=0.344\@0                
- frameskip   avi   libvpx       0.129 min=0.042\@11 max=0.198\@8                
- frameskip   avi   libx264      0.108 min=0.009\@11 max=0.344\@0                
- frameskip   avi   mjpeg        0.380 min=0.141\@11 max=1.108\@0                
- frameskip   avi   mpeg1video   0.426 min=0.237\@17 max=1.338\@0                
- frameskip   avi   mpeg2video   0.411 min=0.223\@15 max=1.284\@0                
- frameskip   avi   mpeg4        0.454 min=0.263\@17 max=0.858\@0                
- frameskip   avi   msmpeg4      1.684 min=0.257\@12 max=3.766\@15               
- frameskip   avi   msmpeg4v2    1.683 min=0.257\@12 max=3.765\@15               
- frameskip   avi   vp8          0.129 min=0.042\@11 max=0.198\@8                
- frameskip   avi   wmv1         0.627 min=0.191\@11 max=1.568\@8                
- frameskip   avi   wmv2         0.626 min=0.191\@11 max=1.566\@8                
- frameskip   avi   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- frameskip   mov   ffv1         0.018 min=0.002\@11 max=0.029\@8                
- frameskip   mov   h264         0.108 min=0.009\@11 max=0.344\@0                
- frameskip   mov   libvpx       0.129 min=0.042\@11 max=0.198\@8                
- frameskip   mov   libx264      0.108 min=0.009\@11 max=0.344\@0                
- frameskip   mov   mjpeg        0.380 min=0.141\@11 max=1.108\@0                
- frameskip   mov   mpeg1video   0.426 min=0.237\@17 max=1.338\@0                
- frameskip   mov   mpeg2video   0.411 min=0.223\@15 max=1.284\@0                
- frameskip   mov   mpeg4        0.454 min=0.263\@17 max=0.858\@0                
- frameskip   mov   msmpeg4      1.684 min=0.257\@12 max=3.766\@15               
- frameskip   mov   msmpeg4v2    1.683 min=0.257\@12 max=3.765\@15               
- frameskip   mov   vp8          0.129 min=0.042\@11 max=0.198\@8                
- frameskip   mov   wmv1         0.627 min=0.191\@11 max=1.568\@8                
- frameskip   mov   wmv2         0.626 min=0.191\@11 max=1.566\@8                
- frameskip   mov   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- frameskip   mp4   ffv1         format+codec unsupported                      
- frameskip   mp4   h264         0.108 min=0.009\@11 max=0.344\@0                
- frameskip   mp4   libvpx       format+codec unsupported                      
- frameskip   mp4   libx264      0.108 min=0.009\@11 max=0.344\@0                
- frameskip   mp4   mjpeg        0.380 min=0.141\@11 max=1.108\@0                
- frameskip   mp4   mpeg1video   0.426 min=0.237\@17 max=1.338\@0                
- frameskip   mp4   mpeg2video   0.411 min=0.223\@15 max=1.284\@0                
- frameskip   mp4   mpeg4        0.454 min=0.263\@17 max=0.858\@0                
- frameskip   mp4   msmpeg4      format+codec unsupported                      
- frameskip   mp4   msmpeg4v2    format+codec unsupported                      
- frameskip   mp4   vp8          format+codec unsupported                      
- frameskip   mp4   wmv1         format+codec unsupported                      
- frameskip   mp4   wmv2         format+codec unsupported                      
- frameskip   mp4   zlib         format+codec unsupported                      
- noise       avi   ffv1         44.192 min=43.887\@0 max=44.568\@8              
- noise       avi   h264         44.882 min=43.738\@2 max=45.848\@27             
- noise       avi   libvpx       48.629 min=44.156\@12 max=54.365\@27            
- noise       avi   libx264      44.883 min=44.089\@2 max=45.857\@29             
- noise       avi   mjpeg        45.723 min=43.942\@3 max=48.283\@28             
- noise       avi   mpeg1video   46.270 min=44.412\@2 max=48.632\@29             
- noise       avi   mpeg2video   45.227 min=44.008\@5 max=48.528\@29             
- noise       avi   mpeg4        45.769 min=43.720\@4 max=48.472\@27             
- noise       avi   msmpeg4      45.757 min=44.034\@7 max=48.055\@24             
- noise       avi   msmpeg4v2    45.789 min=43.908\@6 max=48.423\@27             
- noise       avi   vp8          48.796 min=43.765\@0 max=50.864\@15             
- noise       avi   wmv1         45.729 min=43.878\@6 max=47.921\@29             
- noise       avi   wmv2         46.105 min=44.205\@3 max=48.261\@28             
- noise       avi   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- noise       mov   ffv1         44.200 min=43.869\@20 max=44.719\@22            
- noise       mov   h264         44.882 min=43.991\@6 max=46.183\@27             
- noise       mov   libvpx       48.692 min=43.934\@0 max=50.906\@15             
- noise       mov   libx264      44.909 min=43.773\@3 max=46.079\@29             
- noise       mov   mjpeg        45.754 min=43.823\@8 max=48.278\@28             
- noise       mov   mpeg1video   46.353 min=44.326\@1 max=48.712\@29             
- noise       mov   mpeg2video   45.970 min=43.952\@4 max=50.645\@29             
- noise       mov   mpeg4        45.772 min=43.961\@4 max=48.414\@28             
- noise       mov   msmpeg4      45.764 min=43.867\@5 max=48.156\@29             
- noise       mov   msmpeg4v2    45.844 min=44.009\@6 max=48.317\@27             
- noise       mov   vp8          48.323 min=43.985\@12 max=50.512\@19            
- noise       mov   wmv1         45.803 min=44.109\@3 max=48.334\@29             
- noise       mov   wmv2         46.081 min=43.950\@4 max=48.293\@26             
- noise       mov   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- noise       mp4   ffv1         format+codec unsupported                      
- noise       mp4   h264         44.856 min=43.749\@1 max=46.045\@27             
- noise       mp4   libvpx       format+codec unsupported                      
- noise       mp4   libx264      44.785 min=43.820\@0 max=46.093\@28             
- noise       mp4   mjpeg        45.725 min=43.979\@7 max=48.208\@28             
- noise       mp4   mpeg1video   46.227 min=44.144\@2 max=48.241\@27             
- noise       mp4   mpeg2video   46.060 min=43.991\@5 max=51.358\@29             
- noise       mp4   mpeg4        45.690 min=44.072\@6 max=47.974\@28             
- noise       mp4   msmpeg4      format+codec unsupported                      
- noise       mp4   msmpeg4v2    format+codec unsupported                      
- noise       mp4   vp8          format+codec unsupported                      
- noise       mp4   wmv1         format+codec unsupported                      
- noise       mp4   wmv2         format+codec unsupported                      
- noise       mp4   zlib         format+codec unsupported                      
- user        avi   ffv1         1.174 min=1.166\@2 max=1.187\@7                 
- user        avi   h264         1.988 min=1.525\@0 max=2.290\@7                 
- user        avi   libvpx       1.614 min=1.464\@0 max=1.711\@8                 
- user        avi   libx264      1.988 min=1.525\@0 max=2.290\@7                 
- user        avi   mjpeg        1.067 min=1.014\@2 max=1.444\@0                 
- user        avi   mpeg1video   1.586 min=1.447\@1 max=1.895\@0                 
- user        avi   mpeg2video   1.743 min=1.515\@3 max=1.891\@8                 
- user        avi   mpeg4        1.794 min=1.606\@1 max=1.906\@9                 
- user        avi   msmpeg4      1.802 min=1.599\@1 max=1.925\@8                 
- user        avi   msmpeg4v2    1.775 min=1.599\@1 max=1.868\@9                 
- user        avi   vp8          1.614 min=1.464\@0 max=1.711\@8                 
- user        avi   wmv1         1.802 min=1.599\@1 max=1.925\@8                 
- user        avi   wmv2         1.799 min=1.596\@1 max=1.921\@8                 
- user        avi   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- user        mov   ffv1         1.174 min=1.166\@2 max=1.187\@7                 
- user        mov   h264         1.983 min=1.525\@0 max=2.286\@7                 
- user        mov   libvpx       1.614 min=1.464\@0 max=1.711\@8                 
- user        mov   libx264      1.983 min=1.525\@0 max=2.286\@7                 
- user        mov   mjpeg        1.067 min=1.014\@2 max=1.444\@0                 
- user        mov   mpeg1video   1.586 min=1.447\@1 max=1.895\@0                 
- user        mov   mpeg2video   1.743 min=1.515\@3 max=1.891\@8                 
- user        mov   mpeg4        1.794 min=1.606\@1 max=1.906\@9                 
- user        mov   msmpeg4      1.802 min=1.599\@1 max=1.925\@8                 
- user        mov   msmpeg4v2    1.775 min=1.599\@1 max=1.868\@9                 
- user        mov   vp8          1.614 min=1.464\@0 max=1.711\@8                 
- user        mov   wmv1         1.802 min=1.599\@1 max=1.925\@8                 
- user        mov   wmv2         1.799 min=1.596\@1 max=1.921\@8                 
- user        mov   zlib         0.000 min=0.000\@0 max=0.000\@0                 
- user        mp4   ffv1         format+codec unsupported                      
- user        mp4   h264         1.983 min=1.525\@0 max=2.286\@7                 
- user        mp4   libvpx       format+codec unsupported                      
- user        mp4   libx264      1.983 min=1.525\@0 max=2.286\@7                 
- user        mp4   mjpeg        1.067 min=1.014\@2 max=1.444\@0                 
- user        mp4   mpeg1video   1.586 min=1.447\@1 max=1.895\@0                 
- user        mp4   mpeg2video   1.743 min=1.515\@3 max=1.891\@8                 
- user        mp4   mpeg4        1.794 min=1.606\@1 max=1.906\@9                 
- user        mp4   msmpeg4      format+codec unsupported                      
- user        mp4   msmpeg4v2    format+codec unsupported                      
- user        mp4   vp8          format+codec unsupported                      
- user        mp4   wmv1         format+codec unsupported                      
- user        mp4   wmv2         format+codec unsupported                      
- user        mp4   zlib         format+codec unsupported                      
+ color       avi   ffv1         4.569 min=0.888\@22 max=8.377\@9
+ color       avi   h264         4.603 min=0.890\@22 max=8.388\@9
+ color       avi   libvpx       4.657 min=0.955\@26 max=8.528\@9
+ color       avi   libx264      4.603 min=0.890\@22 max=8.388\@9
+ color       avi   mjpeg        4.676 min=0.965\@22 max=8.469\@9
+ color       avi   mpeg1video   4.781 min=1.103\@28 max=8.483\@9
+ color       avi   mpeg2video   4.741 min=1.004\@16 max=8.466\@9
+ color       avi   mpeg4        4.892 min=1.087\@24 max=8.658\@9
+ color       avi   msmpeg4      4.921 min=1.073\@24 max=8.717\@9
+ color       avi   msmpeg4v2    4.921 min=1.073\@24 max=9.181\@17
+ color       avi   vp8          4.657 min=0.955\@26 max=8.528\@9
+ color       avi   wmv1         4.871 min=1.087\@24 max=8.729\@9
+ color       avi   wmv2         4.884 min=1.093\@24 max=8.823\@9
+ color       avi   zlib         0.000 min=0.000\@0 max=0.000\@0
+ color       mov   ffv1         4.569 min=0.888\@22 max=8.377\@9
+ color       mov   h264         4.603 min=0.890\@22 max=8.387\@9
+ color       mov   libvpx       4.657 min=0.955\@26 max=8.528\@9
+ color       mov   libx264      4.603 min=0.890\@22 max=8.387\@9
+ color       mov   mjpeg        4.676 min=0.965\@22 max=8.469\@9
+ color       mov   mpeg1video   4.781 min=1.103\@28 max=8.483\@9
+ color       mov   mpeg2video   4.741 min=1.004\@16 max=8.466\@9
+ color       mov   mpeg4        4.892 min=1.087\@24 max=8.658\@9
+ color       mov   msmpeg4      4.921 min=1.073\@24 max=8.717\@9
+ color       mov   msmpeg4v2    4.921 min=1.073\@24 max=9.181\@17
+ color       mov   vp8          4.657 min=0.955\@26 max=8.528\@9
+ color       mov   wmv1         4.871 min=1.087\@24 max=8.729\@9
+ color       mov   wmv2         4.884 min=1.093\@24 max=8.823\@9
+ color       mov   zlib         0.000 min=0.000\@0 max=0.000\@0
+ color       mp4   ffv1         format+codec unsupported
+ color       mp4   h264         4.603 min=0.890\@22 max=8.387\@9
+ color       mp4   libvpx       format+codec unsupported
+ color       mp4   libx264      4.603 min=0.890\@22 max=8.387\@9
+ color       mp4   mjpeg        4.676 min=0.965\@22 max=8.469\@9
+ color       mp4   mpeg1video   4.781 min=1.103\@28 max=8.483\@9
+ color       mp4   mpeg2video   4.741 min=1.004\@16 max=8.466\@9
+ color       mp4   mpeg4        4.892 min=1.087\@24 max=8.658\@9
+ color       mp4   msmpeg4      format+codec unsupported
+ color       mp4   msmpeg4v2    format+codec unsupported
+ color       mp4   vp8          format+codec unsupported
+ color       mp4   wmv1         format+codec unsupported
+ color       mp4   wmv2         format+codec unsupported
+ color       mp4   zlib         format+codec unsupported
+ frameskip   avi   ffv1         0.018 min=0.002\@11 max=0.029\@8
+ frameskip   avi   h264         0.108 min=0.009\@11 max=0.344\@0
+ frameskip   avi   libvpx       0.129 min=0.042\@11 max=0.198\@8
+ frameskip   avi   libx264      0.108 min=0.009\@11 max=0.344\@0
+ frameskip   avi   mjpeg        0.380 min=0.141\@11 max=1.108\@0
+ frameskip   avi   mpeg1video   0.426 min=0.237\@17 max=1.338\@0
+ frameskip   avi   mpeg2video   0.411 min=0.223\@15 max=1.284\@0
+ frameskip   avi   mpeg4        0.454 min=0.263\@17 max=0.858\@0
+ frameskip   avi   msmpeg4      1.684 min=0.257\@12 max=3.766\@15
+ frameskip   avi   msmpeg4v2    1.683 min=0.257\@12 max=3.765\@15
+ frameskip   avi   vp8          0.129 min=0.042\@11 max=0.198\@8
+ frameskip   avi   wmv1         0.627 min=0.191\@11 max=1.568\@8
+ frameskip   avi   wmv2         0.626 min=0.191\@11 max=1.566\@8
+ frameskip   avi   zlib         0.000 min=0.000\@0 max=0.000\@0
+ frameskip   mov   ffv1         0.018 min=0.002\@11 max=0.029\@8
+ frameskip   mov   h264         0.108 min=0.009\@11 max=0.344\@0
+ frameskip   mov   libvpx       0.129 min=0.042\@11 max=0.198\@8
+ frameskip   mov   libx264      0.108 min=0.009\@11 max=0.344\@0
+ frameskip   mov   mjpeg        0.380 min=0.141\@11 max=1.108\@0
+ frameskip   mov   mpeg1video   0.426 min=0.237\@17 max=1.338\@0
+ frameskip   mov   mpeg2video   0.411 min=0.223\@15 max=1.284\@0
+ frameskip   mov   mpeg4        0.454 min=0.263\@17 max=0.858\@0
+ frameskip   mov   msmpeg4      1.684 min=0.257\@12 max=3.766\@15
+ frameskip   mov   msmpeg4v2    1.683 min=0.257\@12 max=3.765\@15
+ frameskip   mov   vp8          0.129 min=0.042\@11 max=0.198\@8
+ frameskip   mov   wmv1         0.627 min=0.191\@11 max=1.568\@8
+ frameskip   mov   wmv2         0.626 min=0.191\@11 max=1.566\@8
+ frameskip   mov   zlib         0.000 min=0.000\@0 max=0.000\@0
+ frameskip   mp4   ffv1         format+codec unsupported
+ frameskip   mp4   h264         0.108 min=0.009\@11 max=0.344\@0
+ frameskip   mp4   libvpx       format+codec unsupported
+ frameskip   mp4   libx264      0.108 min=0.009\@11 max=0.344\@0
+ frameskip   mp4   mjpeg        0.380 min=0.141\@11 max=1.108\@0
+ frameskip   mp4   mpeg1video   0.426 min=0.237\@17 max=1.338\@0
+ frameskip   mp4   mpeg2video   0.411 min=0.223\@15 max=1.284\@0
+ frameskip   mp4   mpeg4        0.454 min=0.263\@17 max=0.858\@0
+ frameskip   mp4   msmpeg4      format+codec unsupported
+ frameskip   mp4   msmpeg4v2    format+codec unsupported
+ frameskip   mp4   vp8          format+codec unsupported
+ frameskip   mp4   wmv1         format+codec unsupported
+ frameskip   mp4   wmv2         format+codec unsupported
+ frameskip   mp4   zlib         format+codec unsupported
+ noise       avi   ffv1         44.192 min=43.887\@0 max=44.568\@8
+ noise       avi   h264         44.882 min=43.738\@2 max=45.848\@27
+ noise       avi   libvpx       48.629 min=44.156\@12 max=54.365\@27
+ noise       avi   libx264      44.883 min=44.089\@2 max=45.857\@29
+ noise       avi   mjpeg        45.723 min=43.942\@3 max=48.283\@28
+ noise       avi   mpeg1video   46.270 min=44.412\@2 max=48.632\@29
+ noise       avi   mpeg2video   45.227 min=44.008\@5 max=48.528\@29
+ noise       avi   mpeg4        45.769 min=43.720\@4 max=48.472\@27
+ noise       avi   msmpeg4      45.757 min=44.034\@7 max=48.055\@24
+ noise       avi   msmpeg4v2    45.789 min=43.908\@6 max=48.423\@27
+ noise       avi   vp8          48.796 min=43.765\@0 max=50.864\@15
+ noise       avi   wmv1         45.729 min=43.878\@6 max=47.921\@29
+ noise       avi   wmv2         46.105 min=44.205\@3 max=48.261\@28
+ noise       avi   zlib         0.000 min=0.000\@0 max=0.000\@0
+ noise       mov   ffv1         44.200 min=43.869\@20 max=44.719\@22
+ noise       mov   h264         44.882 min=43.991\@6 max=46.183\@27
+ noise       mov   libvpx       48.692 min=43.934\@0 max=50.906\@15
+ noise       mov   libx264      44.909 min=43.773\@3 max=46.079\@29
+ noise       mov   mjpeg        45.754 min=43.823\@8 max=48.278\@28
+ noise       mov   mpeg1video   46.353 min=44.326\@1 max=48.712\@29
+ noise       mov   mpeg2video   45.970 min=43.952\@4 max=50.645\@29
+ noise       mov   mpeg4        45.772 min=43.961\@4 max=48.414\@28
+ noise       mov   msmpeg4      45.764 min=43.867\@5 max=48.156\@29
+ noise       mov   msmpeg4v2    45.844 min=44.009\@6 max=48.317\@27
+ noise       mov   vp8          48.323 min=43.985\@12 max=50.512\@19
+ noise       mov   wmv1         45.803 min=44.109\@3 max=48.334\@29
+ noise       mov   wmv2         46.081 min=43.950\@4 max=48.293\@26
+ noise       mov   zlib         0.000 min=0.000\@0 max=0.000\@0
+ noise       mp4   ffv1         format+codec unsupported
+ noise       mp4   h264         44.856 min=43.749\@1 max=46.045\@27
+ noise       mp4   libvpx       format+codec unsupported
+ noise       mp4   libx264      44.785 min=43.820\@0 max=46.093\@28
+ noise       mp4   mjpeg        45.725 min=43.979\@7 max=48.208\@28
+ noise       mp4   mpeg1video   46.227 min=44.144\@2 max=48.241\@27
+ noise       mp4   mpeg2video   46.060 min=43.991\@5 max=51.358\@29
+ noise       mp4   mpeg4        45.690 min=44.072\@6 max=47.974\@28
+ noise       mp4   msmpeg4      format+codec unsupported
+ noise       mp4   msmpeg4v2    format+codec unsupported
+ noise       mp4   vp8          format+codec unsupported
+ noise       mp4   wmv1         format+codec unsupported
+ noise       mp4   wmv2         format+codec unsupported
+ noise       mp4   zlib         format+codec unsupported
+ user        avi   ffv1         1.174 min=1.166\@2 max=1.187\@7
+ user        avi   h264         1.988 min=1.525\@0 max=2.290\@7
+ user        avi   libvpx       1.614 min=1.464\@0 max=1.711\@8
+ user        avi   libx264      1.988 min=1.525\@0 max=2.290\@7
+ user        avi   mjpeg        1.067 min=1.014\@2 max=1.444\@0
+ user        avi   mpeg1video   1.586 min=1.447\@1 max=1.895\@0
+ user        avi   mpeg2video   1.743 min=1.515\@3 max=1.891\@8
+ user        avi   mpeg4        1.794 min=1.606\@1 max=1.906\@9
+ user        avi   msmpeg4      1.802 min=1.599\@1 max=1.925\@8
+ user        avi   msmpeg4v2    1.775 min=1.599\@1 max=1.868\@9
+ user        avi   vp8          1.614 min=1.464\@0 max=1.711\@8
+ user        avi   wmv1         1.802 min=1.599\@1 max=1.925\@8
+ user        avi   wmv2         1.799 min=1.596\@1 max=1.921\@8
+ user        avi   zlib         0.000 min=0.000\@0 max=0.000\@0
+ user        mov   ffv1         1.174 min=1.166\@2 max=1.187\@7
+ user        mov   h264         1.983 min=1.525\@0 max=2.286\@7
+ user        mov   libvpx       1.614 min=1.464\@0 max=1.711\@8
+ user        mov   libx264      1.983 min=1.525\@0 max=2.286\@7
+ user        mov   mjpeg        1.067 min=1.014\@2 max=1.444\@0
+ user        mov   mpeg1video   1.586 min=1.447\@1 max=1.895\@0
+ user        mov   mpeg2video   1.743 min=1.515\@3 max=1.891\@8
+ user        mov   mpeg4        1.794 min=1.606\@1 max=1.906\@9
+ user        mov   msmpeg4      1.802 min=1.599\@1 max=1.925\@8
+ user        mov   msmpeg4v2    1.775 min=1.599\@1 max=1.868\@9
+ user        mov   vp8          1.614 min=1.464\@0 max=1.711\@8
+ user        mov   wmv1         1.802 min=1.599\@1 max=1.925\@8
+ user        mov   wmv2         1.799 min=1.596\@1 max=1.921\@8
+ user        mov   zlib         0.000 min=0.000\@0 max=0.000\@0
+ user        mp4   ffv1         format+codec unsupported
+ user        mp4   h264         1.983 min=1.525\@0 max=2.286\@7
+ user        mp4   libvpx       format+codec unsupported
+ user        mp4   libx264      1.983 min=1.525\@0 max=2.286\@7
+ user        mp4   mjpeg        1.067 min=1.014\@2 max=1.444\@0
+ user        mp4   mpeg1video   1.586 min=1.447\@1 max=1.895\@0
+ user        mp4   mpeg2video   1.743 min=1.515\@3 max=1.891\@8
+ user        mp4   mpeg4        1.794 min=1.606\@1 max=1.906\@9
+ user        mp4   msmpeg4      format+codec unsupported
+ user        mp4   msmpeg4v2    format+codec unsupported
+ user        mp4   vp8          format+codec unsupported
+ user        mp4   wmv1         format+codec unsupported
+ user        mp4   wmv2         format+codec unsupported
+ user        mp4   zlib         format+codec unsupported
 =========== ===== ============ ================================================
 
 MacOSX 10.8.3 + FFmpeg 1.1.2
