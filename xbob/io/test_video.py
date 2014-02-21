@@ -16,7 +16,6 @@ from . import test_utils
 # These are some global parameters for the test.
 INPUT_VIDEO = test_utils.datafile('test.mov', __name__)
 
-@test_utils.ffmpeg_found()
 def test_codec_support():
 
   # Describes all encoders
@@ -30,7 +29,7 @@ def test_codec_support():
     if v['encode']: assert describe_encoder(v['id'])
 
   # Assert we support, at least, some known codecs
-  for codec in ('ffv1', 'zlib', 'wmv2', 'mpeg4', 'mjpeg'):
+  for codec in ('ffv1', 'wmv2', 'mpeg4', 'mjpeg'):
     assert codec in supported
     assert supported[codec]['encode']
     assert supported[codec]['decode']
