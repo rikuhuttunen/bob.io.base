@@ -108,7 +108,7 @@ def ffmpeg_found(version_geq=None):
         if version_geq is not None:
           avcodec_req,avformat_req,avutil_req = ffmpeg_versions[version_geq]
           if avcodec_inst < avcodec_req:
-            raise nose.plugins.skip.SkipTest('FFMpeg/libav version installed (%s) is smaller than required for this test (%s)' % (version['FFmpeg']['ffmpeg'], version_geq))
+            raise nose.plugins.skip.SkipTest('FFMpeg/libav version installed (%s) is smaller than required for this test (%s)' % (versions['FFmpeg']['ffmpeg'], version_geq))
         return test(*args, **kwargs)
       except KeyError:
         raise nose.plugins.skip.SkipTest('FFMpeg was not available at compile time')
