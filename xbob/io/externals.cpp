@@ -47,8 +47,6 @@ extern "C" {
 #  include <libavcodec/avcodec.h>
 #  include <libavutil/avutil.h>
 #  include <libswscale/swscale.h>
-#  include <libavutil/opt.h>
-#  include <libavutil/pixdesc.h>
 #  if !HAVE_FFMPEG_AVCODEC_AVCODECID
 #    define AVCodecID CodecID
 #  endif
