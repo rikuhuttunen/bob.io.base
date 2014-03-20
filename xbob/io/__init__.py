@@ -1,6 +1,7 @@
 from ._library import File, VideoReader, VideoWriter, HDF5File
-from ._library import __version__, __api_version__
-from . import _externals
+from . import version
+from .version import module as __version__
+from .version import api as __api_version__
 
 import os
 

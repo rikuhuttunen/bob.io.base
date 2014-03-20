@@ -867,11 +867,11 @@ static PyObject* create_module (void) {
   auto m_ = make_safe(m); ///< protects against early returns
 
   /* register version numbers and constants */
-  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0)
+  if (PyModule_AddIntConstant(m, "api", XBOB_IO_API_VERSION) < 0)
     return 0;
-  if (PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION) < 0)
+  if (PyModule_AddStringConstant(m, "module", XBOB_EXT_MODULE_VERSION) < 0)
     return 0;
-  if (PyModule_AddObject(m, "versions", build_version_dictionary()) < 0) return 0;
+  if (PyModule_AddObject(m, "externals", build_version_dictionary()) < 0) return 0;
 
   /* imports xbob.blitz C-API + dependencies */
   if (import_xbob_blitz() < 0) return 0;

@@ -41,9 +41,9 @@ setup(
       ],
 
     ext_modules = [
-      Extension("xbob.io._externals",
+      Extension("xbob.io.version",
         [
-          "xbob/io/externals.cpp",
+          "xbob/io/version.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,
