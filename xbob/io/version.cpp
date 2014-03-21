@@ -276,11 +276,20 @@ static PyObject* matio_version() {
 #endif
 }
 
+/**
+ * Bob version, API version and platform
+ */
+static PyObject* bob_version() {
+  return Py_BuildValue("sis", BOB_VERSION, BOB_API_VERSION, BOB_PLATFORM);
+}
+
 static PyObject* build_version_dictionary() {
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
+
+  if (!dict_steal(retval, "Bob", bob_version())) return 0;
 
   if (!dict_steal(retval, "HDF5", hdf5_version())) return 0;
 

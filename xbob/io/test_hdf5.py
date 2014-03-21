@@ -15,6 +15,7 @@ import random
 import nose.tools
 
 from . import HDF5File, load, save, peek_all, test_utils
+from .test_utils import bob_at_least
 
 def read_write_check(outfile, dname, data, dtype=None):
   """Tests scalar input/output on HDF5 files"""
@@ -313,6 +314,7 @@ def test_string_support():
     del outfile
     os.unlink(tmpname)
 
+@bob_at_least('1.3.0a0')
 def test_string_attribute_support():
 
   try:

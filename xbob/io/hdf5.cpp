@@ -76,6 +76,23 @@ static void PyBobIoHDF5File_Delete (PyBobIoHDF5FileObject* o) {
 
 }
 
+static bob::io::HDF5File::mode_t mode_from_char (char mode) {
+
+  bob::io::HDF5File::mode_t new_mode = bob::io::HDF5File::inout;
+
+  switch (mode) {
+    case 'r': new_mode = bob::io::HDF5File::in; break;
+    case 'a': new_mode = bob::io::HDF5File::inout; break;
+    case 'w': new_mode = bob::io::HDF5File::trunc; break;
+    case 'x': new_mode = bob::io::HDF5File::excl; break;
+    default:
+      PyErr_SetString(PyExc_RuntimeError, "Supported flags are 'r' (read-only), 'a' (read/write/append), 'w' (read/write/truncate) or 'x' (read/write/exclusive)");
+  }
+
+  return new_mode;
+
+}
+
 /* The __init__(self) method */
 static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     PyObject *args, PyObject* kwds) {
@@ -106,6 +123,8 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write), 'a' (append), 'x' (exclusive)");
     return -1;
   }
+  bob::io::HDF5File::mode_t mode_mode = mode_from_char(mode);
+  if (PyErr_Occurred()) return -1;
 
 #if PY_VERSION_HEX >= 0x03000000
   const char* c_filename = PyBytes_AS_STRING(filename);
@@ -114,7 +133,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
 #endif
 
   try {
-    self->f.reset(new bob::io::HDF5File(c_filename, mode));
+    self->f.reset(new bob::io::HDF5File(c_filename, mode_mode));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
