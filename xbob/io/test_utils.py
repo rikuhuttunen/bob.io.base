@@ -70,9 +70,9 @@ def ffmpeg_version_lessthan(v):
   '''Returns true if the version of ffmpeg compiled-in is at least the version
   indicated as a string parameter.'''
 
-  from ._externals import versions
-  if versions['FFmpeg']['ffmpeg'] == 'unavailable': return False
-  avcodec_inst= SV(versions['FFmpeg']['avcodec'])
+  from .version import externals
+  if externals['FFmpeg']['ffmpeg'] == 'unavailable': return False
+  avcodec_inst= SV(externals['FFmpeg']['avcodec'])
   avcodec_req = ffmpeg_versions[v][0]
   return avcodec_inst < avcodec_req
 
@@ -101,14 +101,14 @@ def ffmpeg_found(version_geq=None):
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
       try:
-        from ._externals import versions
-        avcodec_inst = SV(versions['FFmpeg']['avcodec'])
-        avformat_inst = SV(versions['FFmpeg']['avformat'])
-        avutil_inst = SV(versions['FFmpeg']['avutil'])
+        from .version import externals
+        avcodec_inst = SV(externals['FFmpeg']['avcodec'])
+        avformat_inst = SV(externals['FFmpeg']['avformat'])
+        avutil_inst = SV(externals['FFmpeg']['avutil'])
         if version_geq is not None:
           avcodec_req,avformat_req,avutil_req = ffmpeg_versions[version_geq]
           if avcodec_inst < avcodec_req:
-            raise nose.plugins.skip.SkipTest('FFMpeg/libav version installed (%s) is smaller than required for this test (%s)' % (versions['FFmpeg']['ffmpeg'], version_geq))
+            raise nose.plugins.skip.SkipTest('FFMpeg/libav version installed (%s) is smaller than required for this test (%s)' % (externals['FFmpeg']['ffmpeg'], version_geq))
         return test(*args, **kwargs)
       except KeyError:
         raise nose.plugins.skip.SkipTest('FFMpeg was not available at compile time')
