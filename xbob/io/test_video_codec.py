@@ -98,9 +98,9 @@ def test_format_codecs():
     distortions['mpeg2video']['color'] = 9.0
     distortions['mpeg2video']['frameskip'] = 1.4
 
-  from ._externals import versions
-  if versions['FFmpeg']['ffmpeg'] != 'unavailable':
-    from ._externals import supported_videowriter_formats
+  from .version import externals
+  if externals['FFmpeg']['ffmpeg'] != 'unavailable':
+    from .version import supported_videowriter_formats
     SUPPORTED = supported_videowriter_formats()
     for format in SUPPORTED:
       for codec in SUPPORTED[format]['supported_codecs']:
@@ -181,9 +181,9 @@ def test_user_video():
       msmpeg4v2  = 2.3,
       )
 
-  from ._externals import versions
-  if versions['FFmpeg']['ffmpeg'] != 'unavailable':
-    from ._externals import supported_videowriter_formats
+  from .version import externals
+  if externals['FFmpeg']['ffmpeg'] != 'unavailable':
+    from .version import supported_videowriter_formats
     SUPPORTED = supported_videowriter_formats()
     for format in SUPPORTED:
       for codec in SUPPORTED[format]['supported_codecs']:

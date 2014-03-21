@@ -29,7 +29,7 @@ from .. import test_utils
 
 def list_codecs(*args, **kwargs):
 
-  from .._externals import supported_video_codecs, available_video_codecs
+  from ..version import supported_video_codecs, available_video_codecs
   CODECS = supported_video_codecs()
   ALL_CODECS = available_video_codecs()
 
@@ -44,7 +44,7 @@ def list_codecs(*args, **kwargs):
 
 def list_all_codecs(*args, **kwargs):
 
-  from .._externals import supported_video_codecs, available_video_codecs
+  from ..version import supported_video_codecs, available_video_codecs
 
   CODECS = supported_video_codecs()
   ALL_CODECS = available_video_codecs()
@@ -60,7 +60,7 @@ def list_all_codecs(*args, **kwargs):
 
 def list_formats(*args, **kwargs):
 
-  from .._externals import supported_videowriter_formats, available_videowriter_formats
+  from ..version import supported_videowriter_formats, available_videowriter_formats
   FORMATS = supported_videowriter_formats()
   ALL_FORMATS = available_videowriter_formats()
 
@@ -75,7 +75,7 @@ def list_formats(*args, **kwargs):
 
 def list_all_formats(*args, **kwargs):
 
-  from .._externals import supported_videowriter_formats, available_videowriter_formats
+  from ..version import supported_videowriter_formats, available_videowriter_formats
   FORMATS = supported_videowriter_formats()
   ALL_FORMATS = available_videowriter_formats()
 
@@ -272,7 +272,7 @@ def detail(function, shape, framerate, format, codec, outdir):
 def main(user_input=None):
 
   from .._library import __version__
-  from .._externals import supported_video_codecs, available_video_codecs, supported_videowriter_formats, available_videowriter_formats
+  from ..version import supported_video_codecs, available_video_codecs, supported_videowriter_formats, available_videowriter_formats
   from .. import test as io_test
 
   parser = argparse.ArgumentParser(description=__doc__, epilog=__epilog__,

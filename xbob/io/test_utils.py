@@ -124,7 +124,7 @@ def codec_available(codec):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from ._externals import supported_video_codecs
+      from .version import supported_video_codecs
       d = supported_video_codecs()
       if codec in d and d[codec]['encode'] and d[codec]['decode']:
         return test(*args, **kwargs)
@@ -142,7 +142,7 @@ def extension_available(extension):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from ._externals import extensions
+      from .version import extensions
       if extension in extensions():
         return test(*args, **kwargs)
       else:

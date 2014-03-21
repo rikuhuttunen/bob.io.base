@@ -19,7 +19,7 @@ INPUT_VIDEO = test_utils.datafile('test.mov', __name__)
 def test_codec_support():
 
   # Describes all encoders
-  from ._externals import describe_encoder, describe_decoder, supported_video_codecs
+  from .version import describe_encoder, describe_decoder, supported_video_codecs
 
   supported = supported_video_codecs()
 
@@ -38,7 +38,7 @@ def test_codec_support():
 def test_input_format_support():
 
   # Describes all encoders
-  from ._externals import supported_videoreader_formats
+  from .version import supported_videoreader_formats
 
   supported = supported_videoreader_formats()
 
@@ -50,7 +50,7 @@ def test_input_format_support():
 def test_output_format_support():
 
   # Describes all encoders
-  from ._externals import supported_videowriter_formats
+  from .version import supported_videowriter_formats
 
   supported = supported_videowriter_formats()
 
