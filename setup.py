@@ -15,6 +15,15 @@ include_dirs = [package_dir]
 packages = ['bob-io >= 1.2.2']
 version = '2.0.0a0'
 
+# Check if python-imaging means pil or pillow
+pil_or_pillow = []
+try:
+  import pkg_resources
+  pkg_resources.require('pil')
+  pil_or_pillow.append('pil')
+except pkg_resources.DistributionNotFound as e:
+  pil_or_pillow.append('pillow')
+
 setup(
 
     name='xbob.io',
@@ -33,8 +42,7 @@ setup(
     install_requires=[
       'setuptools',
       'xbob.blitz',
-      'pillow',
-    ],
+    ] + pil_or_pillow,
 
     namespace_packages=[
       "xbob",
