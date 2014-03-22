@@ -16,6 +16,7 @@
 #include <string>
 #include <cstdlib>
 #include <boost/preprocessor/stringize.hpp>
+#include <boost/version.hpp>
 #include <boost/format.hpp>
 
 #include <bob/config.h>
@@ -283,6 +284,55 @@ static PyObject* bob_version() {
   return Py_BuildValue("sis", BOB_VERSION, BOB_API_VERSION, BOB_PLATFORM);
 }
 
+/**
+ * Describes the version of Boost libraries installed
+ */
+static PyObject* boost_version() {
+  boost::format f("%d.%d.%d");
+  f % (BOOST_VERSION / 100000);
+  f % (BOOST_VERSION / 100 % 1000);
+  f % (BOOST_VERSION % 100);
+  return Py_BuildValue("s", f.str().c_str());
+}
+
+/**
+ * Describes the compiler version
+ */
+static PyObject* compiler_version() {
+# if defined(__GNUC__) && !defined(__llvm__)
+  boost::format f("%s.%s.%s");
+  f % BOOST_PP_STRINGIZE(__GNUC__);
+  f % BOOST_PP_STRINGIZE(__GNUC_MINOR__);
+  f % BOOST_PP_STRINGIZE(__GNUC_PATCHLEVEL__);
+  return Py_BuildValue("{ssss}", "name", "gcc", "version", f.str().c_str());
+# elif defined(__llvm__) && !defined(__clang__)
+  return Py_BuildValue("{ssss}", "name", "llvm-gcc", "version", __VERSION__);
+# elif defined(__clang__)
+  return Py_BuildValue("{ssss}", "name", "clang", "version", __clang_version__);
+# else
+  return Py_BuildValue("{ssss}", "name", "unsupported", "version", "unknown");
+# endif
+}
+
+/**
+ * Python version with which we compiled the extensions
+ */
+static PyObject* python_version() {
+  boost::format f("%s.%s.%s");
+  f % BOOST_PP_STRINGIZE(PY_MAJOR_VERSION);
+  f % BOOST_PP_STRINGIZE(PY_MINOR_VERSION);
+  f % BOOST_PP_STRINGIZE(PY_MICRO_VERSION);
+  return Py_BuildValue("s", f.str().c_str());
+}
+
+/**
+ * Numpy version
+ */
+static PyObject* numpy_version() {
+  return Py_BuildValue("{ssss}", "abi", BOOST_PP_STRINGIZE(NPY_VERSION),
+      "api", BOOST_PP_STRINGIZE(NPY_API_VERSION));
+}
+
 static PyObject* build_version_dictionary() {
 
   PyObject* retval = PyDict_New();
@@ -306,6 +356,14 @@ static PyObject* build_version_dictionary() {
   if (!dict_steal(retval, "giflib", giflib_version())) return 0;
 
   if (!dict_steal(retval, "MatIO", matio_version())) return 0;
+
+  if (!dict_steal(retval, "Boost", boost_version())) return 0;
+
+  if (!dict_steal(retval, "Compiler", compiler_version())) return 0;
+
+  if (!dict_steal(retval, "Python", python_version())) return 0;
+
+  if (!dict_steal(retval, "NumPy", numpy_version())) return 0;
 
   Py_INCREF(retval);
   return retval;
