@@ -333,6 +333,13 @@ static PyObject* numpy_version() {
       "api", BOOST_PP_STRINGIZE(NPY_API_VERSION));
 }
 
+/**
+ * xbob.blitz c/c++ api version
+ */
+static PyObject* xbob_blitz_version() {
+  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(XBOB_BLITZ_API_VERSION));
+}
+
 static PyObject* build_version_dictionary() {
 
   PyObject* retval = PyDict_New();
@@ -340,31 +347,22 @@ static PyObject* build_version_dictionary() {
   auto retval_ = make_safe(retval);
 
   if (!dict_steal(retval, "Bob", bob_version())) return 0;
-
   if (!dict_steal(retval, "HDF5", hdf5_version())) return 0;
-
   if (!dict_steal(retval, "FFmpeg", ffmpeg_version())) return 0;
-
   if (!dict_steal(retval, "libjpeg", libjpeg_version())) return 0;
-
   if (!dict_set(retval, "libnetpbm", "Unknown version")) return 0;
-
   if (!dict_steal(retval, "libpng", libpng_version())) return 0;
-
   if (!dict_steal(retval, "libtiff", libtiff_version())) return 0;
-
   if (!dict_steal(retval, "giflib", giflib_version())) return 0;
-
   if (!dict_steal(retval, "MatIO", matio_version())) return 0;
-
   if (!dict_steal(retval, "Boost", boost_version())) return 0;
-
   if (!dict_steal(retval, "Compiler", compiler_version())) return 0;
-
   if (!dict_steal(retval, "Python", python_version())) return 0;
-
   if (!dict_steal(retval, "NumPy", numpy_version())) return 0;
+  if (!dict_set(retval, "Blitz++", BZ_VERSION)) return 0;
+  if (!dict_steal(retval, "xbob.blitz", xbob_blitz_version())) return 0;
 
+  Py_INCREF(retval);
   Py_INCREF(retval);
   return retval;
 }
