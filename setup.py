@@ -19,7 +19,7 @@ version = '2.0.0a0'
 pil_or_pillow = []
 try:
   import pkg_resources
-  pkg_resources.require('pil')
+  pkg_resources.require('PIL')
   pil_or_pillow.append('pil')
 except pkg_resources.DistributionNotFound as e:
   pil_or_pillow.append('pillow')
