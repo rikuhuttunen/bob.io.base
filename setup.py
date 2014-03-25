@@ -29,7 +29,7 @@ setup(
     name='xbob.io',
     version=version,
     description='Bindings for bob.io',
-    url='http://github.com/anjos/xbob.io',
+    url='http://github.com/bioidiap/xbob.io',
     license='BSD',
     author='Andre Anjos',
     author_email='andre.anjos@idiap.ch',
