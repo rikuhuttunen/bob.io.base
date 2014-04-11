@@ -31,11 +31,33 @@
  * C API functions *
  *******************/
 
+/* Enum defining entries in the function table */
+enum _PyBobIo_ENUM{
+  PyXbobIo_APIVersion_NUM = 0,
+  // Bindings for xbob.io.file
+  PyBobIoFile_Type_NUM,
+  PyBobIoFileIterator_Type_NUM,
+  // I/O generic bindings
+  PyBobIo_AsTypenum_NUM,
+  PyBobIo_TypeInfoAsTuple_NUM,
+  PyBobIo_FilenameConverter_NUM,
+  // HDF5 bindings
+  PyBobIoHDF5File_Type_NUM,
+  PyBobIoHDF5File_Check_NUM,
+  PyBobIoHDF5File_Converter_NUM,
+#if WITH_FFMPEG
+  PyBobIoVideoReader_Type_NUM,
+  PyBobIoVideoReaderIterator_Type_NUM,
+  PyBobIoVideoWriter_Type_NUM,
+#endif // WITH_FFMPEG
+  // Total number of C API pointers
+  PyXbobIo_API_pointers
+};
+
 /**************
  * Versioning *
  **************/
 
-#define PyXbobIo_APIVersion_NUM 0
 #define PyXbobIo_APIVersion_TYPE int
 
 /*****************************
@@ -51,7 +73,6 @@ typedef struct {
 
 } PyBobIoFileObject;
 
-#define PyBobIoFile_Type_NUM 1
 #define PyBobIoFile_Type_TYPE PyTypeObject
 
 typedef struct {
@@ -63,22 +84,18 @@ typedef struct {
 
 } PyBobIoFileIteratorObject;
 
-#define PyBobIoFileIterator_Type_NUM 2
 #define PyBobIoFileIterator_Type_TYPE PyTypeObject
 
 /************************
  * I/O generic bindings *
  ************************/
 
-#define PyBobIo_AsTypenum_NUM 3
 #define PyBobIo_AsTypenum_RET int
 #define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
 
-#define PyBobIo_TypeInfoAsTuple_NUM 4
 #define PyBobIo_TypeInfoAsTuple_RET PyObject*
 #define PyBobIo_TypeInfoAsTuple_PROTO (const bob::core::array::typeinfo& ti)
 
-#define PyBobIo_FilenameConverter_NUM 5
 #define PyBobIo_FilenameConverter_RET int
 #define PyBobIo_FilenameConverter_PROTO (PyObject* o, PyObject** b)
 
@@ -94,14 +111,11 @@ typedef struct {
 
 } PyBobIoHDF5FileObject;
 
-#define PyBobIoHDF5File_Type_NUM 6
 #define PyBobIoHDF5File_Type_TYPE PyTypeObject
 
-#define PyBobIoHDF5File_Check_NUM 7
 #define PyBobIoHDF5File_Check_RET int
 #define PyBobIoHDF5File_Check_PROTO (PyObject* o)
 
-#define PyBobIoHDF5File_Converter_NUM 8
 #define PyBobIoHDF5File_Converter_RET int
 #define PyBobIoHDF5File_Converter_PROTO (PyObject* o, PyBobIoHDF5FileObject** a)
 
@@ -119,7 +133,6 @@ typedef struct {
 
 } PyBobIoVideoReaderObject;
 
-#define PyBobIoVideoReader_Type_NUM 9
 #define PyBobIoVideoReader_Type_TYPE PyTypeObject
 
 typedef struct {
@@ -131,7 +144,6 @@ typedef struct {
 
 } PyBobIoVideoReaderIteratorObject;
 
-#define PyBobIoVideoReaderIterator_Type_NUM 10
 #define PyBobIoVideoReaderIterator_Type_TYPE PyTypeObject
 
 typedef struct {
@@ -142,17 +154,10 @@ typedef struct {
 
 } PyBobIoVideoWriterObject;
 
-#define PyBobIoVideoWriter_Type_NUM 11
 #define PyBobIoVideoWriter_Type_TYPE PyTypeObject
 
 #endif /* WITH_FFMPEG */
 
-/* Total number of C API pointers */
-#if WITH_FFMPEG
-#  define PyXbobIo_API_pointers 12
-#else
-#  define PyXbobIo_API_pointers 9
-#endif /* WITH_FFMPEG */
 
 #ifdef XBOB_IO_MODULE
 
