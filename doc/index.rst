@@ -1,12 +1,12 @@
 .. vim: set fileencoding=utf-8 :
 .. Andre Anjos <andre.anjos@idiap.ch>
-.. Mon  4 Nov 20:58:04 2013 CET
+.. Wed 14 May 15:22:33 2014 CEST
 ..
-.. Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
+.. Copyright (C) 2011-2014 Idiap Research Institute, Martigny, Switzerland
 
-====================
- Bob's I/O Routines
-====================
+=========================
+ Bob's Core I/O Routines
+=========================
 
 .. todolist::
 

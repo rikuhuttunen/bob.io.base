@@ -6,10 +6,10 @@
  C++ API
 =========
 
-The C++ API of ``xbob.io`` allows users to leverage from automatic converters
-for classes in :py:class:`xbob.io`.  To use the C API, clients should first,
-include the header file ``<xbob.io/api.h>`` on their compilation units and
-then, make sure to call once ``import_xbob_io()`` at their module
+The C++ API of ``xbob.io.base`` allows users to leverage from automatic converters
+for classes in :py:class:`xbob.io.base`.  To use the C API, clients should first,
+include the header file ``<xbob.io.base/api.h>`` on their compilation units and
+then, make sure to call once ``import_xbob_io_base()`` at their module
 instantiation, as explained at the `Python manual
 <http://docs.python.org/2/extending/extending.html#using-capsules>`_.
 
@@ -18,7 +18,7 @@ the import function:
 
 .. code-block:: c++
 
-   #include <xbob.io/api.h>
+   #include <xbob.io.base/api.h>
 
    PyMODINIT_FUNC initclient(void) {
 
@@ -26,21 +26,25 @@ the import function:
 
      if (!m) return;
 
-     // imports the NumPy C-API
-     import_array();
+     /* imports dependencies */
+     if (import_xbob_blitz() < 0) {
+       PyErr_Print();
+       PyErr_SetString(PyExc_ImportError, "cannot import extension");
+       return 0;
+     }
 
-     // imports blitz.array C-API
-     import_xbob_blitz();
-
-     // imports xbob.io C-API
-     import_xbob_io();
+     if (import_xbob_io_base() < 0) {
+       PyErr_Print();
+       PyErr_SetString(PyExc_ImportError, "cannot import extension");
+       return 0;
+     }
 
    }
 
 .. note::
 
   The include directory can be discovered using
-  :py:func:`xbob.io.get_include`.
+  :py:func:`xbob.io.base.get_include`.
 
 Generic Functions
 -----------------
