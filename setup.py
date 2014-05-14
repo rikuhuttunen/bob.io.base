@@ -12,7 +12,7 @@ package_dir = os.path.dirname(os.path.realpath(__file__))
 package_dir = os.path.join(package_dir, 'xbob', 'io', 'base', 'include')
 include_dirs = [package_dir]
 
-packages = ['bob-io >= 1.2.2']
+packages = ['bob-io >= 2.0.0a2']
 version = '2.0.0a0'
 
 # Check if python-imaging means pil or pillow
