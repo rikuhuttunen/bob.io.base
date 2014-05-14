@@ -6,7 +6,7 @@
  */
 
 #define XBOB_IO_MODULE
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 
 int PyBobIoCodec_Register (const char* extension, const char* description, bob::io::file_factory_t factory) {
   boost::shared_ptr<bob::io::CodecRegistry> instance =

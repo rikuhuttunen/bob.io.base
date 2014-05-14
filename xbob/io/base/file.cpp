@@ -7,7 +7,7 @@
 
 #define XBOB_IO_MODULE
 #include "bobskin.h"
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>

@@ -7,7 +7,7 @@
 
 #define XBOB_IO_MODULE
 #include "bobskin.h"
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 
 #if WITH_FFMPEG
 #include <boost/make_shared.hpp>
@@ -41,7 +41,7 @@ implementation uses `FFmpeg <http://ffmpeg.org>`_ (or\n\
 `libav <http://libav.org>`_ if FFmpeg is not available) which is\n\
 a stable freely available video encoding and decoding library,\n\
 designed specifically for these tasks. You can read an entire\n\
-video in memory by using the :py:meth:`xbob.io.VideoReader.load`\n\
+video in memory by using the :py:meth:`xbob.io.video.Reader.load`\n\
 method or use iterators to read it frame by frame and avoid\n\
 overloading your machine\'s memory. The maximum precision data\n\
 `FFmpeg`_ will yield is a 24-bit (8-bit per band) representation\n\

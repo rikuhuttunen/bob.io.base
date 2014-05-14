@@ -7,7 +7,7 @@
 
 #define XBOB_IO_MODULE
 #include "bobskin.h"
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 
 #if WITH_FFMPEG
 #include <boost/make_shared.hpp>

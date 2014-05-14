@@ -11,7 +11,7 @@
 #undef NO_IMPORT_ARRAY
 #endif
 #define XBOB_IO_MODULE
-#include <xbob.io/config.h>
+#include <xbob.io.base/config.h>
 
 #include <string>
 #include <cstdlib>

@@ -9,7 +9,7 @@ from xbob.blitz.extension import Extension
 
 import os
 package_dir = os.path.dirname(os.path.realpath(__file__))
-package_dir = os.path.join(package_dir, 'xbob', 'io', 'include')
+package_dir = os.path.join(package_dir, 'xbob', 'io', 'base', 'include')
 include_dirs = [package_dir]
 
 packages = ['bob-io >= 1.2.2']
@@ -26,10 +26,10 @@ except pkg_resources.DistributionNotFound as e:
 
 setup(
 
-    name='xbob.io',
+    name='xbob.io.base',
     version=version,
-    description='Bindings for bob.io',
-    url='http://github.com/bioidiap/xbob.io',
+    description='Base bindings for bob.io',
+    url='http://github.com/bioidiap/xbob.io.base',
     license='BSD',
     author='Andre Anjos',
     author_email='andre.anjos@idiap.ch',
@@ -46,27 +46,28 @@ setup(
 
     namespace_packages=[
       "xbob",
+      "xbob.io",
       ],
 
     ext_modules = [
-      Extension("xbob.io.version",
+      Extension("xbob.io.base.version",
         [
-          "xbob/io/version.cpp",
+          "xbob/io/base/version.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,
         version = version,
         define_macros = [('__STDC_CONSTANT_MACROS', None)],
         ),
-      Extension("xbob.io._library",
+      Extension("xbob.io.base._library",
         [
-          "xbob/io/bobskin.cpp",
-          "xbob/io/codec.cpp",
-          "xbob/io/file.cpp",
-          "xbob/io/videoreader.cpp",
-          "xbob/io/videowriter.cpp",
-          "xbob/io/hdf5.cpp",
-          "xbob/io/main.cpp",
+          "xbob/io/base/bobskin.cpp",
+          "xbob/io/base/codec.cpp",
+          "xbob/io/base/file.cpp",
+          "xbob/io/base/videoreader.cpp",
+          "xbob/io/base/videowriter.cpp",
+          "xbob/io/base/hdf5.cpp",
+          "xbob/io/base/main.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,

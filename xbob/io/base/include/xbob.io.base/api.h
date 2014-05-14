@@ -10,12 +10,12 @@
 
 /* Define Module Name and Prefix for other Modules
    Note: We cannot use XBOB_EXT_* macros here, unfortunately */
-#define XBOB_IO_PREFIX    "xbob.io"
-#define XBOB_IO_FULL_NAME "xbob.io._library"
+#define XBOB_IO_PREFIX    "xbob.io.base"
+#define XBOB_IO_FULL_NAME "xbob.io.base._library"
 
 #include <Python.h>
 
-#include <xbob.io/config.h>
+#include <xbob.io.base/config.h>
 #include <bob/config.h>
 #include <bob/io/File.h>
 #include <bob/io/HDF5File.h>
@@ -35,7 +35,7 @@
 /* Enum defining entries in the function table */
 enum _PyBobIo_ENUM{
   PyXbobIo_APIVersion_NUM = 0,
-  // Bindings for xbob.io.file
+  // Bindings for xbob.io.base.File
   PyBobIoFile_Type_NUM,
   PyBobIoFileIterator_Type_NUM,
   // I/O generic bindings
@@ -66,9 +66,9 @@ enum _PyBobIo_ENUM{
 
 #define PyXbobIo_APIVersion_TYPE int
 
-/*****************************
- * Bindings for xbob.io.file *
- *****************************/
+/**********************************
+ * Bindings for xbob.io.base.File *
+ **********************************/
 
 /* Type definition for PyBobIoFileObject */
 typedef struct {
@@ -183,7 +183,7 @@ typedef struct {
 
 #ifdef XBOB_IO_MODULE
 
-  /* This section is used when compiling `xbob.io' itself */
+  /* This section is used when compiling `xbob.io.base' itself */
 
   /**************
    * Versioning *
@@ -191,9 +191,9 @@ typedef struct {
 
   extern int PyXbobIo_APIVersion;
 
-  /*****************************
-   * Bindings for xbob.io.file *
-   *****************************/
+  /**********************************
+   * Bindings for xbob.io.base.File *
+   **********************************/
 
   extern PyBobIoFile_Type_TYPE PyBobIoFile_Type;
   extern PyBobIoFileIterator_Type_TYPE PyBobIoFileIterator_Type;
@@ -244,7 +244,7 @@ typedef struct {
 
 #else
 
-  /* This section is used in modules that use `xbob.io's' C-API */
+  /* This section is used in modules that use `xbob.io.base's' C-API */
 
 #  if defined(NO_IMPORT_ARRAY)
   extern void **PyXbobIo_API;
@@ -263,7 +263,7 @@ typedef struct {
 # define PyXbobIo_APIVersion (*(PyXbobIo_APIVersion_TYPE *)PyXbobIo_API[PyXbobIo_APIVersion_NUM])
 
   /*****************************
-   * Bindings for xbob.io.file *
+   * Bindings for xbob.io.File *
    *****************************/
 
 # define PyBobIoFile_Type (*(PyBobIoFile_Type_TYPE *)PyXbobIo_API[PyBobIoFile_Type_NUM])
@@ -318,7 +318,7 @@ typedef struct {
   /**
    * Returns -1 on error, 0 on success.
    */
-  static int import_xbob_io(void) {
+  static int import_xbob_io_base(void) {
 
     PyObject *c_api_object;
     PyObject *module;

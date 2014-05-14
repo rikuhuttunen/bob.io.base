@@ -6,7 +6,7 @@
  */
 
 #define XBOB_IO_MODULE
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>

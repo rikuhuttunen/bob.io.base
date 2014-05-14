@@ -6,7 +6,7 @@
  */
 
 #define XBOB_IO_MODULE
-#include <xbob.io/api.h>
+#include <xbob.io.base/api.h>
 
 #ifdef NO_IMPORT_ARRAY
 #undef NO_IMPORT_ARRAY
@@ -98,9 +98,9 @@ static PyObject* create_module (void) {
 
   PyXbobIo_API[PyXbobIo_APIVersion_NUM] = (void *)&PyXbobIo_APIVersion;
 
-  /*****************************
-   * Bindings for xbob.io.file *
-   *****************************/
+  /**********************************
+   * Bindings for xbob.io.base.File *
+   **********************************/
 
   PyXbobIo_API[PyBobIoFile_Type_NUM] = (void *)&PyBobIoFile_Type;
 
