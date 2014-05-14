@@ -838,7 +838,7 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
 
 PyDoc_STRVAR(s_extensions_str, "extensions");
 PyDoc_STRVAR(s_extensions_doc,
-"as_blitz(x) -> dict\n\
+"extensions() -> dict\n\
 \n\
 Returns a dictionary containing all extensions and descriptions\n\
 currently stored on the global codec registry\n\

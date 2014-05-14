@@ -146,15 +146,15 @@ static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
   PyString_FromFormat
 # endif
   ("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name,
-   self->f->filename().c_str(), self->f->name().c_str());
+   self->f->filename(), self->f->name());
 }
 
 static PyObject* PyBobIoFile_Filename(PyBobIoFileObject* self) {
-  return Py_BuildValue("s", self->f->filename().c_str());
+  return Py_BuildValue("s", self->f->filename());
 }
 
 static PyObject* PyBobIoFile_CodecName(PyBobIoFileObject* self) {
-  return Py_BuildValue("s", self->f->name().c_str());
+  return Py_BuildValue("s", self->f->name());
 }
 
 PyDoc_STRVAR(s_filename_str, "filename");
@@ -242,7 +242,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
   if (i < 0) i += self->f->size(); ///< adjust for negative indexing
 
   if (i < 0 || (size_t)i >= self->f->size()) {
-    PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
+    PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename(), self->f->size());
     return 0;
   }
 
@@ -267,7 +267,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
     return 0;
   }
   catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename());
     return 0;
   }
 
@@ -323,7 +323,7 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
       return 0;
     }
     catch (...) {
-      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename().c_str());
+      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename());
       return 0;
     }
 
@@ -372,7 +372,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
     if (i < 0) i += self->f->size();
 
     if (i < 0 || (size_t)i >= self->f->size()) {
-      PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename().c_str(), self->f->size());
+      PyErr_Format(PyExc_IndexError, "file index out of range - `%s' only contains %" PY_FORMAT_SIZE_T "d object(s)", self->f->filename(), self->f->size());
       return 0;
     }
 
@@ -399,7 +399,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
     self->f->read_all(skin);
   }
   catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading all contents of file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading all contents of file `%s': %s", self->f->filename(), e.what());
     return 0;
   }
   catch (std::exception& e) {
@@ -407,7 +407,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
     return 0;
   }
   catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while reading all contents of file `%s'", self->f->filename().c_str());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while reading all contents of file `%s'", self->f->filename());
     return 0;
   }
 
@@ -451,7 +451,7 @@ static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyOb
     self->f->write(skin);
   }
   catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while writing to file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while writing to file `%s': %s", self->f->filename(), e.what());
     return 0;
   }
   catch (std::exception& e) {
@@ -459,7 +459,7 @@ static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyOb
     return 0;
   }
   catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while writing to file `%s'", self->f->filename().c_str());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while writing to file `%s'", self->f->filename());
     return 0;
   }
 
@@ -504,7 +504,7 @@ static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyO
     pos = self->f->append(skin);
   }
   catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while appending to file `%s': %s", self->f->filename().c_str(), e.what());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while appending to file `%s': %s", self->f->filename(), e.what());
     return 0;
   }
   catch (std::exception& e) {
@@ -512,7 +512,7 @@ static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyO
     return 0;
   }
   catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while appending to file `%s'", self->f->filename().c_str());
+    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while appending to file `%s'", self->f->filename());
     return 0;
   }
 

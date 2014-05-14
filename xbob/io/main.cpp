@@ -28,7 +28,7 @@ static PyModuleDef module_definition = {
   XBOB_EXT_MODULE_NAME,
   module_docstr,
   -1,
-  module_methods, 
+  module_methods,
   0, 0, 0, 0
 };
 #endif
@@ -109,7 +109,7 @@ static PyObject* create_module (void) {
   /************************
    * I/O generic bindings *
    ************************/
-  
+
   PyXbobIo_API[PyBobIo_AsTypenum_NUM] = (void *)PyBobIo_AsTypenum;
 
   PyXbobIo_API[PyBobIo_TypeInfoAsTuple_NUM] = (void *)PyBobIo_TypeInfoAsTuple;
@@ -121,10 +121,22 @@ static PyObject* create_module (void) {
    *****************/
 
   PyXbobIo_API[PyBobIoHDF5File_Type_NUM] = (void *)&PyBobIoHDF5File_Type;
-  
+
   PyXbobIo_API[PyBobIoHDF5File_Check_NUM] = (void *)&PyBobIoHDF5File_Check;
 
   PyXbobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
+
+/*****************************************
+ * Code Registration and De-registration *
+ *****************************************/
+
+  PyXbobIo_API[PyBobIoCodec_Register_NUM] = (void *)&PyBobIoCodec_Register;
+
+  PyXbobIo_API[PyBobIoCodec_Deregister_NUM] = (void *)&PyBobIoCodec_Deregister;
+
+  PyXbobIo_API[PyBobIoCodec_IsRegistered_NUM] = (void *)&PyBobIoCodec_IsRegistered;
+
+  PyXbobIo_API[PyBobIoCodec_GetDescription_NUM] = (void *)&PyBobIoCodec_GetDescription;
 
 #if WITH_FFMPEG
   /******************

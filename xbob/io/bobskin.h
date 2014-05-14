@@ -6,6 +6,9 @@
  * functionality.
  */
 
+#ifndef PYTHON_BOB_IO_BOBSKIN_H
+#define PYTHON_BOB_IO_BOBSKIN_H
+
 #include <Python.h>
 
 #include <bob/core/array.h>
@@ -86,3 +89,5 @@ class bobskin: public bob::core::array::interface {
     void* m_ptr; ///< pointer to the data
 
 };
+
+#endif /* PYTHON_BOB_IO_BOBSKIN_H */

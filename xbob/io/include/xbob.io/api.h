@@ -19,6 +19,7 @@
 #include <bob/config.h>
 #include <bob/io/File.h>
 #include <bob/io/HDF5File.h>
+#include <bob/io/CodecRegistry.h>
 
 #if WITH_FFMPEG
 #include <bob/io/VideoReader.h>
@@ -45,6 +46,11 @@ enum _PyBobIo_ENUM{
   PyBobIoHDF5File_Type_NUM,
   PyBobIoHDF5File_Check_NUM,
   PyBobIoHDF5File_Converter_NUM,
+  // Codec registration and de-registration
+  PyBobIoCodec_Register_NUM,
+  PyBobIoCodec_Deregister_NUM,
+  PyBobIoCodec_IsRegistered_NUM,
+  PyBobIoCodec_GetDescription_NUM,
 #if WITH_FFMPEG
   PyBobIoVideoReader_Type_NUM,
   PyBobIoVideoReaderIterator_Type_NUM,
@@ -118,6 +124,22 @@ typedef struct {
 
 #define PyBobIoHDF5File_Converter_RET int
 #define PyBobIoHDF5File_Converter_PROTO (PyObject* o, PyBobIoHDF5FileObject** a)
+
+/*****************************************
+ * Code Registration and De-registration *
+ *****************************************/
+
+#define PyBobIoCodec_Register_RET int
+#define PyBobIoCodec_Register_PROTO (const char* extension, const char* description, bob::io::file_factory_t factory)
+
+#define PyBobIoCodec_Deregister_RET int
+#define PyBobIoCodec_Deregister_PROTO (const char* extension)
+
+#define PyBobIoCodec_IsRegistered_RET int
+#define PyBobIoCodec_IsRegistered_PROTO (const char* extension)
+
+#define PyBobIoCodec_GetDescription_RET const char*
+#define PyBobIoCodec_GetDescription_PROTO (const char* extension)
 
 #if WITH_FFMPEG
 
@@ -196,6 +218,18 @@ typedef struct {
 
   PyBobIoHDF5File_Converter_RET PyBobIoHDF5File_Converter PyBobIoHDF5File_Converter_PROTO;
 
+/*****************************************
+ * Code Registration and De-registration *
+ *****************************************/
+
+ PyBobIoCodec_Register_RET PyBobIoCodec_Register PyBobIoCodec_Register_PROTO;
+
+ PyBobIoCodec_Deregister_RET PyBobIoCodec_Deregister PyBobIoCodec_Deregister_PROTO;
+
+ PyBobIoCodec_IsRegistered_RET PyBobIoCodec_IsRegistered PyBobIoCodec_IsRegistered_PROTO;
+
+ PyBobIoCodec_GetDescription_RET PyBobIoCodec_GetDescription PyBobIoCodec_GetDescription_PROTO;
+
 #if WITH_FFMPEG
   /******************
    * Video bindings *
@@ -254,6 +288,18 @@ typedef struct {
 # define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyXbobIo_API[PyBobIoHDF5File_Check_NUM])
 
 # define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
+
+/*****************************************
+ * Code Registration and De-registration *
+ *****************************************/
+
+# define PyBobIoCodec_Register (*(PyBobIoCodec_Register_RET (*)PyBobIoCodec_Register_PROTO) PyXbobIo_API[PyBobIoCodec_Register_NUM])
+
+# define PyBobIoCodec_Deregister (*(PyBobIoCodec_Deregister_RET (*)PyBobIoCodec_Deregister_PROTO) PyXbobIo_API[PyBobIoCodec_Deregister_NUM])
+
+# define PyBobIoCodec_IsRegistered (*(PyBobIoCodec_IsRegistered_RET (*)PyBobIoCodec_IsRegistered_PROTO) PyXbobIo_API[PyBobIoCodec_IsRegistered_NUM])
+
+# define PyBobIoCodec_GetDescription (*(PyBobIoCodec_GetDescription_RET (*)PyBobIoCodec_GetDescription_PROTO) PyXbobIo_API[PyBobIoCodec_GetDescription_NUM])
 
 #if WITH_FFMPEG
   /******************

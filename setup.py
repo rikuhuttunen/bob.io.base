@@ -61,6 +61,7 @@ setup(
       Extension("xbob.io._library",
         [
           "xbob/io/bobskin.cpp",
+          "xbob/io/codec.cpp",
           "xbob/io/file.cpp",
           "xbob/io/videoreader.cpp",
           "xbob/io/videowriter.cpp",
