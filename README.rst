@@ -2,22 +2,22 @@
 .. Andre Anjos <andre.anjos@idiap.ch>
 .. Thu 29 Aug 2013 16:07:57 CEST
 
-.. image:: https://travis-ci.org/bioidiap/xbob.io.svg?branch=master
-   :target: https://travis-ci.org/bioidiap/xbob.io
-.. image:: https://coveralls.io/repos/bioidiap/xbob.io/badge.png
-   :target: https://coveralls.io/r/bioidiap/xbob.io
-.. image:: http://img.shields.io/github/tag/bioidiap/xbob.io.png
-   :target: https://github.com/bioidiap/xbob.io
-.. image:: http://img.shields.io/pypi/v/xbob.io.png
-   :target: https://pypi.python.org/pypi/xbob.io
-.. image:: http://img.shields.io/pypi/dm/xbob.io.png
-   :target: https://pypi.python.org/pypi/xbob.io
+.. image:: https://travis-ci.org/bioidiap/xbob.io.base.svg?branch=master
+   :target: https://travis-ci.org/bioidiap/xbob.io.base
+.. image:: https://coveralls.io/repos/bioidiap/xbob.io.base/badge.png
+   :target: https://coveralls.io/r/bioidiap/xbob.io.base
+.. image:: http://img.shields.io/github/tag/bioidiap/xbob.io.base.png
+   :target: https://github.com/bioidiap/xbob.io.base
+.. image:: http://img.shields.io/pypi/v/xbob.io.base.png
+   :target: https://pypi.python.org/pypi/xbob.io.base
+.. image:: http://img.shields.io/pypi/dm/xbob.io.base.png
+   :target: https://pypi.python.org/pypi/xbob.io.base
 
-============================
- Python bindings for bob.io
-============================
+=============================
+ Python bindings for bob::io
+=============================
 
-This package contains a set of Pythonic bindings for Bob's I/O functionality.
+This package contains a set of Pythonic bindings for core Bob I/O functionality.
 
 Installation
 ------------
@@ -41,7 +41,7 @@ Testing
 
 You can run a set of tests using the nose test runner::
 
-  $ nosetests -sv xbob.io
+  $ nosetests -sv xbob.io.base
 
 .. warning::
 
@@ -58,7 +58,7 @@ You can run our documentation tests using sphinx itself::
 
 You can test overall test coverage with::
 
-  $ nosetests --with-coverage --cover-package=xbob.io
+  $ nosetests --with-coverage --cover-package=xbob.io.base
 
 The ``coverage`` egg must be installed for this to work properly.
 
