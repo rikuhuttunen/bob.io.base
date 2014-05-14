@@ -5,7 +5,7 @@
  * @brief Bindings to bob::io::VideoReader
  */
 
-#define XBOB_IO_MODULE
+#define XBOB_IO_BASE_MODULE
 #include "bobskin.h"
 #include <xbob.io.base/api.h>
 

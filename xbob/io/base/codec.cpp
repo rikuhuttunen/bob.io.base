@@ -5,7 +5,7 @@
  * @brief Bindings to bob::io::CodecRegistry
  */
 
-#define XBOB_IO_MODULE
+#define XBOB_IO_BASE_MODULE
 #include <xbob.io.base/api.h>
 
 int PyBobIoCodec_Register (const char* extension, const char* description, bob::io::file_factory_t factory) {

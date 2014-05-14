@@ -5,7 +5,7 @@
  * @brief Bindings to bob::io
  */
 
-#define XBOB_IO_MODULE
+#define XBOB_IO_BASE_MODULE
 #include <xbob.io.base/api.h>
 
 #ifdef NO_IMPORT_ARRAY
@@ -20,7 +20,7 @@ static PyMethodDef module_methods[] = {
 
 PyDoc_STRVAR(module_docstr, "bob::io classes and methods");
 
-int PyXbobIo_APIVersion = XBOB_IO_API_VERSION;
+int PyXbobIo_APIVersion = XBOB_IO_BASE_API_VERSION;
 
 #if PY_VERSION_HEX >= 0x03000000
 static PyModuleDef module_definition = {
@@ -64,7 +64,7 @@ static PyObject* create_module (void) {
   auto m_ = make_safe(m);
 
   /* register some constants */
-  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_API_VERSION) < 0) return 0;
+  if (PyModule_AddIntConstant(m, "__api_version__", XBOB_IO_BASE_API_VERSION) < 0) return 0;
   if (PyModule_AddStringConstant(m, "__version__", XBOB_EXT_MODULE_VERSION) < 0) return 0;
 
   /* register the types to python */

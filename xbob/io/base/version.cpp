@@ -10,7 +10,7 @@
 #ifdef NO_IMPORT_ARRAY
 #undef NO_IMPORT_ARRAY
 #endif
-#define XBOB_IO_MODULE
+#define XBOB_IO_BASE_MODULE
 #include <xbob.io.base/config.h>
 
 #include <string>
@@ -932,7 +932,7 @@ static PyObject* create_module (void) {
   auto m_ = make_safe(m); ///< protects against early returns
 
   /* register version numbers and constants */
-  if (PyModule_AddIntConstant(m, "api", XBOB_IO_API_VERSION) < 0)
+  if (PyModule_AddIntConstant(m, "api", XBOB_IO_BASE_API_VERSION) < 0)
     return 0;
   if (PyModule_AddStringConstant(m, "module", XBOB_EXT_MODULE_VERSION) < 0)
     return 0;

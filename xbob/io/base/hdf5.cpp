@@ -5,7 +5,7 @@
  * @brief Bindings to bob::io::HDF5File
  */
 
-#define XBOB_IO_MODULE
+#define XBOB_IO_BASE_MODULE
 #include <xbob.io.base/api.h>
 
 #include <boost/make_shared.hpp>

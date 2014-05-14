@@ -5,13 +5,13 @@
  * @brief C/C++ API for bob::io
  */
 
-#ifndef XBOB_IO_H
-#define XBOB_IO_H
+#ifndef XBOB_IO_BASE_H
+#define XBOB_IO_BASE_H
 
 /* Define Module Name and Prefix for other Modules
    Note: We cannot use XBOB_EXT_* macros here, unfortunately */
-#define XBOB_IO_PREFIX    "xbob.io.base"
-#define XBOB_IO_FULL_NAME "xbob.io.base._library"
+#define XBOB_IO_BASE_PREFIX    "xbob.io.base"
+#define XBOB_IO_BASE_FULL_NAME "xbob.io.base._library"
 
 #include <Python.h>
 
@@ -181,7 +181,7 @@ typedef struct {
 #endif /* WITH_FFMPEG */
 
 
-#ifdef XBOB_IO_MODULE
+#ifdef XBOB_IO_BASE_MODULE
 
   /* This section is used when compiling `xbob.io.base' itself */
 
@@ -323,7 +323,7 @@ typedef struct {
     PyObject *c_api_object;
     PyObject *module;
 
-    module = PyImport_ImportModule(XBOB_IO_FULL_NAME);
+    module = PyImport_ImportModule(XBOB_IO_BASE_FULL_NAME);
 
     if (module == NULL) return -1;
 
@@ -355,15 +355,15 @@ typedef struct {
 #   else
           "cobject"
 #   endif
-          " at `" XBOB_IO_FULL_NAME "._C_API'");
+          " at `" XBOB_IO_BASE_FULL_NAME "._C_API'");
       return -1;
     }
 
     /* Checks that the imported version matches the compiled version */
     int imported_version = *(int*)PyXbobIo_API[PyXbobIo_APIVersion_NUM];
 
-    if (XBOB_IO_API_VERSION != imported_version) {
-      PyErr_Format(PyExc_ImportError, XBOB_IO_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_API_VERSION, imported_version);
+    if (XBOB_IO_BASE_API_VERSION != imported_version) {
+      PyErr_Format(PyExc_ImportError, XBOB_IO_BASE_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_BASE_API_VERSION, imported_version);
       return -1;
     }
 
@@ -374,6 +374,6 @@ typedef struct {
 
 # endif //!defined(NO_IMPORT_ARRAY)
 
-#endif /* XBOB_IO_MODULE */
+#endif /* XBOB_IO_BASE_MODULE */
 
-#endif /* XBOB_IO_H */
+#endif /* XBOB_IO_BASE_H */
