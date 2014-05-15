@@ -21,11 +21,6 @@
 #include <bob/io/HDF5File.h>
 #include <bob/io/CodecRegistry.h>
 
-#if WITH_FFMPEG
-#include <bob/io/VideoReader.h>
-#include <bob/io/VideoWriter.h>
-#endif /* WITH_FFMPEG */
-
 #include <boost/shared_ptr.hpp>
 
 /*******************
@@ -51,11 +46,6 @@ enum _PyBobIo_ENUM{
   PyBobIoCodec_Deregister_NUM,
   PyBobIoCodec_IsRegistered_NUM,
   PyBobIoCodec_GetDescription_NUM,
-#if WITH_FFMPEG
-  PyBobIoVideoReader_Type_NUM,
-  PyBobIoVideoReaderIterator_Type_NUM,
-  PyBobIoVideoWriter_Type_NUM,
-#endif // WITH_FFMPEG
   // Total number of C API pointers
   PyXbobIo_API_pointers
 };
@@ -141,46 +131,6 @@ typedef struct {
 #define PyBobIoCodec_GetDescription_RET const char*
 #define PyBobIoCodec_GetDescription_PROTO (const char* extension)
 
-#if WITH_FFMPEG
-
-/******************
- * Video bindings *
- ******************/
-
-typedef struct {
-  PyObject_HEAD
-
-  /* Type-specific fields go here. */
-  boost::shared_ptr<bob::io::VideoReader> v;
-
-} PyBobIoVideoReaderObject;
-
-#define PyBobIoVideoReader_Type_TYPE PyTypeObject
-
-typedef struct {
-  PyObject_HEAD
-
-  /* Type-specific fields go here. */
-  PyBobIoVideoReaderObject* pyreader;
-  boost::shared_ptr<bob::io::VideoReader::const_iterator> iter;
-
-} PyBobIoVideoReaderIteratorObject;
-
-#define PyBobIoVideoReaderIterator_Type_TYPE PyTypeObject
-
-typedef struct {
-  PyObject_HEAD
-
-  /* Type-specific fields go here. */
-  boost::shared_ptr<bob::io::VideoWriter> v;
-
-} PyBobIoVideoWriterObject;
-
-#define PyBobIoVideoWriter_Type_TYPE PyTypeObject
-
-#endif /* WITH_FFMPEG */
-
-
 #ifdef XBOB_IO_BASE_MODULE
 
   /* This section is used when compiling `xbob.io.base' itself */
@@ -229,18 +179,6 @@ typedef struct {
  PyBobIoCodec_IsRegistered_RET PyBobIoCodec_IsRegistered PyBobIoCodec_IsRegistered_PROTO;
 
  PyBobIoCodec_GetDescription_RET PyBobIoCodec_GetDescription PyBobIoCodec_GetDescription_PROTO;
-
-#if WITH_FFMPEG
-  /******************
-   * Video bindings *
-   ******************/
-
-  extern PyBobIoVideoReader_Type_TYPE PyBobIoVideoReader_Type;
-
-  extern PyBobIoVideoReaderIterator_Type_TYPE PyBobIoVideoReaderIterator_Type;
-
-  extern PyBobIoVideoWriter_Type_TYPE PyBobIoVideoWriter_Type;
-#endif /* WITH_FFMPEG */
 
 #else
 
@@ -300,18 +238,6 @@ typedef struct {
 # define PyBobIoCodec_IsRegistered (*(PyBobIoCodec_IsRegistered_RET (*)PyBobIoCodec_IsRegistered_PROTO) PyXbobIo_API[PyBobIoCodec_IsRegistered_NUM])
 
 # define PyBobIoCodec_GetDescription (*(PyBobIoCodec_GetDescription_RET (*)PyBobIoCodec_GetDescription_PROTO) PyXbobIo_API[PyBobIoCodec_GetDescription_NUM])
-
-#if WITH_FFMPEG
-  /******************
-   * Video bindings *
-   ******************/
-
-# define PyBobIoVideoReader_Type (*(PyBobIoVideoReader_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReader_Type_NUM])
-
-# define PyBobIoVideoReaderIterator_Type (*(PyBobIoVideoReaderIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoReaderIterator_Type_NUM])
-
-# define PyBobIoVideoWriterIterator_Type (*(PyBobIoVideoWriterIterator_Type_TYPE *)PyXbobIo_API[PyBobIoVideoWriterIterator_Type_NUM])
-#endif /* WITH_FFMPEG */
 
 # if !defined(NO_IMPORT_ARRAY)
 
