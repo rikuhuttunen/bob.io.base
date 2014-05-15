@@ -1,9 +1,21 @@
-from ._library import File, VideoReader, VideoWriter, HDF5File
+from ._library import File, HDF5File
 from . import version
 from .version import module as __version__
 from .version import api as __api_version__
 
 import os
+
+def __is_string__(s):
+  """Returns ``True`` if the given object is a string
+
+  This method can be used with Python-2.x or 3.x and returns a string
+  respecting each environment's constraints.
+  """
+
+  from sys import version_info
+
+  return (version_info[0] < 3 and isinstance(s, (str, unicode))) or \
+    isinstance(s, (bytes, str))
 
 def create_directories_save(directory, dryrun=False):
   """Creates a directory if it does not exists, with concurrent access support.
@@ -59,13 +71,12 @@ def load(inputs):
 
   from collections import Iterable
   import numpy
-  from .utils import is_string
-  if is_string(inputs):
+  if __is_string__(inputs):
     return File(inputs, 'r').read()
   elif isinstance(inputs, Iterable):
     retval = []
     for obj in inputs:
-      if is_string(obj):
+      if __is_string__(obj):
         retval.append(load(obj))
       elif isinstance(obj, File):
         retval.append(obj.read())

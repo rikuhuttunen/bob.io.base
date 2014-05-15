@@ -18,7 +18,7 @@ static PyMethodDef module_methods[] = {
     {0}  /* Sentinel */
 };
 
-PyDoc_STRVAR(module_docstr, "bob::io classes and methods");
+PyDoc_STRVAR(module_docstr, "Core bob::io classes and methods");
 
 int PyXbobIo_APIVersion = XBOB_IO_BASE_API_VERSION;
 
@@ -44,17 +44,6 @@ static PyObject* create_module (void) {
   PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return 0;
 
-#if WITH_FFMPEG
-  PyBobIoVideoReader_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReader_Type) < 0) return 0;
-
-  PyBobIoVideoReaderIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoReaderIterator_Type) < 0) return 0;
-
-  PyBobIoVideoWriter_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoVideoWriter_Type) < 0) return 0;
-#endif /* WITH_FFMPEG */
-
 # if PY_VERSION_HEX >= 0x03000000
   PyObject* m = PyModule_Create(&module_definition);
 # else
@@ -76,17 +65,6 @@ static PyObject* create_module (void) {
 
   Py_INCREF(&PyBobIoHDF5File_Type);
   if (PyModule_AddObject(m, "HDF5File", (PyObject *)&PyBobIoHDF5File_Type) < 0) return 0;
-
-#if WITH_FFMPEG
-  Py_INCREF(&PyBobIoVideoReader_Type);
-  if (PyModule_AddObject(m, "VideoReader", (PyObject *)&PyBobIoVideoReader_Type) < 0) return 0;
-
-  Py_INCREF(&PyBobIoVideoReaderIterator_Type);
-  if (PyModule_AddObject(m, "VideoReader.iter", (PyObject *)&PyBobIoVideoReaderIterator_Type) < 0) return 0;
-
-  Py_INCREF(&PyBobIoVideoWriter_Type);
-  if (PyModule_AddObject(m, "VideoWriter", (PyObject *)&PyBobIoVideoWriter_Type) < 0) return 0;
-#endif /* WITH_FFMPEG */
 
   static void* PyXbobIo_API[PyXbobIo_API_pointers];
 
@@ -137,18 +115,6 @@ static PyObject* create_module (void) {
   PyXbobIo_API[PyBobIoCodec_IsRegistered_NUM] = (void *)&PyBobIoCodec_IsRegistered;
 
   PyXbobIo_API[PyBobIoCodec_GetDescription_NUM] = (void *)&PyBobIoCodec_GetDescription;
-
-#if WITH_FFMPEG
-  /******************
-   * Video bindings *
-   ******************/
-
-  PyXbobIo_API[PyBobIoVideoReader_Type_NUM] = (void *)&PyBobIoVideoReader_Type;
-
-  PyXbobIo_API[PyBobIoVideoReaderIterator_Type_NUM] = (void *)&PyBobIoVideoReaderIterator_Type;
-
-  PyXbobIo_API[PyBobIoVideoWriter_Type_NUM] = (void *)&PyBobIoVideoWriter_Type;
-#endif /* WITH_FFMPEG */
 
 #if PY_VERSION_HEX >= 0x02070000
 

@@ -291,35 +291,6 @@ def test_tensorfile():
   # complete transcoding test
   transcode(test_utils.datafile('torch.tensor', __name__))
 
-@test_utils.extension_available('.pgm')
-@test_utils.extension_available('.pbm')
-@test_utils.extension_available('.ppm')
-def test_netpbm():
-
-  def image_transcode(filename):
-
-    tmpname = test_utils.temporary_filename(suffix=os.path.splitext(filename)[1])
-
-    try:
-      # complete transcoding test
-      image = load(filename)
-
-      # save with the same extension
-      write(image, tmpname)
-
-      # reload the image from the file
-      image2 = load(tmpname)
-
-      assert numpy.array_equal(image, image2)
-
-    finally:
-      if os.path.exists(tmpname): os.unlink(tmpname)
-
-  image_transcode(test_utils.datafile('test.pgm', __name__)) #indexed, works fine
-  image_transcode(test_utils.datafile('test.pbm', __name__)) #indexed, works fine
-  image_transcode(test_utils.datafile('test.ppm', __name__)) #indexed, works fine
-  #image_transcode(test_utils.datafile('test.jpg', __name__)) #does not work because of re-compression
-
 @test_utils.extension_available('.csv')
 def test_csv():
 

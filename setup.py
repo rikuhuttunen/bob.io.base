@@ -15,15 +15,6 @@ include_dirs = [package_dir]
 packages = ['bob-io >= 2.0.0a2']
 version = '2.0.0a0'
 
-# Check if python-imaging means pil or pillow
-pil_or_pillow = []
-try:
-  import pkg_resources
-  pkg_resources.require('PIL')
-  pil_or_pillow.append('pil')
-except pkg_resources.DistributionNotFound as e:
-  pil_or_pillow.append('pillow')
-
 setup(
 
     name='xbob.io.base',
@@ -42,7 +33,7 @@ setup(
     install_requires=[
       'setuptools',
       'xbob.blitz',
-    ] + pil_or_pillow,
+    ],
 
     namespace_packages=[
       "xbob",
@@ -57,30 +48,20 @@ setup(
         packages = packages,
         include_dirs = include_dirs,
         version = version,
-        define_macros = [('__STDC_CONSTANT_MACROS', None)],
         ),
       Extension("xbob.io.base._library",
         [
           "xbob/io/base/bobskin.cpp",
           "xbob/io/base/codec.cpp",
           "xbob/io/base/file.cpp",
-          "xbob/io/base/videoreader.cpp",
-          "xbob/io/base/videowriter.cpp",
           "xbob/io/base/hdf5.cpp",
           "xbob/io/base/main.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,
         version = version,
-        define_macros = [('__STDC_CONSTANT_MACROS', None)],
         ),
       ],
-
-    entry_points={
-      'console_scripts': [
-        'xbob_video_test.py = xbob.io.script.video_test:main',
-        ],
-      },
 
     classifiers = [
       'Development Status :: 3 - Alpha',
