@@ -14,7 +14,6 @@
 #include <xbob.blitz/cleanup.h>
 #include <stdexcept>
 #include <cstring>
-#include "bobskin.h"
 
 #define HDF5FILE_NAME "HDF5File"
 PyDoc_STRVAR(s_hdf5file_str, XBOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
