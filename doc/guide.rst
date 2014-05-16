@@ -1,11 +1,6 @@
 .. vim: set fileencoding=utf-8 :
 .. Andre Anjos <andre.dos.anjos@gmail.com>
-.. Tue 15 Oct 17:41:52 2013
-
-.. testsetup:: iotest
-
-   import numpy
-   import xbob.io.base
+.. Fri 16 May 11:48:13 2014 CEST
 
 ============
  User Guide
@@ -340,113 +335,6 @@ the :py:class:`xbob.io.base.Array` container:
   the read and write operations. Have a look at the manual section for
   :py:mod:`xbob.io.base` for more details and other shortcuts available.
 
-Reading and writing images
---------------------------
-
-|project| provides support to load and save data from many different file types
-including Matlab ``.mat`` files, various image file types and video data. File
-types and specific serialization and de-serialization is switched automatically
-using filename extensions. Knowing this, saving an array in a different format
-is just a matter of choosing the right extension. This is illustrated in the
-following example, where an image generated randomly using the method `NumPy`
-:py:meth:`numpy.random.random_integers`, is saved in JPEG format. The image
-must be of type uint8 or uint16.
-
-.. doctest::
-
-  >>> my_image = numpy.random.random_integers(0,255,(3,256,256))
-  >>> xbob.io.base.save(my_image.astype('uint8'), 'testimage.jpg') # saving the image in jpeg format
-  >>> my_image_copy = xbob.io.base.load('testimage.jpg')
-
-.. tip::
-
-  To find out about which formats and extensions are supported in a given
-  installation of |project|, just call ``bob_config.py`` on your prompt. It
-  will print a list of compiled-in software and supported extensions.
-
-The loaded image files can be 3D arrays (for RGB format) or 2D arrays (for
-greyscale) of type ``uint8`` or ``uint16``.
-
-Dealing with videos
--------------------
-
-|project| has support for dealing with videos in an equivalent way to dealing
-with images:
-
-.. doctest::
-
-  >>> my_video = numpy.random.random_integers(0,255,(30,3,256,256))
-  >>> xbob.io.base.save(my_video.astype('uint8'), 'testvideo.avi') # saving the video avi format with a default codec
-  >>> my_video_copy = xbob.io.base.load('testvideo.avi')
-
-Video reading and writing is performed using an `FFmpeg`_ (or `libav`_ if
-`FFmpeg`_ is not available) bridge. |project|'s :py:meth:`xbob.io.base.save`
-method will allow you to choose the output format with the same extension
-mechanism as mentioned earlier. `FFmpeg`_ will then choose a default codec for
-the format and perform encoding. The output file can be as easily loaded using
-:py:meth:`xbob.io.base.load`.
-
-For finer control over the loading, saving, format and codecs used for a
-specific encoding or decoding operation, you must directly use either
-:py:class:`xbob.io.base.VideoReader` or :py:class:`xbob.io.base.VideoWriter`
-classes. For example, it is possible to use
-:py:class:`xbob.io.base.VideoReader` to read videos frame by frame and avoid
-overloading your machine's memory. In the following example you can see how to
-create a video, save it using the class :py:class:`xbob.io.base.VideoWriter`
-and load it again using the class :py:class:`xbob.io.base.VideoReader`. The
-created video will have 30 frames generated randomly.
-
-.. note::
-
-  Due to `FFmpeg`_ constrains, the width and height of the video need to be
-  multiples of two.
-
-.. doctest::
-
-  >>> width = 50; height = 50;
-  >>> framerate = 24
-  >>> outv = xbob.io.base.VideoWriter('testvideo.avi', height, width, framerate, codec='mpeg1video') # output video
-  >>> for i in range(0, 30):
-  ...   newframe = (numpy.random.random_integers(0,255,(3,height,width)))
-  ...   outv.append(newframe.astype('uint8'))
-  >>> outv.close()
-  >>> input = xbob.io.base.VideoReader('testvideo.avi')
-  >>> input.number_of_frames
-  30
-  >>> inv = input.load()
-  >>> inv.shape
-  (30, 3, 50, 50)
-  >>> type(inv)
-  <... 'numpy.ndarray'>
-
-Videos in |project| are represented as sequences of colored images, i.e. 4D
-arrays of type ``uint8``. All the extensions and formats for videos supported
-in version of |project| installed on your machine can be listed using the
-|project|'s utility ``bob_config.py``.
-
-.. testcleanup:: *
-
-  import shutil
-  os.chdir(current_directory)
-  shutil.rmtree(temp_dir)
-
-.. warning::
-
-  Please read :doc:`video` for details on choosing codecs and formats that are
-  adequate to your application, as well as drawbacks and pitfalls with video
-  encoding and decoding.
-
-Loading and saving Matlab data
-------------------------------
-
-An alternative for saving data in ``.mat`` files using
-:py:meth:`xbob.io.base.save`, would be to save them as a `HDF5`_ file which
-then can be easily read in Matlab. Similarly, instead of having to read
-``.mat`` files using :py:meth:`xbob.io.base.load`, you can save your Matlab
-data in `HDF5`_ format, which then can be easily read from |project|. Detailed
-instructions about how to save and load data from Matlab to and from `HDF5`_
-files can be found `here`__.
-
 .. _audiosignal:
 
 Loading and saving audio files
@@ -477,10 +365,6 @@ To save a `NumPy` :py:class:`numpy.ndarray` into a wave file, the
 :py:func:`scipy.io.wavfile.write` could be used, which also requires the
 framerate to be specified.
 
-.. include:: links.rst
-
 .. Place here your external references
-
+.. include:: links.rst
 .. _ddl: http://www.hdfgroup.org/HDF5/doc/ddl.html
-.. _matlab-hdf5: http://www.mathworks.ch/help/techdoc/ref/hdf5write.html
-__ matlab-hdf5_

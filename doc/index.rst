@@ -21,7 +21,6 @@ Documentation
    :maxdepth: 2
 
    guide
-   video
    py_api
    c_cpp_api
 
