@@ -5,18 +5,18 @@
  * @brief Bindings to bob::io::HDF5File
  */
 
-#define XBOB_IO_BASE_MODULE
-#include <xbob.io.base/api.h>
+#define BOB_IO_BASE_MODULE
+#include <bob.io.base/api.h>
 
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>
-#include <xbob.blitz/cppapi.h>
-#include <xbob.blitz/cleanup.h>
+#include <bob.blitz/cppapi.h>
+#include <bob.blitz/cleanup.h>
 #include <stdexcept>
 #include <cstring>
 
 #define HDF5FILE_NAME "HDF5File"
-PyDoc_STRVAR(s_hdf5file_str, XBOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
+PyDoc_STRVAR(s_hdf5file_str, BOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
 
 PyDoc_STRVAR(s_hdf5file_doc,
 "HDF5File(filename, [mode='r']) -> new bob::io::HDF5File\n\
@@ -978,7 +978,7 @@ static bool PyBobIoHDF5File_IsPythonScalar(PyObject* obj) {
 
 /**
  * Returns the type of object `op' is - a scalar (return value = 0), a
- * xbob.blitzarray (return value = 1), a numpy.ndarray (return value = 2), an
+ * bob.blitzarray (return value = 1), a numpy.ndarray (return value = 2), an
  * object which is convertible to a numpy.ndarray (return value = 3) or returns
  * -1 if the object cannot be converted. No error is set on the python stack.
  *
@@ -1208,7 +1208,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
     else { //write as array
 
       switch (is_array) {
-        case 1: //xbob.blitz.array
+        case 1: //bob.blitz.array
           self->f->write_buffer(path, pos, type, ((PyBlitzArrayObject*)data)->data);
           break;
 
@@ -1341,7 +1341,7 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
     else { //write as array
 
       switch (is_array) {
-        case 1: //xbob.blitz.array
+        case 1: //bob.blitz.array
           if (!self->f->contains(path)) self->f->create(path, type, true, compression);
           self->f->extend_buffer(path, type, ((PyBlitzArrayObject*)data)->data);
           break;
@@ -1532,7 +1532,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     else { //write as array
 
       switch (is_array) {
-        case 1: //xbob.blitz.array
+        case 1: //bob.blitz.array
           if (!self->f->contains(path)) self->f->create(path, type, false, compression);
           self->f->write_buffer(path, 0, type, ((PyBlitzArrayObject*)data)->data);
           break;
@@ -1962,7 +1962,7 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
     try {
       switch (is_array) {
 
-        case 1: //xbob.blitz.array
+        case 1: //bob.blitz.array
           self->f->write_attribute(path, name, type, ((PyBlitzArrayObject*)o)->data);
           break;
 

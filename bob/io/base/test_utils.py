@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2011-2013 Idiap Research Institute, Martigny, Switzerland
 
-"""Re-usable decorators and utilities for xbob test code
+"""Re-usable decorators and utilities for bob test code
 """
 
 import os
@@ -24,7 +24,7 @@ def datafile(f, module=None, path='data'):
 
   package: string, optional
     This is the python-style package name of the module you want to retrieve
-    the data from. This should be something like ``xbob.io.test``, but you
+    the data from. This should be something like ``bob.io.test``, but you
     normally refer it using the ``__name__`` property of the module you want to
     find the path relative to.
 

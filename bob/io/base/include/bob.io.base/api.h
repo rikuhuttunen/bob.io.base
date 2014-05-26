@@ -5,17 +5,17 @@
  * @brief C/C++ API for bob::io
  */
 
-#ifndef XBOB_IO_BASE_H
-#define XBOB_IO_BASE_H
+#ifndef BOB_IO_BASE_H
+#define BOB_IO_BASE_H
 
 /* Define Module Name and Prefix for other Modules
-   Note: We cannot use XBOB_EXT_* macros here, unfortunately */
-#define XBOB_IO_BASE_PREFIX    "xbob.io.base"
-#define XBOB_IO_BASE_FULL_NAME "xbob.io.base._library"
+   Note: We cannot use BOB_EXT_* macros here, unfortunately */
+#define BOB_IO_BASE_PREFIX    "bob.io.base"
+#define BOB_IO_BASE_FULL_NAME "bob.io.base._library"
 
 #include <Python.h>
 
-#include <xbob.io.base/config.h>
+#include <bob.io.base/config.h>
 #include <bob/config.h>
 #include <bob/io/File.h>
 #include <bob/io/HDF5File.h>
@@ -29,8 +29,8 @@
 
 /* Enum defining entries in the function table */
 enum _PyBobIo_ENUM{
-  PyXbobIo_APIVersion_NUM = 0,
-  // Bindings for xbob.io.base.File
+  PyBobIo_APIVersion_NUM = 0,
+  // Bindings for bob.io.base.File
   PyBobIoFile_Type_NUM,
   PyBobIoFileIterator_Type_NUM,
   // I/O generic bindings
@@ -47,17 +47,17 @@ enum _PyBobIo_ENUM{
   PyBobIoCodec_IsRegistered_NUM,
   PyBobIoCodec_GetDescription_NUM,
   // Total number of C API pointers
-  PyXbobIo_API_pointers
+  PyBobIo_API_pointers
 };
 
 /**************
  * Versioning *
  **************/
 
-#define PyXbobIo_APIVersion_TYPE int
+#define PyBobIo_APIVersion_TYPE int
 
 /**********************************
- * Bindings for xbob.io.base.File *
+ * Bindings for bob.io.base.File *
  **********************************/
 
 /* Type definition for PyBobIoFileObject */
@@ -131,18 +131,18 @@ typedef struct {
 #define PyBobIoCodec_GetDescription_RET const char*
 #define PyBobIoCodec_GetDescription_PROTO (const char* extension)
 
-#ifdef XBOB_IO_BASE_MODULE
+#ifdef BOB_IO_BASE_MODULE
 
-  /* This section is used when compiling `xbob.io.base' itself */
+  /* This section is used when compiling `bob.io.base' itself */
 
   /**************
    * Versioning *
    **************/
 
-  extern int PyXbobIo_APIVersion;
+  extern int PyBobIo_APIVersion;
 
   /**********************************
-   * Bindings for xbob.io.base.File *
+   * Bindings for bob.io.base.File *
    **********************************/
 
   extern PyBobIoFile_Type_TYPE PyBobIoFile_Type;
@@ -182,15 +182,15 @@ typedef struct {
 
 #else
 
-  /* This section is used in modules that use `xbob.io.base's' C-API */
+  /* This section is used in modules that use `bob.io.base's' C-API */
 
 #  if defined(NO_IMPORT_ARRAY)
-  extern void **PyXbobIo_API;
+  extern void **PyBobIo_API;
 #  else
 #    if defined(PY_ARRAY_UNIQUE_SYMBOL)
-  void **PyXbobIo_API;
+  void **PyBobIo_API;
 #    else
-  static void **PyXbobIo_API=NULL;
+  static void **PyBobIo_API=NULL;
 #    endif
 #  endif
 
@@ -198,58 +198,58 @@ typedef struct {
    * Versioning *
    **************/
 
-# define PyXbobIo_APIVersion (*(PyXbobIo_APIVersion_TYPE *)PyXbobIo_API[PyXbobIo_APIVersion_NUM])
+# define PyBobIo_APIVersion (*(PyBobIo_APIVersion_TYPE *)PyBobIo_API[PyBobIo_APIVersion_NUM])
 
   /*****************************
-   * Bindings for xbob.io.File *
+   * Bindings for bob.io.File *
    *****************************/
 
-# define PyBobIoFile_Type (*(PyBobIoFile_Type_TYPE *)PyXbobIo_API[PyBobIoFile_Type_NUM])
-# define PyBobIoFileIterator_Type (*(PyBobIoFileIterator_Type_TYPE *)PyXbobIo_API[PyBobIoFileIterator_Type_NUM])
+# define PyBobIoFile_Type (*(PyBobIoFile_Type_TYPE *)PyBobIo_API[PyBobIoFile_Type_NUM])
+# define PyBobIoFileIterator_Type (*(PyBobIoFileIterator_Type_TYPE *)PyBobIo_API[PyBobIoFileIterator_Type_NUM])
 
   /************************
    * I/O generic bindings *
    ************************/
 
-# define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyXbobIo_API[PyBobIo_AsTypenum_NUM])
+# define PyBobIo_AsTypenum (*(PyBobIo_AsTypenum_RET (*)PyBobIo_AsTypenum_PROTO) PyBobIo_API[PyBobIo_AsTypenum_NUM])
 
-# define PyBobIo_TypeInfoAsTuple (*(PyBobIo_TypeInfoAsTuple_RET (*)PyBobIo_TypeInfoAsTuple_PROTO) PyXbobIo_API[PyBobIo_TypeInfoAsTuple_NUM])
+# define PyBobIo_TypeInfoAsTuple (*(PyBobIo_TypeInfoAsTuple_RET (*)PyBobIo_TypeInfoAsTuple_PROTO) PyBobIo_API[PyBobIo_TypeInfoAsTuple_NUM])
 
-# define PyBobIo_FilenameConverter (*(PyBobIo_FilenameConverter_RET (*)PyBobIo_FilenameConverter_PROTO) PyXbobIo_API[PyBobIo_FilenameConverter_NUM])
+# define PyBobIo_FilenameConverter (*(PyBobIo_FilenameConverter_RET (*)PyBobIo_FilenameConverter_PROTO) PyBobIo_API[PyBobIo_FilenameConverter_NUM])
 
   /*****************
    * HDF5 bindings *
    *****************/
 
-# define PyBobIoHDF5File_Type (*(PyBobIoHDF5File_Type_TYPE *)PyXbobIo_API[PyBobIoHDF5File_Type_NUM])
+# define PyBobIoHDF5File_Type (*(PyBobIoHDF5File_Type_TYPE *)PyBobIo_API[PyBobIoHDF5File_Type_NUM])
 
-# define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyXbobIo_API[PyBobIoHDF5File_Check_NUM])
+# define PyBobIoHDF5File_Check (*(PyBobIoHDF5File_Check_RET (*)PyBobIoHDF5File_Check_PROTO) PyBobIo_API[PyBobIoHDF5File_Check_NUM])
 
-# define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyXbobIo_API[PyBobIoHDF5File_Converter_NUM])
+# define PyBobIoHDF5File_Converter (*(PyBobIoHDF5File_Converter_RET (*)PyBobIoHDF5File_Converter_PROTO) PyBobIo_API[PyBobIoHDF5File_Converter_NUM])
 
 /*****************************************
  * Code Registration and De-registration *
  *****************************************/
 
-# define PyBobIoCodec_Register (*(PyBobIoCodec_Register_RET (*)PyBobIoCodec_Register_PROTO) PyXbobIo_API[PyBobIoCodec_Register_NUM])
+# define PyBobIoCodec_Register (*(PyBobIoCodec_Register_RET (*)PyBobIoCodec_Register_PROTO) PyBobIo_API[PyBobIoCodec_Register_NUM])
 
-# define PyBobIoCodec_Deregister (*(PyBobIoCodec_Deregister_RET (*)PyBobIoCodec_Deregister_PROTO) PyXbobIo_API[PyBobIoCodec_Deregister_NUM])
+# define PyBobIoCodec_Deregister (*(PyBobIoCodec_Deregister_RET (*)PyBobIoCodec_Deregister_PROTO) PyBobIo_API[PyBobIoCodec_Deregister_NUM])
 
-# define PyBobIoCodec_IsRegistered (*(PyBobIoCodec_IsRegistered_RET (*)PyBobIoCodec_IsRegistered_PROTO) PyXbobIo_API[PyBobIoCodec_IsRegistered_NUM])
+# define PyBobIoCodec_IsRegistered (*(PyBobIoCodec_IsRegistered_RET (*)PyBobIoCodec_IsRegistered_PROTO) PyBobIo_API[PyBobIoCodec_IsRegistered_NUM])
 
-# define PyBobIoCodec_GetDescription (*(PyBobIoCodec_GetDescription_RET (*)PyBobIoCodec_GetDescription_PROTO) PyXbobIo_API[PyBobIoCodec_GetDescription_NUM])
+# define PyBobIoCodec_GetDescription (*(PyBobIoCodec_GetDescription_RET (*)PyBobIoCodec_GetDescription_PROTO) PyBobIo_API[PyBobIoCodec_GetDescription_NUM])
 
 # if !defined(NO_IMPORT_ARRAY)
 
   /**
    * Returns -1 on error, 0 on success.
    */
-  static int import_xbob_io_base(void) {
+  static int import_bob_io_base(void) {
 
     PyObject *c_api_object;
     PyObject *module;
 
-    module = PyImport_ImportModule(XBOB_IO_BASE_FULL_NAME);
+    module = PyImport_ImportModule(BOB_IO_BASE_FULL_NAME);
 
     if (module == NULL) return -1;
 
@@ -262,34 +262,34 @@ typedef struct {
 
 #   if PY_VERSION_HEX >= 0x02070000
     if (PyCapsule_CheckExact(c_api_object)) {
-      PyXbobIo_API = (void **)PyCapsule_GetPointer(c_api_object,
+      PyBobIo_API = (void **)PyCapsule_GetPointer(c_api_object,
           PyCapsule_GetName(c_api_object));
     }
 #   else
     if (PyCObject_Check(c_api_object)) {
-      PyXbobIo_API = (void **)PyCObject_AsVoidPtr(c_api_object);
+      PyBobIo_API = (void **)PyCObject_AsVoidPtr(c_api_object);
     }
 #   endif
 
     Py_DECREF(c_api_object);
     Py_DECREF(module);
 
-    if (!PyXbobIo_API) {
+    if (!PyBobIo_API) {
       PyErr_SetString(PyExc_ImportError, "cannot find C/C++ API "
 #   if PY_VERSION_HEX >= 0x02070000
           "capsule"
 #   else
           "cobject"
 #   endif
-          " at `" XBOB_IO_BASE_FULL_NAME "._C_API'");
+          " at `" BOB_IO_BASE_FULL_NAME "._C_API'");
       return -1;
     }
 
     /* Checks that the imported version matches the compiled version */
-    int imported_version = *(int*)PyXbobIo_API[PyXbobIo_APIVersion_NUM];
+    int imported_version = *(int*)PyBobIo_API[PyBobIo_APIVersion_NUM];
 
-    if (XBOB_IO_BASE_API_VERSION != imported_version) {
-      PyErr_Format(PyExc_ImportError, XBOB_IO_BASE_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", XBOB_IO_BASE_API_VERSION, imported_version);
+    if (BOB_IO_BASE_API_VERSION != imported_version) {
+      PyErr_Format(PyExc_ImportError, BOB_IO_BASE_FULL_NAME " import error: you compiled against API version 0x%04x, but are now importing an API with version 0x%04x which is not compatible - check your Python runtime environment for errors", BOB_IO_BASE_API_VERSION, imported_version);
       return -1;
     }
 
@@ -300,6 +300,6 @@ typedef struct {
 
 # endif //!defined(NO_IMPORT_ARRAY)
 
-#endif /* XBOB_IO_BASE_MODULE */
+#endif /* BOB_IO_BASE_MODULE */
 
-#endif /* XBOB_IO_BASE_H */
+#endif /* BOB_IO_BASE_H */

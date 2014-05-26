@@ -7,35 +7,35 @@
 ============
 
 This section includes information for using the pure Python API of
-``xbob.io.base``.
+``bob.io.base``.
 
 
 Classes
 -------
 
-.. autoclass:: xbob.io.base.File
+.. autoclass:: bob.io.base.File
 
-.. autoclass:: xbob.io.base.HDF5File
+.. autoclass:: bob.io.base.HDF5File
 
 Functions
 ---------
 
-.. autofunction:: xbob.io.base.load
+.. autofunction:: bob.io.base.load
 
-.. autofunction:: xbob.io.base.merge
+.. autofunction:: bob.io.base.merge
 
-.. autofunction:: xbob.io.base.save
+.. autofunction:: bob.io.base.save
 
-.. autofunction:: xbob.io.base.append
+.. autofunction:: bob.io.base.append
 
-.. autofunction:: xbob.io.base.peek
+.. autofunction:: bob.io.base.peek
 
-.. autofunction:: xbob.io.base.peek_all
+.. autofunction:: bob.io.base.peek_all
 
-.. autofunction:: xbob.io.base.create_directories_save
+.. autofunction:: bob.io.base.create_directories_save
 
 
 C++ API Helpers
 ---------------
 
-.. autofunction:: xbob.io.base.get_include
+.. autofunction:: bob.io.base.get_include

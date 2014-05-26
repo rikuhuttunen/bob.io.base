@@ -20,7 +20,7 @@ and |project| loaded into the `Python`_ environment.
 .. testsetup:: *
 
    import numpy
-   import xbob.io.base
+   import bob.io.base
    import tempfile
    import os
 
@@ -44,7 +44,7 @@ an `HDF5`_ file. These are supplied by the `HDF5`_ project.
 ``h5diff``
   Finds the differences between HDF5 files.
 
-I/O operations using the class `xbob.io.base.HDF5File`
+I/O operations using the class `bob.io.base.HDF5File`
 ------------------------------------------------------
 
 Writing operations
@@ -57,7 +57,7 @@ floats.
 
    >>> an_integer = 5
    >>> a_float = 3.1416
-   >>> f = xbob.io.base.HDF5File('testfile1.hdf5', 'w')
+   >>> f = bob.io.base.HDF5File('testfile1.hdf5', 'w')
    >>> f.set('my_integer', an_integer)
    >>> f.set('my_float', a_float)
    >>> del f
@@ -108,7 +108,7 @@ in a different directory like this:
 
 .. doctest::
 
-  >>> f = xbob.io.base.HDF5File('testfile1.hdf5', 'a')
+  >>> f = bob.io.base.HDF5File('testfile1.hdf5', 'a')
   >>> f.create_group('/test')
   >>> f.set('/test/my_float', numpy.float32(6.28))
   >>> del f
@@ -144,7 +144,7 @@ as it was defined.
 
   If you need to place lots of variables in a subfolder, it may be better to
   setup the prefix folder before starting the writing operations on the
-  :py:class:`xbob.io.base.HDF5File` object. You can do this using the method
+  :py:class:`bob.io.base.HDF5File` object. You can do this using the method
   :py:meth:`HDF5File.cd`.  Look up its help for more information and usage
   instructions.
 
@@ -155,7 +155,7 @@ is an example:
 .. doctest::
 
   >>> A = numpy.array(range(4), 'int8').reshape(2,2)
-  >>> f = xbob.io.base.HDF5File('testfile1.hdf5', 'a')
+  >>> f = bob.io.base.HDF5File('testfile1.hdf5', 'a')
   >>> f.set('my_array', A)
   >>> del f
 
@@ -175,23 +175,23 @@ The result of running ``h5dump`` on the file ``testfile3.hdf5`` should be:
   ...
 
 You don't need to limit yourself to single variables, you can also save lists
-of scalars and arrays using the function :py:meth:`xbob.io.base.HDF5.append`
-instead of :py:meth:`xbob.io.base.HDF5.set`.
+of scalars and arrays using the function :py:meth:`bob.io.base.HDF5.append`
+instead of :py:meth:`bob.io.base.HDF5.set`.
 
 Reading operations
 ------------------
 
 Reading data from a file that you just wrote to is just as easy. For this task
-you should use :py:meth:`xbob.io.base.HDF5File.read`. The read method will read
+you should use :py:meth:`bob.io.base.HDF5File.read`. The read method will read
 all the contents of the variable pointed to by the given path. This is the
 normal way to read a variable you have written with
-:py:meth:`xbob.io.base.HDF5File.set`. If you decided to create a list of scalar
+:py:meth:`bob.io.base.HDF5File.set`. If you decided to create a list of scalar
 or arrays, the way to read that up would be using
-:py:meth:`xbob.io.base.HDF5File.lread` instead. Here is an example:
+:py:meth:`bob.io.base.HDF5File.lread` instead. Here is an example:
 
 .. doctest::
 
-  >>> f = xbob.io.base.HDF5File('testfile1.hdf5') #read only
+  >>> f = bob.io.base.HDF5File('testfile1.hdf5') #read only
   >>> f.read('my_integer') #reads integer
   5
   >>> print(f.read('my_array')) # reads the array
@@ -200,13 +200,13 @@ or arrays, the way to read that up would be using
   >>> del f
 
 Now let's look at an example where we have used
-:py:meth:`xbob.io.base.HDF5File.append` instead of
-:py:meth:`xbob.io.base.HDF5File.set` to write data to a file. That is normally
+:py:meth:`bob.io.base.HDF5File.append` instead of
+:py:meth:`bob.io.base.HDF5File.set` to write data to a file. That is normally
 the case when you write lists of variables to a dataset.
 
 .. doctest::
 
-  >>> f = xbob.io.base.HDF5File('testfile2.hdf5', 'w')
+  >>> f = bob.io.base.HDF5File('testfile2.hdf5', 'w')
   >>> f.append('arrayset', numpy.array(range(10), 'float64'))
   >>> f.append('arrayset', 2*numpy.array(range(10), 'float64'))
   >>> f.append('arrayset', 3*numpy.array(range(10), 'float64'))
@@ -241,20 +241,20 @@ shot:
 
 .. doctest::
 
-  >>> f = xbob.io.base.HDF5File('testfile2.hdf5')
+  >>> f = bob.io.base.HDF5File('testfile2.hdf5')
   >>> print(f.read('arrayset'))
   [[  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.]
    [  0.   2.   4.   6.   8.  10.  12.  14.  16.  18.]
    [  0.   3.   6.   9.  12.  15.  18.  21.  24.  27.]]
 
 As you can see, the only difference between
-:py:meth:`xbob.io.base.HDF5File.read` and
-:py:meth:`xbob.io.base.HDF5File.lread` is on how |project| considers the
+:py:meth:`bob.io.base.HDF5File.read` and
+:py:meth:`bob.io.base.HDF5File.lread` is on how |project| considers the
 available data (as a single array with N dimensions or as a set of arrays with
 N-1 dimensions). In the first example, you would have also been able to read
 the variable `my_array` as an arrayset using
-:py:meth:`xbob.io.base.HDF5File.lread` instead of
-:py:meth:`xbob.io.base.HDF5File.read`. In this case, each position readout
+:py:meth:`bob.io.base.HDF5File.lread` instead of
+:py:meth:`bob.io.base.HDF5File.read`. In this case, each position readout
 would return a 1D uint8 array instead of a 2D array.
 
 Array interfaces
@@ -266,27 +266,27 @@ other software frameworks, debug your data or just implement your own classes
 that can serialize and de-serialize from HDF5 file containers. In |project|,
 most of the time you will be working with :py:class:`numpy.ndarrays`\s. In
 special situations though, you may be asked to handle
-:py:class:`xbob.io.base.File`\s. :py:class:`xbob.io.base.File` objects create a
+:py:class:`bob.io.base.File`\s. :py:class:`bob.io.base.File` objects create a
 transparent connection between C++ (`Blitz++`_) / Python (`NumPy`_) arrays and
 file access.  You specify the filename from which you want to input data and
-the :py:class:`xbob.io.base.File` object decides what is the best codec to be
+the :py:class:`bob.io.base.File` object decides what is the best codec to be
 used (from the extension) and how to read the data back into your array.
 
-To create an :py:class:`xbob.io.base.File` from a file path, just do the
+To create an :py:class:`bob.io.base.File` from a file path, just do the
 following:
 
 .. doctest::
 
-  >>> a = xbob.io.base.File('testfile2.hdf5', 'r')
+  >>> a = bob.io.base.File('testfile2.hdf5', 'r')
   >>> a.filename
   'testfile2.hdf5'
 
-:py:class:`xbob.io.base.File`\s simulate containers for
+:py:class:`bob.io.base.File`\s simulate containers for
 :py:class:`numpy.ndarray`\s, transparently accessing the file data when
 requested. Note, however, that when you instantiate an
-:py:class:`xbob.io.base.File` it does **not** load the file contents into
+:py:class:`bob.io.base.File` it does **not** load the file contents into
 memory. It waits until you emit another explicit instruction to do so. We do
-this with the :py:meth:`xbob.io.base.File.read` method:
+this with the :py:meth:`bob.io.base.File.read` method:
 
 .. doctest::
 
@@ -296,44 +296,44 @@ this with the :py:meth:`xbob.io.base.File.read` method:
          [  0.,   2.,   4.,   6.,   8.,  10.,  12.,  14.,  16.,  18.],
          [  0.,   3.,   6.,   9.,  12.,  15.,  18.,  21.,  24.,  27.]])
 
-Every time you say :py:meth:`xbob.io.base.File.read`, the file contents will be
+Every time you say :py:meth:`bob.io.base.File.read`, the file contents will be
 read from the file and into a new array.
 
-Saving arrays to the :py:class:`xbob.io.base.File` is as easy, just call the
-:py:meth:`xbob.io.base.File.write` method:
+Saving arrays to the :py:class:`bob.io.base.File` is as easy, just call the
+:py:meth:`bob.io.base.File.write` method:
 
 .. doctest::
 
-  >>> f = xbob.io.base.File('copy1.hdf5', 'w')
+  >>> f = bob.io.base.File('copy1.hdf5', 'w')
   >>> f.write(array)
 
 Numpy ndarray shortcuts
 -----------------------
 
 To just load an :py:class:`numpy.ndarray` in memory, you can use a short cut
-that lives at :py:func:`xbob.io.base.load`. With it, you don't have to go
-through the :py:class:`xbob.io.base.File` container:
+that lives at :py:func:`bob.io.base.load`. With it, you don't have to go
+through the :py:class:`bob.io.base.File` container:
 
 .. doctest::
 
-  >>> t = xbob.io.base.load('testfile2.hdf5')
+  >>> t = bob.io.base.load('testfile2.hdf5')
   >>> t
   array([[  0.,   1.,   2.,   3.,   4.,   5.,   6.,   7.,   8.,   9.],
          [  0.,   2.,   4.,   6.,   8.,  10.,  12.,  14.,  16.,  18.],
          [  0.,   3.,   6.,   9.,  12.,  15.,  18.,  21.,  24.,  27.]])
 
 You can also directly save :py:class:`numpy.ndarray`\s without going through
-the :py:class:`xbob.io.base.Array` container:
+the :py:class:`bob.io.base.Array` container:
 
 .. doctest::
 
-  >>> xbob.io.base.save(t, 'copy2.hdf5')
+  >>> bob.io.base.save(t, 'copy2.hdf5')
 
 .. note::
 
-  Under the hood, we still use the :py:class:`xbob.io.base.File` API to execute
+  Under the hood, we still use the :py:class:`bob.io.base.File` API to execute
   the read and write operations. Have a look at the manual section for
-  :py:mod:`xbob.io.base` for more details and other shortcuts available.
+  :py:mod:`bob.io.base` for more details and other shortcuts available.
 
 .. _audiosignal:
 

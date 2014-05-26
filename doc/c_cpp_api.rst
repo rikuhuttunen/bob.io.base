@@ -6,10 +6,10 @@
  C++ API
 =========
 
-The C++ API of ``xbob.io.base`` allows users to leverage from automatic converters
-for classes in :py:class:`xbob.io.base`.  To use the C API, clients should first,
-include the header file ``<xbob.io.base/api.h>`` on their compilation units and
-then, make sure to call once ``import_xbob_io_base()`` at their module
+The C++ API of ``bob.io.base`` allows users to leverage from automatic converters
+for classes in :py:class:`bob.io.base`.  To use the C API, clients should first,
+include the header file ``<bob.io.base/api.h>`` on their compilation units and
+then, make sure to call once ``import_bob_io_base()`` at their module
 instantiation, as explained at the `Python manual
 <http://docs.python.org/2/extending/extending.html#using-capsules>`_.
 
@@ -18,7 +18,7 @@ the import function:
 
 .. code-block:: c++
 
-   #include <xbob.io.base/api.h>
+   #include <bob.io.base/api.h>
 
    PyMODINIT_FUNC initclient(void) {
 
@@ -27,13 +27,13 @@ the import function:
      if (!m) return;
 
      /* imports dependencies */
-     if (import_xbob_blitz() < 0) {
+     if (import_bob_blitz() < 0) {
        PyErr_Print();
        PyErr_SetString(PyExc_ImportError, "cannot import extension");
        return 0;
      }
 
-     if (import_xbob_io_base() < 0) {
+     if (import_bob_io_base() < 0) {
        PyErr_Print();
        PyErr_SetString(PyExc_ImportError, "cannot import extension");
        return 0;
@@ -44,7 +44,7 @@ the import function:
 .. note::
 
   The include directory can be discovered using
-  :py:func:`xbob.io.base.get_include`.
+  :py:func:`bob.io.base.get_include`.
 
 Generic Functions
 -----------------

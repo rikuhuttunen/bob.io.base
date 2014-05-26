@@ -4,12 +4,12 @@
 # Mon 16 Apr 08:18:08 2012 CEST
 
 from setuptools import setup, find_packages, dist
-dist.Distribution(dict(setup_requires=['xbob.blitz']))
-from xbob.blitz.extension import Extension
+dist.Distribution(dict(setup_requires=['bob.blitz']))
+from bob.blitz.extension import Extension
 
 import os
 package_dir = os.path.dirname(os.path.realpath(__file__))
-package_dir = os.path.join(package_dir, 'xbob', 'io', 'base', 'include')
+package_dir = os.path.join(package_dir, 'bob', 'io', 'base', 'include')
 include_dirs = [package_dir]
 
 packages = ['bob-io >= 2.0.0a2']
@@ -17,10 +17,10 @@ version = '2.0.0a0'
 
 setup(
 
-    name='xbob.io.base',
+    name='bob.io.base',
     version=version,
     description='Base bindings for bob.io',
-    url='http://github.com/bioidiap/xbob.io.base',
+    url='http://github.com/bioidiap/bob.io.base',
     license='BSD',
     author='Andre Anjos',
     author_email='andre.anjos@idiap.ch',
@@ -32,30 +32,30 @@ setup(
 
     install_requires=[
       'setuptools',
-      'xbob.blitz',
+      'bob.blitz',
     ],
 
     namespace_packages=[
-      "xbob",
-      "xbob.io",
+      "bob",
+      "bob.io",
       ],
 
     ext_modules = [
-      Extension("xbob.io.base.version",
+      Extension("bob.io.base.version",
         [
-          "xbob/io/base/version.cpp",
+          "bob/io/base/version.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,
         version = version,
         ),
-      Extension("xbob.io.base._library",
+      Extension("bob.io.base._library",
         [
-          "xbob/io/base/bobskin.cpp",
-          "xbob/io/base/codec.cpp",
-          "xbob/io/base/file.cpp",
-          "xbob/io/base/hdf5.cpp",
-          "xbob/io/base/main.cpp",
+          "bob/io/base/bobskin.cpp",
+          "bob/io/base/codec.cpp",
+          "bob/io/base/file.cpp",
+          "bob/io/base/hdf5.cpp",
+          "bob/io/base/main.cpp",
           ],
         packages = packages,
         include_dirs = include_dirs,

@@ -5,18 +5,18 @@
  * @brief Bindings to bob::io::File
  */
 
-#define XBOB_IO_BASE_MODULE
+#define BOB_IO_BASE_MODULE
 #include "bobskin.h"
-#include <xbob.io.base/api.h>
+#include <bob.io.base/api.h>
 #include <bob/io/CodecRegistry.h>
 #include <bob/io/utils.h>
 #include <numpy/arrayobject.h>
-#include <xbob.blitz/capi.h>
-#include <xbob.blitz/cleanup.h>
+#include <bob.blitz/capi.h>
+#include <bob.blitz/cleanup.h>
 #include <stdexcept>
 
 #define FILETYPE_NAME "File"
-PyDoc_STRVAR(s_file_str, XBOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
+PyDoc_STRVAR(s_file_str, BOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
 
 PyDoc_STRVAR(s_file_doc,
 "File(filename, [mode='r', [pretend_extension='']]) -> new bob::io::File\n\
@@ -477,10 +477,10 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be written into the file. It can be a\n\
-  numpy, a xbob.blitz.array or any other object which can be\n\
+  numpy, a bob.blitz.array or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
-  :py:class:`xbob.blitz.array`.\n\
+  :py:class:`bob.blitz.array`.\n\
 \n\
 This method writes data to the file. It acts like the\n\
 given array is the only piece of data that will ever be written\n\
@@ -530,10 +530,10 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be added into the file. It can be a\n\
-  numpy, a xbob.blitz.array or any other object which can be\n\
+  numpy, a bob.blitz.array or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
-  :py:class:`xbob.blitz.array`.\n\
+  :py:class:`bob.blitz.array`.\n\
 \n\
 This method appends data to the file. If the file does not\n\
 exist, creates a new file, else, makes sure that the inserted\n\
@@ -630,7 +630,7 @@ static PyMethodDef PyBobIoFile_Methods[] = {
  **********************************/
 
 #define FILEITERTYPE_NAME "File.iter"
-PyDoc_STRVAR(s_fileiterator_str, XBOB_EXT_MODULE_PREFIX "." FILEITERTYPE_NAME);
+PyDoc_STRVAR(s_fileiterator_str, BOB_EXT_MODULE_PREFIX "." FILEITERTYPE_NAME);
 
 /* How to create a new PyBobIoFileIteratorObject */
 static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject*) {

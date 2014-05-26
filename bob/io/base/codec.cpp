@@ -5,8 +5,8 @@
  * @brief Bindings to bob::io::CodecRegistry
  */
 
-#define XBOB_IO_BASE_MODULE
-#include <xbob.io.base/api.h>
+#define BOB_IO_BASE_MODULE
+#include <bob.io.base/api.h>
 
 int PyBobIoCodec_Register (const char* extension, const char* description, bob::io::file_factory_t factory) {
   boost::shared_ptr<bob::io::CodecRegistry> instance =
