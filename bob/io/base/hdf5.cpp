@@ -12,8 +12,10 @@
 #include <numpy/arrayobject.h>
 #include <bob.blitz/cppapi.h>
 #include <bob.blitz/cleanup.h>
+#include <bob.extension/documentation.h>
 #include <stdexcept>
 #include <cstring>
+
 
 #define HDF5FILE_NAME "HDF5File"
 PyDoc_STRVAR(s_hdf5file_str, BOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
@@ -156,6 +158,73 @@ static PyObject* PyBobIoHDF5File_Repr(PyBobIoHDF5FileObject* self) {
   ("%s(filename='%s')", Py_TYPE(self)->tp_name, self->f->filename().c_str());
 }
 
+static PyObject* PyBobIoHDF5File_Flush(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  /* Parses input arguments in a single shot */
+  static char* kwlist[] = {0};
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) return 0;
+
+  try {
+    self->f->flush();
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while flushing HDF5 file `%s'", filename);
+    return 0;
+  }
+  Py_RETURN_NONE;
+}
+
+static auto s_flush = bob::extension::FunctionDoc(
+  "flush",
+  "Flushes the content of the HDF5 file to disk",
+  "When the HDF5File is open for writing, this function synchronizes the contents on the disk with the one from the file."
+  "When the file is open for reading, nothing happens.",
+  true
+)
+  .add_prototype("")
+;
+
+
+static PyObject* PyBobIoHDF5File_Close(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+  /* Parses input arguments in a single shot */
+  static char * kwlist[] = {0};
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) return 0;
+
+  try {
+    self->f->close();
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while closing HDF5 file `%s'", filename);
+    return 0;
+  }
+
+  Py_RETURN_NONE;
+}
+
+static auto s_close = bob::extension::FunctionDoc(
+  "close",
+  "Closes this file",
+  "This function closes the HDF5File after flushing all its contents to disk."
+  "After the HDF5File is closed, any operation on it will result in an exception.",
+  true
+)
+  .add_prototype("")
+;
+
+
 static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
 
   /* Parses input arguments in a single shot */
@@ -173,7 +242,9 @@ static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, Py
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while changing directory to `%s' in HDF5 file `%s'", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while changing directory to `%s' in HDF5 file `%s'", path, filename);
     return 0;
   }
 
@@ -221,7 +292,9 @@ static PyObject* PyBobIoHDF5File_HasGroup(PyBobIoHDF5FileObject* self, PyObject 
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for group `%s' in HDF5 file `%s'", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for group `%s' in HDF5 file `%s'", path, filename);
     return 0;
   }
 
@@ -262,7 +335,9 @@ static PyObject* PyBobIoHDF5File_CreateGroup(PyBobIoHDF5FileObject* self, PyObje
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while creating group `%s' in HDF5 file `%s'", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while creating group `%s' in HDF5 file `%s'", path, filename);
     return 0;
   }
 
@@ -303,7 +378,9 @@ static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObjec
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for dataset `%s' in HDF5 file `%s'", key, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for dataset `%s' in HDF5 file `%s'", key, filename);
     return 0;
   }
 
@@ -480,7 +557,9 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while getting description for dataset `%s' in HDF5 file `%s'", key, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while getting description for dataset `%s' in HDF5 file `%s'", key, filename);
     return 0;
   }
 
@@ -524,7 +603,9 @@ static PyObject* PyBobIoHDF5File_Unlink(PyBobIoHDF5FileObject* self, PyObject *a
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while unlinking dataset `%s' in HDF5 file `%s'", key, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while unlinking dataset `%s' in HDF5 file `%s'", key, filename);
     return 0;
   }
 
@@ -567,7 +648,9 @@ static PyObject* PyBobIoHDF5File_Rename(PyBobIoHDF5FileObject* self, PyObject *a
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while renaming dataset `%s' to `%s' in HDF5 file `%s'", from, to, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while renaming dataset `%s' to `%s' in HDF5 file `%s'", from, to, filename);
     return 0;
   }
 
@@ -620,7 +703,9 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading dataset names from HDF5 file `%s'", self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading dataset names from HDF5 file `%s'", filename);
     return 0;
   }
 
@@ -678,7 +763,9 @@ static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading group names from HDF5 file `%s'", self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading group names from HDF5 file `%s'", filename);
     return 0;
   }
 
@@ -717,7 +804,9 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", p, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", p, filename);
     return 0;
   }
 
@@ -770,7 +859,9 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
       return 0;
     }
     catch (...) {
-      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading %s scalar from dataset `%s' at position %d from HDF5 file `%s'", bob::io::stringize(type.type()), p, pos, self->f->filename().c_str());
+      const char* filename = "<unknown>";
+      try{ filename = self->f->filename().c_str(); } catch(...){}
+      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading %s scalar from dataset `%s' at position %d from HDF5 file `%s'", bob::io::stringize(type.type()), p, pos, filename);
       return 0;
     }
   }
@@ -794,7 +885,9 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading dataset `%s' at position %d with descriptor `%s' from HDF5 file `%s'", p, pos, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading dataset `%s' at position %d with descriptor `%s' from HDF5 file `%s'", p, pos, type.str().c_str(), filename);
     return 0;
   }
 
@@ -852,7 +945,9 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", key, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", key, filename);
     return 0;
   }
 
@@ -1153,7 +1248,9 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_TypeError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", pos, path, filename, Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1221,7 +1318,9 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
           break;
 
         default:
-          PyErr_Format(PyExc_NotImplementedError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", pos, path, self->f->filename().c_str(), is_array);
+          const char* filename = "<unknown>";
+          try{ filename = self->f->filename().c_str(); } catch(...){}
+          PyErr_Format(PyExc_NotImplementedError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", pos, path, filename, is_array);
           return 0;
       }
 
@@ -1233,7 +1332,9 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot replace object in position %" PY_FORMAT_SIZE_T "d at HDF5 file `%s': unknown exception caught", pos, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot replace object in position %" PY_FORMAT_SIZE_T "d at HDF5 file `%s': unknown exception caught", pos, filename);
     return 0;
   }
 
@@ -1286,7 +1387,9 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_TypeError, "error appending to object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, filename, Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1356,9 +1459,12 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
           self->f->extend_buffer(path, type, PyArray_DATA((PyArrayObject*)converted));
           break;
 
-        default:
-          PyErr_Format(PyExc_NotImplementedError, "error appending to object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, self->f->filename().c_str(), is_array);
+        default:{
+          const char* filename = "<unknown>";
+          try{ filename = self->f->filename().c_str(); } catch(...){}
+          PyErr_Format(PyExc_NotImplementedError, "error appending to object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, filename, is_array);
           return 0;
+        }
       }
 
     }
@@ -1369,7 +1475,9 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot append to object `%s' at HDF5 file `%s': unknown exception caught", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot append to object `%s' at HDF5 file `%s': unknown exception caught", path, filename);
     return 0;
   }
 
@@ -1476,7 +1584,9 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, self->f->filename().c_str(), Py_TYPE(data)->tp_name);
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_TypeError, "error setting object `%s' of HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", path, filename, Py_TYPE(data)->tp_name);
     return 0;
   }
 
@@ -1548,7 +1658,9 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
           break;
 
         default:
-          PyErr_Format(PyExc_NotImplementedError, "error setting object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, self->f->filename().c_str(), is_array);
+          const char* filename = "<unknown>";
+          try{ filename = self->f->filename().c_str(); } catch(...){}
+          PyErr_Format(PyExc_NotImplementedError, "error setting object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, filename, is_array);
           return 0;
       }
 
@@ -1560,7 +1672,9 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot set object `%s' at HDF5 file `%s': unknown exception caught", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot set object `%s' at HDF5 file `%s': unknown exception caught", path, filename);
     return 0;
   }
 
@@ -1618,7 +1732,9 @@ static PyObject* PyBobIoHDF5File_Copy(PyBobIoHDF5FileObject* self, PyObject *arg
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while copying contents of file `%s' to file `%s'", self->f->filename().c_str(), other->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while copying contents of file `%s' to file `%s'", self->f->filename().c_str(), filename);
     return 0;
   }
 
@@ -1652,7 +1768,9 @@ template <typename T> static PyObject* PyBobIoHDF5File_ReadScalarAttribute
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
     return 0;
   }
   return PyBlitzArrayCxx_FromCScalar(value);
@@ -1670,7 +1788,9 @@ template <> PyObject* PyBobIoHDF5File_ReadScalarAttribute<const char*>
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading string attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading string attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
     return 0;
   }
   return Py_BuildValue("s", retval.c_str());
@@ -1742,7 +1862,9 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading array attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading array attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
     return 0;
   }
 
@@ -1770,13 +1892,17 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while getting type for attribute `%s' at resource `%s' from HDF5 file `%s'", name, path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while getting type for attribute `%s' at resource `%s' from HDF5 file `%s'", name, path, filename);
     return 0;
   }
 
   if (type.type() == bob::io::unsupported) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
     boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
-    m % name % path % self->f->filename();
+    m % name % path % filename;
     PyErr_Warn(PyExc_UserWarning, m.str().c_str());
     Py_RETURN_NONE;
   }
@@ -1826,8 +1952,10 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
   for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
     PyObject* item = 0;
     if (k->second.type() == bob::io::unsupported) {
+      const char* filename = "<unknown>";
+      try{ filename = self->f->filename().c_str(); } catch(...){}
       boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
-      m % k->first % k->second.str() % self->f->filename();
+      m % k->first % k->second.str() % filename;
       PyErr_Warn(PyExc_UserWarning, m.str().c_str());
       item = Py_None;
       Py_INCREF(item);
@@ -1881,7 +2009,9 @@ template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
     return 0;
   }
 
@@ -1904,7 +2034,9 @@ template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing string attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing string attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
     return 0;
   }
 
@@ -1974,9 +2106,12 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
           self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)converted));
           break;
 
-        default:
-          PyErr_Format(PyExc_NotImplementedError, "error setting attribute `%s' at resource `%s' of HDF5 file `%s': HDF5 attribute setting function is uncovered for array type %d (DEBUG ME)", name, path, self->f->filename().c_str(), is_array);
+        default:{
+          const char* filename = "<unknown>";
+          try{ filename = self->f->filename().c_str(); } catch(...){}
+          PyErr_Format(PyExc_NotImplementedError, "error setting attribute `%s' at resource `%s' of HDF5 file `%s': HDF5 attribute setting function is uncovered for array type %d (DEBUG ME)", name, path, filename, is_array);
           return 0;
+        }
       }
     }
     catch (std::exception& e) {
@@ -1984,7 +2119,9 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
       return 0;
     }
     catch (...) {
-      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing array attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), self->f->filename().c_str());
+      const char* filename = "<unknown>";
+      try{ filename = self->f->filename().c_str(); } catch(...){}
+      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing array attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
       return 0;
     }
 
@@ -2011,7 +2148,9 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
-    PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name, path, filename, Py_TYPE(value)->tp_name);
     return 0;
   }
 
@@ -2083,7 +2222,9 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
     auto converted_ = make_xsafe(converted);
 
     if (is_array < 0) { ///< error condition, signal
-      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name.get(), path, self->f->filename().c_str(), Py_TYPE(value)->tp_name);
+      const char* filename = "<unknown>";
+      try{ filename = self->f->filename().c_str(); } catch(...){}
+      PyErr_Format(PyExc_TypeError, "error setting attribute `%s' of resource `%s' at HDF5 file `%s': no support for storing objects of type `%s' on HDF5 files", name.get(), path, filename, Py_TYPE(value)->tp_name);
       return 0;
     }
 
@@ -2148,7 +2289,9 @@ static PyObject* PyBobIoHDF5File_DelAttribute(PyBobIoHDF5FileObject* self, PyObj
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, filename);
     return 0;
   }
 
@@ -2208,7 +2351,9 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
         return 0;
       }
       catch (...) {
-        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name.get(), path, self->f->filename().c_str());
+        const char* filename = "<unknown>";
+        try{ filename = self->f->filename().c_str(); } catch(...){}
+        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name.get(), path, filename);
         return 0;
       }
     }
@@ -2225,7 +2370,9 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot list attributes at resource `%s' of HDF5 file `%s': unknown exception caught", path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot list attributes at resource `%s' of HDF5 file `%s': unknown exception caught", path, filename);
     return 0;
   }
   for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
@@ -2237,7 +2384,9 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
       return 0;
     }
     catch (...) {
-      PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", k->first.c_str(), path, self->f->filename().c_str());
+      const char* filename = "<unknown>";
+      try{ filename = self->f->filename().c_str(); } catch(...){}
+      PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", k->first.c_str(), path, filename);
       return 0;
     }
   }
@@ -2285,7 +2434,9 @@ static PyObject* PyBobIoHDF5File_HasAttribute(PyBobIoHDF5FileObject* self, PyObj
     return 0;
   }
   catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot verify existence of attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, self->f->filename().c_str());
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot verify existence of attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, filename);
     return 0;
   }
 }
@@ -2311,6 +2462,18 @@ path\n\
 ");
 
 static PyMethodDef PyBobIoHDF5File_Methods[] = {
+  {
+    s_close.name(),
+    (PyCFunction)PyBobIoHDF5File_Close,
+    METH_VARARGS|METH_KEYWORDS,
+    s_close.doc()
+  },
+  {
+    s_flush.name(),
+    (PyCFunction)PyBobIoHDF5File_Flush,
+    METH_VARARGS|METH_KEYWORDS,
+    s_flush.doc()
+  },
   {
     s_cd_str,
     (PyCFunction)PyBobIoHDF5File_ChangeDirectory,
@@ -2459,12 +2622,68 @@ static PyMethodDef PyBobIoHDF5File_Methods[] = {
 };
 
 static PyObject* PyBobIoHDF5File_Cwd(PyBobIoHDF5FileObject* self) {
-  return Py_BuildValue("s", self->f->cwd().c_str());
+  try{
+    return Py_BuildValue("s", self->f->cwd().c_str());
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot access 'cwd' in HDF5 file `%s': unknown exception caught", filename);
+    return 0;
+  }
 }
 
 PyDoc_STRVAR(s_cwd_str, "cwd");
 PyDoc_STRVAR(s_cwd_doc,
 "The current working directory set on the file"
+);
+
+static PyObject* PyBobIoHDF5File_Filename(PyBobIoHDF5FileObject* self) {
+  try{
+    return Py_BuildValue("s", self->f->filename().c_str());
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot access 'filename' in HDF5 file `%s': unknown exception caught", filename);
+    return 0;
+  }
+}
+
+static auto s_filename = bob::extension::VariableDoc(
+  "filename",
+  "str",
+  "The name (and path) of the underlying file on hard disk"
+);
+
+static PyObject* PyBobIoHDF5File_Writable(PyBobIoHDF5FileObject* self) {
+  try{
+    return Py_BuildValue("b", self->f->writable());
+  }
+  catch (std::exception& e) {
+    PyErr_SetString(PyExc_RuntimeError, e.what());
+    return 0;
+  }
+  catch (...) {
+    const char* filename = "<unknown>";
+    try{ filename = self->f->filename().c_str(); } catch(...){}
+    PyErr_Format(PyExc_RuntimeError, "cannot access 'writable' in HDF5 file `%s': unknown exception caught", filename);
+    return 0;
+  }
+}
+
+static auto s_writable = bob::extension::VariableDoc(
+  "writable",
+  "bool",
+  "Has this file been opened in writable mode?"
 );
 
 static PyGetSetDef PyBobIoHDF5File_getseters[] = {
@@ -2473,6 +2692,20 @@ static PyGetSetDef PyBobIoHDF5File_getseters[] = {
       (getter)PyBobIoHDF5File_Cwd,
       0,
       s_cwd_doc,
+      0,
+    },
+    {
+      s_filename.name(),
+      (getter)PyBobIoHDF5File_Filename,
+      0,
+      s_filename.doc(),
+      0,
+    },
+    {
+      s_writable.name(),
+      (getter)PyBobIoHDF5File_Writable,
+      0,
+      s_writable.doc(),
       0,
     },
     {0}  /* Sentinel */
