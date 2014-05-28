@@ -420,14 +420,17 @@ def test_close():
     outfile = HDF5File(tmpname, 'w')
     outfile.close()
 
-    with nose.tools.assert_raises(RuntimeError):
+    def test_set():
       outfile.set("Test", numpy.array([1,2]))
+    nose.tools.assert_raises(RuntimeError, test_set)
 
-    with nose.tools.assert_raises(RuntimeError):
+    def test_read():
       test = outfile.read("Test")
+    nose.tools.assert_raises(RuntimeError, test_read)
 
-    with nose.tools.assert_raises(RuntimeError):
-      outfile.filename
+    def test_filename():
+      fn = outfile.filename
+    nose.tools.assert_raises(RuntimeError, test_filename)
 
   finally:
     os.unlink(tmpname)
