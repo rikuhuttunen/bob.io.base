@@ -49,31 +49,6 @@ def temporary_filename(prefix='bobtest_', suffix='.hdf5'):
   os.unlink(name)
   return name
 
-def bob_at_least(version_geq):
-  '''Decorator to check if at least a certain version of Bob is installed
-
-  To use this, decorate your test routine with something like:
-
-  .. code-block:: python
-
-    @bob_at_least('1.2.2')
-
-  '''
-
-  def test_wrapper(test):
-
-    @functools.wraps(test)
-    def wrapper(*args, **kwargs):
-      from .version import externals
-      inst = SV(externals['Bob'][0])
-      if inst < version_geq:
-        raise nose.plugins.skip.SkipTest('Bob version installed (%s) is smaller than required for this test (%s)' % (externals['Bob'][0], version_geq))
-      return test(*args, **kwargs)
-
-    return wrapper
-
-  return test_wrapper
-
 def extension_available(extension):
   '''Decorator to check if a extension is available before enabling a test'''
 
@@ -81,7 +56,7 @@ def extension_available(extension):
 
     @functools.wraps(test)
     def wrapper(*args, **kwargs):
-      from .version import extensions
+      from . import extensions
       if extension in extensions():
         return test(*args, **kwargs)
       else:

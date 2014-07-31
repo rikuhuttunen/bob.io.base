@@ -2,7 +2,7 @@
  * @author Andre Anjos <andre.anjos@idiap.ch>
  * @date Tue 12 Nov 18:19:22 2013
  *
- * @brief Bindings to bob::io::HDF5File
+ * @brief Bindings to bob::io::base::HDF5File
  */
 
 #define BOB_IO_BASE_MODULE
@@ -21,7 +21,7 @@
 PyDoc_STRVAR(s_hdf5file_str, BOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
 
 PyDoc_STRVAR(s_hdf5file_doc,
-"HDF5File(filename, [mode='r']) -> new bob::io::HDF5File\n\
+"HDF5File(filename, [mode='r']) -> new bob::io::base::HDF5File\n\
 \n\
 Reads and writes data to HDF5 files.\n\
 \n\
@@ -77,15 +77,15 @@ static void PyBobIoHDF5File_Delete (PyBobIoHDF5FileObject* o) {
 
 }
 
-static bob::io::HDF5File::mode_t mode_from_char (char mode) {
+static bob::io::base::HDF5File::mode_t mode_from_char (char mode) {
 
-  bob::io::HDF5File::mode_t new_mode = bob::io::HDF5File::inout;
+  bob::io::base::HDF5File::mode_t new_mode = bob::io::base::HDF5File::inout;
 
   switch (mode) {
-    case 'r': new_mode = bob::io::HDF5File::in; break;
-    case 'a': new_mode = bob::io::HDF5File::inout; break;
-    case 'w': new_mode = bob::io::HDF5File::trunc; break;
-    case 'x': new_mode = bob::io::HDF5File::excl; break;
+    case 'r': new_mode = bob::io::base::HDF5File::in; break;
+    case 'a': new_mode = bob::io::base::HDF5File::inout; break;
+    case 'w': new_mode = bob::io::base::HDF5File::trunc; break;
+    case 'x': new_mode = bob::io::base::HDF5File::excl; break;
     default:
       PyErr_SetString(PyExc_RuntimeError, "Supported flags are 'r' (read-only), 'a' (read/write/append), 'w' (read/write/truncate) or 'x' (read/write/exclusive)");
   }
@@ -124,7 +124,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     PyErr_Format(PyExc_ValueError, "file open mode string should have 1 element and be either 'r' (read), 'w' (write), 'a' (append), 'x' (exclusive)");
     return -1;
   }
-  bob::io::HDF5File::mode_t mode_mode = mode_from_char(mode);
+  bob::io::base::HDF5File::mode_t mode_mode = mode_from_char(mode);
   if (PyErr_Occurred()) return -1;
 
 #if PY_VERSION_HEX >= 0x03000000
@@ -134,7 +134,7 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
 #endif
 
   try {
-    self->f.reset(new bob::io::HDF5File(c_filename, mode_mode));
+    self->f.reset(new bob::io::base::HDF5File(c_filename, mode_mode));
   }
   catch (std::exception& e) {
     PyErr_SetString(PyExc_RuntimeError, e.what());
@@ -404,85 +404,85 @@ If the given path is relative, it is take w.r.t. to the current\n\
 working directory.\n\
 ");
 
-static bob::io::hdf5type PyBobIo_H5FromTypenum (int type_num) {
+static bob::io::base::hdf5type PyBobIo_H5FromTypenum (int type_num) {
 
   switch(type_num) {
-    case NPY_STRING:     return bob::io::s;
-    case NPY_BOOL:       return bob::io::b;
-    case NPY_INT8:       return bob::io::i8;
-    case NPY_INT16:      return bob::io::i16;
-    case NPY_INT32:      return bob::io::i32;
-    case NPY_INT64:      return bob::io::i64;
-    case NPY_UINT8:      return bob::io::u8;
-    case NPY_UINT16:     return bob::io::u16;
-    case NPY_UINT32:     return bob::io::u32;
-    case NPY_UINT64:     return bob::io::u64;
-    case NPY_FLOAT32:    return bob::io::f32;
-    case NPY_FLOAT64:    return bob::io::f64;
+    case NPY_STRING:     return bob::io::base::s;
+    case NPY_BOOL:       return bob::io::base::b;
+    case NPY_INT8:       return bob::io::base::i8;
+    case NPY_INT16:      return bob::io::base::i16;
+    case NPY_INT32:      return bob::io::base::i32;
+    case NPY_INT64:      return bob::io::base::i64;
+    case NPY_UINT8:      return bob::io::base::u8;
+    case NPY_UINT16:     return bob::io::base::u16;
+    case NPY_UINT32:     return bob::io::base::u32;
+    case NPY_UINT64:     return bob::io::base::u64;
+    case NPY_FLOAT32:    return bob::io::base::f32;
+    case NPY_FLOAT64:    return bob::io::base::f64;
 #ifdef NPY_FLOAT128
-    case NPY_FLOAT128:   return bob::io::f128;
+    case NPY_FLOAT128:   return bob::io::base::f128;
 #endif
-    case NPY_COMPLEX64:  return bob::io::c64;
-    case NPY_COMPLEX128: return bob::io::c128;
+    case NPY_COMPLEX64:  return bob::io::base::c64;
+    case NPY_COMPLEX128: return bob::io::base::c128;
 #ifdef NPY_COMPLEX256
-    case NPY_COMPLEX256: return bob::io::c256;
+    case NPY_COMPLEX256: return bob::io::base::c256;
 #endif
 #if defined(__LP64__) || defined(__APPLE__)
     case NPY_LONGLONG:
                          switch (NPY_BITSOF_LONGLONG) {
-                           case 8: return bob::io::i8;
-                           case 16: return bob::io::i16;
-                           case 32: return bob::io::i32;
-                           case 64: return bob::io::i64;
-                           default: return bob::io::unsupported;
+                           case 8: return bob::io::base::i8;
+                           case 16: return bob::io::base::i16;
+                           case 32: return bob::io::base::i32;
+                           case 64: return bob::io::base::i64;
+                           default: return bob::io::base::unsupported;
                          }
                          break;
     case NPY_ULONGLONG:
                          switch (NPY_BITSOF_LONGLONG) {
-                           case 8: return bob::io::u8;
-                           case 16: return bob::io::u16;
-                           case 32: return bob::io::u32;
-                           case 64: return bob::io::u64;
-                           default: return bob::io::unsupported;
+                           case 8: return bob::io::base::u8;
+                           case 16: return bob::io::base::u16;
+                           case 32: return bob::io::base::u32;
+                           case 64: return bob::io::base::u64;
+                           default: return bob::io::base::unsupported;
                          }
                          break;
 #endif
-    default:             return bob::io::unsupported;
+    default:             return bob::io::base::unsupported;
   }
 
 }
 
-static int PyBobIo_H5AsTypenum (bob::io::hdf5type type) {
+static int PyBobIo_H5AsTypenum (bob::io::base::hdf5type type) {
 
   switch(type) {
-    case bob::io::s:    return NPY_STRING;
-    case bob::io::b:    return NPY_BOOL;
-    case bob::io::i8:   return NPY_INT8;
-    case bob::io::i16:  return NPY_INT16;
-    case bob::io::i32:  return NPY_INT32;
-    case bob::io::i64:  return NPY_INT64;
-    case bob::io::u8:   return NPY_UINT8;
-    case bob::io::u16:  return NPY_UINT16;
-    case bob::io::u32:  return NPY_UINT32;
-    case bob::io::u64:  return NPY_UINT64;
-    case bob::io::f32:  return NPY_FLOAT32;
-    case bob::io::f64:  return NPY_FLOAT64;
+    case bob::io::base::s:    return NPY_STRING;
+    case bob::io::base::b:    return NPY_BOOL;
+    case bob::io::base::i8:   return NPY_INT8;
+    case bob::io::base::i16:  return NPY_INT16;
+    case bob::io::base::i32:  return NPY_INT32;
+    case bob::io::base::i64:  return NPY_INT64;
+    case bob::io::base::u8:   return NPY_UINT8;
+    case bob::io::base::u16:  return NPY_UINT16;
+    case bob::io::base::u32:  return NPY_UINT32;
+    case bob::io::base::u64:  return NPY_UINT64;
+    case bob::io::base::f32:  return NPY_FLOAT32;
+    case bob::io::base::f64:  return NPY_FLOAT64;
 #ifdef NPY_FLOAT128
-    case bob::io::f128: return NPY_FLOAT128;
+    case bob::io::base::f128: return NPY_FLOAT128;
 #endif
-    case bob::io::c64:  return NPY_COMPLEX64;
-    case bob::io::c128: return NPY_COMPLEX128;
+    case bob::io::base::c64:  return NPY_COMPLEX64;
+    case bob::io::base::c128: return NPY_COMPLEX128;
 #ifdef NPY_COMPLEX256
-    case bob::io::c256: return NPY_COMPLEX256;
+    case bob::io::base::c256: return NPY_COMPLEX256;
 #endif
     default:            return NPY_NOTYPE;
   }
 
 }
 
-static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::HDF5Type& t) {
+static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::base::HDF5Type& t) {
 
-  const bob::io::HDF5Shape& sh = t.shape();
+  const bob::io::base::HDF5Shape& sh = t.shape();
   size_t ndim = sh.n();
   const hsize_t* shptr = sh.get();
 
@@ -513,7 +513,7 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::HDF5Type& t) {
 
 }
 
-static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::HDF5Descriptor& d) {
+static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::base::HDF5Descriptor& d) {
 
   PyObject* type = PyBobIo_HDF5TypeAsTuple(d.type);
   if (!type) return 0;
@@ -542,7 +542,7 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
   boost::shared_ptr<PyObject> retval_;
 
   try {
-    const std::vector<bob::io::HDF5Descriptor>& dv = self->f->describe(key);
+    const std::vector<bob::io::base::HDF5Descriptor>& dv = self->f->describe(key);
     retval = PyTuple_New(dv.size());
     retval_ = make_safe(retval);
 
@@ -795,7 +795,7 @@ recursive\n\
 static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     const char* p, int descriptor, int pos) {
 
-  const std::vector<bob::io::HDF5Descriptor>* D = 0;
+  const std::vector<bob::io::base::HDF5Descriptor>* D = 0;
   try {
     D = &self->f->describe(p);
   }
@@ -811,43 +811,43 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
   }
 
   //last descriptor always contains the full readout.
-  const bob::io::HDF5Type& type = (*D)[descriptor].type;
-  const bob::io::HDF5Shape& shape = type.shape();
+  const bob::io::base::HDF5Type& type = (*D)[descriptor].type;
+  const bob::io::base::HDF5Shape& shape = type.shape();
 
   if (shape.n() == 1 && shape[0] == 1) { //read as scalar
     try {
       switch(type.type()) {
-        case bob::io::s:
+        case bob::io::base::s:
           return Py_BuildValue("s", self->f->read<std::string>(p, pos).c_str());
-        case bob::io::b:
+        case bob::io::base::b:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<bool>(p, pos));
-        case bob::io::i8:
+        case bob::io::base::i8:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<int8_t>(p, pos));
-        case bob::io::i16:
+        case bob::io::base::i16:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<int16_t>(p, pos));
-        case bob::io::i32:
+        case bob::io::base::i32:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<int32_t>(p, pos));
-        case bob::io::i64:
+        case bob::io::base::i64:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<int64_t>(p, pos));
-        case bob::io::u8:
+        case bob::io::base::u8:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<uint8_t>(p, pos));
-        case bob::io::u16:
+        case bob::io::base::u16:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<uint16_t>(p, pos));
-        case bob::io::u32:
+        case bob::io::base::u32:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<uint32_t>(p, pos));
-        case bob::io::u64:
+        case bob::io::base::u64:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<uint64_t>(p, pos));
-        case bob::io::f32:
+        case bob::io::base::f32:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<float>(p, pos));
-        case bob::io::f64:
+        case bob::io::base::f64:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<double>(p, pos));
-        case bob::io::f128:
+        case bob::io::base::f128:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<long double>(p, pos));
-        case bob::io::c64:
+        case bob::io::base::c64:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<float> >(p, pos));
-        case bob::io::c128:
+        case bob::io::base::c128:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<double> >(p, pos));
-        case bob::io::c256:
+        case bob::io::base::c256:
           return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<long double> >(p, pos));
         default:
           PyErr_Format(PyExc_TypeError, "unsupported HDF5 type: %s", type.str().c_str());
@@ -861,7 +861,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     catch (...) {
       const char* filename = "<unknown>";
       try{ filename = self->f->filename().c_str(); } catch(...){}
-      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading %s scalar from dataset `%s' at position %d from HDF5 file `%s'", bob::io::stringize(type.type()), p, pos, filename);
+      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading %s scalar from dataset `%s' at position %d from HDF5 file `%s'", bob::io::base::stringize(type.type()), p, pos, filename);
       return 0;
     }
   }
@@ -936,7 +936,7 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
   if (pos >= 0) return PyBobIoHDF5File_Xread(self, key, 0, pos);
 
   //otherwise returns as a list
-  const std::vector<bob::io::HDF5Descriptor>* D = 0;
+  const std::vector<bob::io::base::HDF5Descriptor>* D = 0;
   try {
     D = &self->f->describe(key);
   }
@@ -1037,16 +1037,16 @@ static boost::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
 
 }
 
-static int PyBobIoHDF5File_SetStringType(bob::io::HDF5Type& t, PyObject* o) {
+static int PyBobIoHDF5File_SetStringType(bob::io::base::HDF5Type& t, PyObject* o) {
   auto value = PyBobIo_GetString(o);
   if (!value) return -1;
-  t = bob::io::HDF5Type(value.get());
+  t = bob::io::base::HDF5Type(value.get());
   return 0;
 }
 
-template <typename T> int PyBobIoHDF5File_SetType(bob::io::HDF5Type& t) {
+template <typename T> int PyBobIoHDF5File_SetType(bob::io::base::HDF5Type& t) {
   T v;
-  t = bob::io::HDF5Type(v);
+  t = bob::io::base::HDF5Type(v);
   return 0;
 }
 
@@ -1082,7 +1082,7 @@ static bool PyBobIoHDF5File_IsPythonScalar(PyObject* obj) {
  * `*converted' is set to 0 (NULL), then we don't try a conversion, returning
  * -1.
  */
-static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
+static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::base::HDF5Type& t,
     PyObject** converted=0) {
 
   if (PyArray_IsScalar(o, Generic) || PyBobIoHDF5File_IsPythonScalar(o)) {
@@ -1172,10 +1172,10 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
   else if (PyBlitzArray_Check(o)) {
 
     PyBlitzArrayObject* bz = reinterpret_cast<PyBlitzArrayObject*>(o);
-    bob::io::hdf5type h5type = PyBobIo_H5FromTypenum(bz->type_num);
-    if (h5type == bob::io::unsupported) return -1;
-    bob::io::HDF5Shape h5shape(bz->ndim, bz->shape);
-    t = bob::io::HDF5Type(h5type, h5shape);
+    bob::io::base::hdf5type h5type = PyBobIo_H5FromTypenum(bz->type_num);
+    if (h5type == bob::io::base::unsupported) return -1;
+    bob::io::base::HDF5Shape h5shape(bz->ndim, bz->shape);
+    t = bob::io::base::HDF5Type(h5type, h5shape);
     return 1;
 
   }
@@ -1183,10 +1183,10 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
   else if (PyArray_CheckExact(o) && PyArray_ISCARRAY_RO((PyArrayObject*)o)) {
 
     PyArrayObject* np = reinterpret_cast<PyArrayObject*>(o);
-    bob::io::hdf5type h5type = PyBobIo_H5FromTypenum(PyArray_DESCR(np)->type_num);
-    if (h5type == bob::io::unsupported) return -1;
-    bob::io::HDF5Shape h5shape(PyArray_NDIM(np), PyArray_DIMS(np));
-    t = bob::io::HDF5Type(h5type, h5shape);
+    bob::io::base::hdf5type h5type = PyBobIo_H5FromTypenum(PyArray_DESCR(np)->type_num);
+    if (h5type == bob::io::base::unsupported) return -1;
+    bob::io::base::HDF5Shape h5shape(PyArray_NDIM(np), PyArray_DIMS(np));
+    t = bob::io::base::HDF5Type(h5type, h5shape);
     return 2;
 
   }
@@ -1203,13 +1203,13 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::HDF5Type& t,
     if (!*converted) return -1; ///< error condition
 
     PyArrayObject* np = reinterpret_cast<PyArrayObject*>(*converted);
-    bob::io::hdf5type h5type = PyBobIo_H5FromTypenum(PyArray_DESCR(np)->type_num);
-    if (h5type == bob::io::unsupported) {
+    bob::io::base::hdf5type h5type = PyBobIo_H5FromTypenum(PyArray_DESCR(np)->type_num);
+    if (h5type == bob::io::base::unsupported) {
       Py_CLEAR(*converted);
       return -1;
     }
-    bob::io::HDF5Shape h5shape(PyArray_NDIM(np), PyArray_DIMS(np));
-    t = bob::io::HDF5Type(h5type, h5shape);
+    bob::io::base::HDF5Shape h5shape(PyArray_NDIM(np), PyArray_DIMS(np));
+    t = bob::io::base::HDF5Type(h5type, h5shape);
     return 3;
 
   }
@@ -1242,7 +1242,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
   PyObject* data = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "snO", kwlist, &path, &pos, &data)) return 0;
 
-  bob::io::HDF5Type type;
+  bob::io::base::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
@@ -1259,42 +1259,42 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
     if (!is_array) { //write as a scalar
 
       switch(type.type()) {
-        case bob::io::s:
+        case bob::io::base::s:
           {
             auto value = PyBobIo_GetString(data);
             if (!value) return 0;
             self->f->replace<std::string>(path, pos, value.get());
             Py_RETURN_NONE;
           }
-        case bob::io::b:
+        case bob::io::base::b:
           return PyBobIoHDF5File_ReplaceScalar<bool>(self, path, pos, data);
-        case bob::io::i8:
+        case bob::io::base::i8:
           return PyBobIoHDF5File_ReplaceScalar<int8_t>(self, path, pos, data);
-        case bob::io::i16:
+        case bob::io::base::i16:
           return PyBobIoHDF5File_ReplaceScalar<int16_t>(self, path, pos, data);
-        case bob::io::i32:
+        case bob::io::base::i32:
           return PyBobIoHDF5File_ReplaceScalar<int32_t>(self, path, pos, data);
-        case bob::io::i64:
+        case bob::io::base::i64:
           return PyBobIoHDF5File_ReplaceScalar<int64_t>(self, path, pos, data);
-        case bob::io::u8:
+        case bob::io::base::u8:
           return PyBobIoHDF5File_ReplaceScalar<uint8_t>(self, path, pos, data);
-        case bob::io::u16:
+        case bob::io::base::u16:
           return PyBobIoHDF5File_ReplaceScalar<uint16_t>(self, path, pos, data);
-        case bob::io::u32:
+        case bob::io::base::u32:
           return PyBobIoHDF5File_ReplaceScalar<uint32_t>(self, path, pos, data);
-        case bob::io::u64:
+        case bob::io::base::u64:
           return PyBobIoHDF5File_ReplaceScalar<uint64_t>(self, path, pos, data);
-        case bob::io::f32:
+        case bob::io::base::f32:
           return PyBobIoHDF5File_ReplaceScalar<float>(self, path, pos, data);
-        case bob::io::f64:
+        case bob::io::base::f64:
           return PyBobIoHDF5File_ReplaceScalar<double>(self, path, pos, data);
-        case bob::io::f128:
+        case bob::io::base::f128:
           return PyBobIoHDF5File_ReplaceScalar<long double>(self, path, pos, data);
-        case bob::io::c64:
+        case bob::io::base::c64:
           return PyBobIoHDF5File_ReplaceScalar<std::complex<float> >(self, path, pos, data);
-        case bob::io::c128:
+        case bob::io::base::c128:
           return PyBobIoHDF5File_ReplaceScalar<std::complex<double> >(self, path, pos, data);
-        case bob::io::c256:
+        case bob::io::base::c256:
           return PyBobIoHDF5File_ReplaceScalar<std::complex<long double> >(self, path, pos, data);
         default:
           break;
@@ -1381,7 +1381,7 @@ static int PyBobIoHDF5File_AppendScalar(PyBobIoHDF5FileObject* self,
 
 static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* path, PyObject* data, Py_ssize_t compression) {
 
-  bob::io::HDF5Type type;
+  bob::io::base::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
@@ -1398,42 +1398,42 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
     if (!is_array) { //write as a scalar
 
       switch(type.type()) {
-        case bob::io::s:
+        case bob::io::base::s:
           {
             auto value = PyBobIo_GetString(data);
             if (!value) return 0;
             self->f->append<std::string>(path, value.get());
             return 1;
           }
-        case bob::io::b:
+        case bob::io::base::b:
           return PyBobIoHDF5File_AppendScalar<bool>(self, path, data);
-        case bob::io::i8:
+        case bob::io::base::i8:
           return PyBobIoHDF5File_AppendScalar<int8_t>(self, path, data);
-        case bob::io::i16:
+        case bob::io::base::i16:
           return PyBobIoHDF5File_AppendScalar<int16_t>(self, path, data);
-        case bob::io::i32:
+        case bob::io::base::i32:
           return PyBobIoHDF5File_AppendScalar<int32_t>(self, path, data);
-        case bob::io::i64:
+        case bob::io::base::i64:
           return PyBobIoHDF5File_AppendScalar<int64_t>(self, path, data);
-        case bob::io::u8:
+        case bob::io::base::u8:
           return PyBobIoHDF5File_AppendScalar<uint8_t>(self, path, data);
-        case bob::io::u16:
+        case bob::io::base::u16:
           return PyBobIoHDF5File_AppendScalar<uint16_t>(self, path, data);
-        case bob::io::u32:
+        case bob::io::base::u32:
           return PyBobIoHDF5File_AppendScalar<uint32_t>(self, path, data);
-        case bob::io::u64:
+        case bob::io::base::u64:
           return PyBobIoHDF5File_AppendScalar<uint64_t>(self, path, data);
-        case bob::io::f32:
+        case bob::io::base::f32:
           return PyBobIoHDF5File_AppendScalar<float>(self, path, data);
-        case bob::io::f64:
+        case bob::io::base::f64:
           return PyBobIoHDF5File_AppendScalar<double>(self, path, data);
-        case bob::io::f128:
+        case bob::io::base::f128:
           return PyBobIoHDF5File_AppendScalar<long double>(self, path, data);
-        case bob::io::c64:
+        case bob::io::base::c64:
           return PyBobIoHDF5File_AppendScalar<std::complex<float> >(self, path, data);
-        case bob::io::c128:
+        case bob::io::base::c128:
           return PyBobIoHDF5File_AppendScalar<std::complex<double> >(self, path, data);
-        case bob::io::c256:
+        case bob::io::base::c256:
           return PyBobIoHDF5File_AppendScalar<std::complex<long double> >(self, path, data);
         default:
           break;
@@ -1578,7 +1578,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     return 0;
   }
 
-  bob::io::HDF5Type type;
+  bob::io::base::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
@@ -1595,7 +1595,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     if (!is_array) { //write as a scalar
 
       switch(type.type()) {
-        case bob::io::s:
+        case bob::io::base::s:
           {
             auto value = PyBobIo_GetString(data);
             if (!value) return 0;
@@ -1603,35 +1603,35 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
             Py_RETURN_NONE;
           }
           break;
-        case bob::io::b:
+        case bob::io::base::b:
           return PyBobIoHDF5File_SetScalar<bool>(self, path, data);
-        case bob::io::i8:
+        case bob::io::base::i8:
           return PyBobIoHDF5File_SetScalar<int8_t>(self, path, data);
-        case bob::io::i16:
+        case bob::io::base::i16:
           return PyBobIoHDF5File_SetScalar<int16_t>(self, path, data);
-        case bob::io::i32:
+        case bob::io::base::i32:
           return PyBobIoHDF5File_SetScalar<int32_t>(self, path, data);
-        case bob::io::i64:
+        case bob::io::base::i64:
           return PyBobIoHDF5File_SetScalar<int64_t>(self, path, data);
-        case bob::io::u8:
+        case bob::io::base::u8:
           return PyBobIoHDF5File_SetScalar<uint8_t>(self, path, data);
-        case bob::io::u16:
+        case bob::io::base::u16:
           return PyBobIoHDF5File_SetScalar<uint16_t>(self, path, data);
-        case bob::io::u32:
+        case bob::io::base::u32:
           return PyBobIoHDF5File_SetScalar<uint32_t>(self, path, data);
-        case bob::io::u64:
+        case bob::io::base::u64:
           return PyBobIoHDF5File_SetScalar<uint64_t>(self, path, data);
-        case bob::io::f32:
+        case bob::io::base::f32:
           return PyBobIoHDF5File_SetScalar<float>(self, path, data);
-        case bob::io::f64:
+        case bob::io::base::f64:
           return PyBobIoHDF5File_SetScalar<double>(self, path, data);
-        case bob::io::f128:
+        case bob::io::base::f128:
           return PyBobIoHDF5File_SetScalar<long double>(self, path, data);
-        case bob::io::c64:
+        case bob::io::base::c64:
           return PyBobIoHDF5File_SetScalar<std::complex<float> >(self, path, data);
-        case bob::io::c128:
+        case bob::io::base::c128:
           return PyBobIoHDF5File_SetScalar<std::complex<double> >(self, path, data);
-        case bob::io::c256:
+        case bob::io::base::c256:
           return PyBobIoHDF5File_SetScalar<std::complex<long double> >(self, path, data);
         default:
           break;
@@ -1758,7 +1758,7 @@ file\n\
 
 template <typename T> static PyObject* PyBobIoHDF5File_ReadScalarAttribute
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::HDF5Type& type) {
+ const bob::io::base::HDF5Type& type) {
   T value;
   try {
     self->f->read_attribute(path, name, type, static_cast<void*>(&value));
@@ -1778,7 +1778,7 @@ template <typename T> static PyObject* PyBobIoHDF5File_ReadScalarAttribute
 
 template <> PyObject* PyBobIoHDF5File_ReadScalarAttribute<const char*>
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::HDF5Type& type) {
+ const bob::io::base::HDF5Type& type) {
   std::string retval;
   try {
     self->f->getAttribute(path, name, retval);
@@ -1797,46 +1797,46 @@ template <> PyObject* PyBobIoHDF5File_ReadScalarAttribute<const char*>
 }
 
 static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
-    const char* path, const char* name, const bob::io::HDF5Type& type) {
+    const char* path, const char* name, const bob::io::base::HDF5Type& type) {
 
   //no error detection: this should be done before reaching this method
 
-  const bob::io::HDF5Shape& shape = type.shape();
+  const bob::io::base::HDF5Shape& shape = type.shape();
 
-  if (type.type() == bob::io::s || (shape.n() == 1 && shape[0] == 1)) {
+  if (type.type() == bob::io::base::s || (shape.n() == 1 && shape[0] == 1)) {
     //read as scalar
     switch(type.type()) {
-      case bob::io::s:
+      case bob::io::base::s:
         return PyBobIoHDF5File_ReadScalarAttribute<const char*>(self, path, name, type);
-      case bob::io::b:
+      case bob::io::base::b:
         return PyBobIoHDF5File_ReadScalarAttribute<bool>(self, path, name, type);
-      case bob::io::i8:
+      case bob::io::base::i8:
         return PyBobIoHDF5File_ReadScalarAttribute<int8_t>(self, path, name, type);
-      case bob::io::i16:
+      case bob::io::base::i16:
         return PyBobIoHDF5File_ReadScalarAttribute<int16_t>(self, path, name, type);
-      case bob::io::i32:
+      case bob::io::base::i32:
         return PyBobIoHDF5File_ReadScalarAttribute<int32_t>(self, path, name, type);
-      case bob::io::i64:
+      case bob::io::base::i64:
         return PyBobIoHDF5File_ReadScalarAttribute<int64_t>(self, path, name, type);
-      case bob::io::u8:
+      case bob::io::base::u8:
         return PyBobIoHDF5File_ReadScalarAttribute<uint8_t>(self, path, name, type);
-      case bob::io::u16:
+      case bob::io::base::u16:
         return PyBobIoHDF5File_ReadScalarAttribute<uint16_t>(self, path, name, type);
-      case bob::io::u32:
+      case bob::io::base::u32:
         return PyBobIoHDF5File_ReadScalarAttribute<uint32_t>(self, path, name, type);
-      case bob::io::u64:
+      case bob::io::base::u64:
         return PyBobIoHDF5File_ReadScalarAttribute<uint64_t>(self, path, name, type);
-      case bob::io::f32:
+      case bob::io::base::f32:
         return PyBobIoHDF5File_ReadScalarAttribute<float>(self, path, name, type);
-      case bob::io::f64:
+      case bob::io::base::f64:
         return PyBobIoHDF5File_ReadScalarAttribute<double>(self, path, name, type);
-      case bob::io::f128:
+      case bob::io::base::f128:
         return PyBobIoHDF5File_ReadScalarAttribute<long double>(self, path, name, type);
-      case bob::io::c64:
+      case bob::io::base::c64:
         return PyBobIoHDF5File_ReadScalarAttribute<std::complex<float> >(self, path, name, type);
-      case bob::io::c128:
+      case bob::io::base::c128:
         return PyBobIoHDF5File_ReadScalarAttribute<std::complex<double> >(self, path, name, type);
-      case bob::io::c256:
+      case bob::io::base::c256:
         return PyBobIoHDF5File_ReadScalarAttribute<std::complex<long double> >(self, path, name, type);
       default:
         break;
@@ -1882,7 +1882,7 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
-  bob::io::HDF5Type type;
+  bob::io::base::HDF5Type type;
 
   try {
     self->f->getAttributeType(path, name, type);
@@ -1898,7 +1898,7 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
     return 0;
   }
 
-  if (type.type() == bob::io::unsupported) {
+  if (type.type() == bob::io::base::unsupported) {
     const char* filename = "<unknown>";
     try{ filename = self->f->filename().c_str(); } catch(...){}
     boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
@@ -1943,7 +1943,7 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &path)) return 0;
 
-  std::map<std::string, bob::io::HDF5Type> attributes;
+  std::map<std::string, bob::io::base::HDF5Type> attributes;
   self->f->listAttributes(path, attributes);
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
@@ -1951,7 +1951,7 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
 
   for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
     PyObject* item = 0;
-    if (k->second.type() == bob::io::unsupported) {
+    if (k->second.type() == bob::io::base::unsupported) {
       const char* filename = "<unknown>";
       try{ filename = self->f->filename().c_str(); } catch(...){}
       boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
@@ -1996,7 +1996,7 @@ a specific attribute, use :py:meth:`HDF5File.get_attribute()`.\n\
 
 template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::HDF5Type& type, PyObject* o) {
+ const bob::io::base::HDF5Type& type, PyObject* o) {
 
   T value = PyBlitzArrayCxx_AsCScalar<T>(o);
   if (PyErr_Occurred()) return 0;
@@ -2021,7 +2021,7 @@ template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
 
 template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::HDF5Type& type, PyObject* o) {
+ const bob::io::base::HDF5Type& type, PyObject* o) {
 
   auto value = PyBobIo_GetString(o);
   if (!value) return 0;
@@ -2045,44 +2045,44 @@ template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
 }
 
 static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
-    const char* path, const char* name, const bob::io::HDF5Type& type,
+    const char* path, const char* name, const bob::io::base::HDF5Type& type,
     PyObject* o, int is_array, PyObject* converted) {
 
   //no error detection: this should be done before reaching this method
 
   if (!is_array) { //write as a scalar
     switch(type.type()) {
-      case bob::io::s:
+      case bob::io::base::s:
         return PyBobIoHDF5File_WriteScalarAttribute<const char*>(self, path, name, type, o);
-      case bob::io::b:
+      case bob::io::base::b:
         return PyBobIoHDF5File_WriteScalarAttribute<bool>(self, path, name, type, o);
-      case bob::io::i8:
+      case bob::io::base::i8:
         return PyBobIoHDF5File_WriteScalarAttribute<int8_t>(self, path, name, type, o);
-      case bob::io::i16:
+      case bob::io::base::i16:
         return PyBobIoHDF5File_WriteScalarAttribute<int16_t>(self, path, name, type, o);
-      case bob::io::i32:
+      case bob::io::base::i32:
         return PyBobIoHDF5File_WriteScalarAttribute<int32_t>(self, path, name, type, o);
-      case bob::io::i64:
+      case bob::io::base::i64:
         return PyBobIoHDF5File_WriteScalarAttribute<int64_t>(self, path, name, type, o);
-      case bob::io::u8:
+      case bob::io::base::u8:
         return PyBobIoHDF5File_WriteScalarAttribute<uint8_t>(self, path, name, type, o);
-      case bob::io::u16:
+      case bob::io::base::u16:
         return PyBobIoHDF5File_WriteScalarAttribute<uint16_t>(self, path, name, type, o);
-      case bob::io::u32:
+      case bob::io::base::u32:
         return PyBobIoHDF5File_WriteScalarAttribute<uint32_t>(self, path, name, type, o);
-      case bob::io::u64:
+      case bob::io::base::u64:
         return PyBobIoHDF5File_WriteScalarAttribute<uint64_t>(self, path, name, type, o);
-      case bob::io::f32:
+      case bob::io::base::f32:
         return PyBobIoHDF5File_WriteScalarAttribute<float>(self, path, name, type, o);
-      case bob::io::f64:
+      case bob::io::base::f64:
         return PyBobIoHDF5File_WriteScalarAttribute<double>(self, path, name, type, o);
-      case bob::io::f128:
+      case bob::io::base::f128:
         return PyBobIoHDF5File_WriteScalarAttribute<long double>(self, path, name, type, o);
-      case bob::io::c64:
+      case bob::io::base::c64:
         return PyBobIoHDF5File_WriteScalarAttribute<std::complex<float> >(self, path, name, type, o);
-      case bob::io::c128:
+      case bob::io::base::c128:
         return PyBobIoHDF5File_WriteScalarAttribute<std::complex<double> >(self, path, name, type, o);
-      case bob::io::c256:
+      case bob::io::base::c256:
         return PyBobIoHDF5File_WriteScalarAttribute<std::complex<long double> >(self, path, name, type, o);
       default:
         break;
@@ -2142,7 +2142,7 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO|s", kwlist, &name, &value, &path)) return 0;
 
-  bob::io::HDF5Type type;
+  bob::io::base::HDF5Type type;
   PyObject* converted = 0;
   int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
   auto converted_ = make_xsafe(converted);
@@ -2212,7 +2212,7 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
   PyObject *key, *value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(attrs, &pos, &key, &value)) {
-    bob::io::HDF5Type type;
+    bob::io::base::HDF5Type type;
     PyObject* converted = 0;
 
     auto name = PyBobIo_GetString(key);
@@ -2361,7 +2361,7 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
   }
 
   //else, find the attributes and remove all of them
-  std::map<std::string, bob::io::HDF5Type> attributes;
+  std::map<std::string, bob::io::base::HDF5Type> attributes;
   try {
     self->f->listAttributes(path, attributes);
   }
@@ -2751,8 +2751,3 @@ PyTypeObject PyBobIoHDF5File_Type = {
     0,                                          /* tp_alloc */
     PyBobIoHDF5File_New,                        /* tp_new */
 };
-
-/**
-    .def("__contains__", &bob::io::HDF5File::contains, (arg("self"), arg("key")), "Returns True if the file contains an HDF5 dataset with a given path")
-
-**/

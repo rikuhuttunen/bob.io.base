@@ -2,7 +2,7 @@
  * @author Andre Anjos <andre.anjos@idiap.ch>
  * @date Tue  5 Nov 12:22:48 2013
  *
- * @brief C/C++ API for bob::io
+ * @brief Python API for bob::io::base
  */
 
 #ifndef BOB_IO_BASE_H
@@ -16,10 +16,9 @@
 #include <Python.h>
 
 #include <bob.io.base/config.h>
-#include <bob/config.h>
-#include <bob/io/File.h>
-#include <bob/io/HDF5File.h>
-#include <bob/io/CodecRegistry.h>
+#include <bob.io.base/File.h>
+#include <bob.io.base/CodecRegistry.h>
+#include <bob.io.base/HDF5File.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -65,7 +64,7 @@ typedef struct {
   PyObject_HEAD
 
   /* Type-specific fields go here. */
-  boost::shared_ptr<bob::io::File> f;
+  boost::shared_ptr<bob::io::base::File> f;
 
 } PyBobIoFileObject;
 
@@ -87,10 +86,10 @@ typedef struct {
  ************************/
 
 #define PyBobIo_AsTypenum_RET int
-#define PyBobIo_AsTypenum_PROTO (bob::core::array::ElementType et)
+#define PyBobIo_AsTypenum_PROTO (bob::io::base::array::ElementType et)
 
 #define PyBobIo_TypeInfoAsTuple_RET PyObject*
-#define PyBobIo_TypeInfoAsTuple_PROTO (const bob::core::array::typeinfo& ti)
+#define PyBobIo_TypeInfoAsTuple_PROTO (const bob::io::base::array::typeinfo& ti)
 
 #define PyBobIo_FilenameConverter_RET int
 #define PyBobIo_FilenameConverter_PROTO (PyObject* o, PyObject** b)
@@ -103,7 +102,7 @@ typedef struct {
   PyObject_HEAD
 
   /* Type-specific fields go here. */
-  boost::shared_ptr<bob::io::HDF5File> f;
+  boost::shared_ptr<bob::io::base::HDF5File> f;
 
 } PyBobIoHDF5FileObject;
 
@@ -120,7 +119,7 @@ typedef struct {
  *****************************************/
 
 #define PyBobIoCodec_Register_RET int
-#define PyBobIoCodec_Register_PROTO (const char* extension, const char* description, bob::io::file_factory_t factory)
+#define PyBobIoCodec_Register_PROTO (const char* extension, const char* description, bob::io::base::file_factory_t factory)
 
 #define PyBobIoCodec_Deregister_RET int
 #define PyBobIoCodec_Deregister_PROTO (const char* extension)

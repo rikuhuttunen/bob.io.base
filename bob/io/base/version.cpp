@@ -15,16 +15,15 @@
 
 #include <string>
 #include <cstdlib>
+#include <blitz/blitz.h>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/version.hpp>
 #include <boost/format.hpp>
-
-#include <bob/config.h>
-#include <bob/io/CodecRegistry.h>
+#include <hdf5.h>
 
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
-#include <hdf5.h>
+#include <bob.core/config.h>
 
 static int dict_set(PyObject* d, const char* key, const char* value) {
   PyObject* v = Py_BuildValue("s", value);
@@ -43,14 +42,6 @@ static int dict_steal(PyObject* d, const char* key, PyObject* value) {
   return 0; //a problem occurred
 }
 
-/**
- * Creates an str object, from a C or C++ string. Returns a **new
- * reference**.
- */
-static PyObject* make_object(const char* s) {
-  return Py_BuildValue("s", s);
-}
-
 /***********************************************************
  * Version number generation
  ***********************************************************/
@@ -61,13 +52,6 @@ static PyObject* hdf5_version() {
   f % BOOST_PP_STRINGIZE(H5_VERS_MINOR);
   f % BOOST_PP_STRINGIZE(H5_VERS_RELEASE);
   return Py_BuildValue("s", f.str().c_str());
-}
-
-/**
- * Bob version, API version and platform
- */
-static PyObject* bob_version() {
-  return Py_BuildValue("sis", BOB_VERSION, BOB_API_VERSION, BOB_PLATFORM);
 }
 
 /**
@@ -126,13 +110,19 @@ static PyObject* bob_blitz_version() {
   return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_BLITZ_API_VERSION));
 }
 
+/**
+ * bob.core c/c++ api version
+ */
+static PyObject* bob_core_version() {
+  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_BLITZ_API_VERSION));
+}
+
 static PyObject* build_version_dictionary() {
 
   PyObject* retval = PyDict_New();
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
-  if (!dict_steal(retval, "Bob", bob_version())) return 0;
   if (!dict_steal(retval, "HDF5", hdf5_version())) return 0;
   if (!dict_steal(retval, "Boost", boost_version())) return 0;
   if (!dict_steal(retval, "Compiler", compiler_version())) return 0;
@@ -140,49 +130,14 @@ static PyObject* build_version_dictionary() {
   if (!dict_steal(retval, "NumPy", numpy_version())) return 0;
   if (!dict_set(retval, "Blitz++", BZ_VERSION)) return 0;
   if (!dict_steal(retval, "bob.blitz", bob_blitz_version())) return 0;
+  if (!dict_steal(retval, "bob.core", bob_core_version())) return 0;
 
   Py_INCREF(retval);
   Py_INCREF(retval);
   return retval;
 }
-
-static PyObject* PyBobIo_Extensions(PyObject*) {
-
-  typedef std::map<std::string, std::string> map_type;
-  const map_type& table = bob::io::CodecRegistry::getExtensions();
-
-  PyObject* retval = PyDict_New();
-  if (!retval) return 0;
-  auto retval_ = make_safe(retval);
-
-  for (auto it=table.begin(); it!=table.end(); ++it) {
-    PyObject* pyvalue = make_object(it->second.c_str());
-    if (!pyvalue) return 0;
-    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) {
-      return 0;
-    }
-  }
-
-  Py_INCREF(retval);
-  return retval;
-
-}
-
-PyDoc_STRVAR(s_extensions_str, "extensions");
-PyDoc_STRVAR(s_extensions_doc,
-"extensions() -> dict\n\
-\n\
-Returns a dictionary containing all extensions and descriptions\n\
-currently stored on the global codec registry\n\
-");
 
 static PyMethodDef module_methods[] = {
-    {
-      s_extensions_str,
-      (PyCFunction)PyBobIo_Extensions,
-      METH_NOARGS,
-      s_extensions_doc,
-    },
     {0}  /* Sentinel */
 };
 

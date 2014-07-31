@@ -14,7 +14,51 @@
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
 
+/**
+ * Creates an str object, from a C or C++ string. Returns a **new
+ * reference**.
+ */
+static PyObject* make_object(const char* s) {
+  return Py_BuildValue("s", s);
+}
+
+static PyObject* PyBobIo_Extensions(PyObject*) {
+
+  typedef std::map<std::string, std::string> map_type;
+  const map_type& table = bob::io::base::CodecRegistry::getExtensions();
+
+  PyObject* retval = PyDict_New();
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
+
+  for (auto it=table.begin(); it!=table.end(); ++it) {
+    PyObject* pyvalue = make_object(it->second.c_str());
+    if (!pyvalue) return 0;
+    if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) {
+      return 0;
+    }
+  }
+
+  Py_INCREF(retval);
+  return retval;
+
+}
+
+PyDoc_STRVAR(s_extensions_str, "extensions");
+PyDoc_STRVAR(s_extensions_doc,
+"extensions() -> dict\n\
+\n\
+Returns a dictionary containing all extensions and descriptions\n\
+currently stored on the global codec registry\n\
+");
+
 static PyMethodDef module_methods[] = {
+    {
+      s_extensions_str,
+      (PyCFunction)PyBobIo_Extensions,
+      METH_NOARGS,
+      s_extensions_doc,
+    },
     {0}  /* Sentinel */
 };
 
