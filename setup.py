@@ -14,7 +14,6 @@ package_dir = os.path.dirname(os.path.realpath(__file__))
 package_dir = os.path.join(package_dir, 'bob', 'io', 'base', 'include')
 include_dirs = [package_dir, bob.core.get_include()]
 
-packages = ['bob-core >= 1.2.2']
 version = '2.0.0a0'
 
 def libhdf5_version(header):
@@ -148,6 +147,7 @@ setup(
     install_requires=[
       'setuptools',
       'bob.blitz',
+      'bob.core',
     ],
 
     namespace_packages=[
@@ -160,11 +160,11 @@ setup(
         [
           "bob/io/base/version.cpp",
           ],
-        packages = packages,
         include_dirs = include_dirs,
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
+        packages = ['boost'],
         ),
       Extension("bob.io.base._library",
         [
@@ -194,13 +194,14 @@ setup(
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
           ],
-        packages = packages,
         include_dirs = include_dirs,
         library_dirs = library_dirs,
         libraries = libraries,
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
+        packages = ['boost'],
+        boost_modules = ['iostreams', 'filesystem'],
         ),
       ],
 

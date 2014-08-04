@@ -7,14 +7,14 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#include <bob.core/logging.h>
+
+#include <bob.io.base/CodecRegistry.h>
+
 #include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-
-#include <bob.io.base/CodecRegistry.h>
-
-#include <bob/core/logging.h>
 
 boost::shared_ptr<bob::io::base::CodecRegistry> bob::io::base::CodecRegistry::instance() {
   static boost::shared_ptr<bob::io::base::CodecRegistry> s_instance(new CodecRegistry());
@@ -58,7 +58,8 @@ void bob::io::base::CodecRegistry::registerExtension(const char* extension,
   else if (!s_ignore) {
     boost::format m("extension already registered: %s - ignoring second registration with description `%s'");
     m % extension % description;
-    bob::core::error << m.str() << std::endl;
+    auto& error_stream = PyBobCoreLogging_Error();
+    error_stream << m.str() << std::endl;
     throw std::runtime_error(m.str());
   }
 

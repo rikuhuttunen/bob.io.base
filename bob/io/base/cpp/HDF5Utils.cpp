@@ -7,10 +7,10 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#include <bob.core/logging.h>
+
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
-
-#include <bob/core/logging.h>
 
 #include <bob.io.base/HDF5Utils.h>
 
@@ -21,8 +21,9 @@ static void delete_h5file (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Fclose(*p);
     if (err < 0) {
-      bob::core::error << "H5Fclose(hid=" << *p << ") exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
+      auto& error_stream = PyBobCoreLogging_Error();
+      error_stream << "H5Fclose(hid=" << *p << ") exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      error_stream << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;
@@ -35,8 +36,9 @@ static void delete_h5p (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Pclose(*p);
     if (err < 0) {
-      bob::core::error << "H5Pclose(hid=" << *p << ") exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
+      auto& error_stream = PyBobCoreLogging_Error();
+      error_stream << "H5Pclose(hid=" << *p << ") exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      error_stream << bob::io::base::format_hdf5_error() << std::endl;
       return;
     }
   }

@@ -13,6 +13,7 @@
 #endif
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
+#include <bob.core/logging.h>
 
 /**
  * Creates an str object, from a C or C++ string. Returns a **new
@@ -176,6 +177,13 @@ static PyObject* create_module (void) {
   if (!c_api_object) return 0;
 
   if (PyModule_AddObject(m, "_C_API", c_api_object) < 0) return 0;
+
+  /* imports dependencies */
+  if (import_bob_core_logging() < 0) {
+    PyErr_Print();
+    PyErr_Format(PyExc_ImportError, "cannot import `%s'", BOB_EXT_MODULE_NAME);
+    return 0;
+  }
 
   /* imports dependencies */
   if (import_bob_blitz() < 0) {

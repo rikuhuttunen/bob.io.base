@@ -7,8 +7,10 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#include <boost/format.hpp>
+#include <bob.core/logging.h>
+
 #include <sstream>
+#include <boost/format.hpp>
 #include <boost/make_shared.hpp>
 
 /**
@@ -23,8 +25,6 @@
 #else
 #warning Disabling MT locks because Boost < 1.35!
 #endif
-
-#include <bob/core/logging.h>
 
 #include <bob.io.base/HDF5Types.h>
 
@@ -213,8 +213,9 @@ static void delete_h5datatype (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Tclose(*p);
     if (err < 0) {
-      bob::core::error << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
+      auto& error_stream = PyBobCoreLogging_Error();
+      error_stream << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      error_stream << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;
