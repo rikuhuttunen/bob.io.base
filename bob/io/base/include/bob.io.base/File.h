@@ -25,7 +25,7 @@ namespace bob { namespace io { namespace base {
 
     public: //abstract API
 
-      virtual ~File();
+      virtual ~File() {};
 
       /**
        * The filename this array codec current points to

@@ -170,7 +170,6 @@ setup(
         [
           "bob/io/base/cpp/CodecRegistry.cpp",
           "bob/io/base/cpp/CSVFile.cpp",
-          "bob/io/base/cpp/File.cpp",
           "bob/io/base/cpp/HDF5ArrayFile.cpp",
           "bob/io/base/cpp/HDF5Attribute.cpp",
           "bob/io/base/cpp/HDF5Dataset.cpp",
