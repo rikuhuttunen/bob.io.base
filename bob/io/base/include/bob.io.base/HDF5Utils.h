@@ -27,12 +27,12 @@
 #ifndef BOB_IO_BASE_HDF5UTILS_H
 #define BOB_IO_BASE_HDF5UTILS_H
 
+#include <bob.io.base/HDF5Group.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <hdf5.h>
-
-#include <bob.io.base/HDF5Group.h>
 
 namespace bob { namespace io { namespace base { namespace detail { namespace hdf5 {
 

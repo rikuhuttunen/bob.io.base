@@ -7,8 +7,9 @@
 
 #define BOB_IO_BASE_MODULE
 #include <bob.io.base/api.h>
+#include "cpp/CodecRegistry.h"
 
-int PyBobIoCodec_Register (const char* extension, const char* description, bob::io::base::file_factory_t factory) {
+int PyBobIoCodec_Register (const char* extension, const char* description, BobIoFileFactory factory) {
   boost::shared_ptr<bob::io::base::CodecRegistry> instance =
     bob::io::base::CodecRegistry::instance();
 

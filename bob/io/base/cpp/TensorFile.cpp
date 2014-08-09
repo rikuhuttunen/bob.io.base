@@ -7,10 +7,9 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#define BOB_IO_BASE_MODULE
+#include <bob.io.base/api.h>
 #include "TensorFile.h"
-
-#include <bob.io.base/reorder.h>
-#include <bob.io.base/array_type.h>
 
 bob::io::base::TensorFile::TensorFile(const std::string& filename,
     bob::io::base::TensorFile::openmode flag):
@@ -25,7 +24,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
     if(m_stream)
     {
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[BobIoTypeinfo_BufferSize(&m_header.m_type)]);
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
 
@@ -40,7 +39,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
       m_stream.open(filename.c_str(), std::ios::out | std::ios::in |
           std::ios::binary);
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[BobIoTypeinfo_BufferSize(&m_header.m_type)]);
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
       m_stream.seekp(0, std::ios::end);
@@ -53,7 +52,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
     m_stream.open(filename.c_str(), std::ios::in | std::ios::binary);
     if(m_stream) {
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[BobIoTypeinfo_BufferSize(&m_header.m_type)]);
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
 
@@ -71,7 +70,7 @@ bob::io::base::TensorFile::~TensorFile() {
   close();
 }
 
-void bob::io::base::TensorFile::peek(bob::io::base::array::typeinfo& info) const {
+void bob::io::base::TensorFile::peek(BobIoTypeinfo& info) const {
   info = m_header.m_type;
 }
 
@@ -83,7 +82,7 @@ void bob::io::base::TensorFile::close() {
   m_stream.close();
 }
 
-void bob::io::base::TensorFile::initHeader(const bob::io::base::array::typeinfo& info) {
+void bob::io::base::TensorFile::initHeader(const BobIoTypeinfo& info) {
   // Check that data have not already been written
   if (m_n_arrays_written > 0 ) {
     throw std::runtime_error("cannot init the header of an output stream in which data have already been written");
@@ -95,25 +94,25 @@ void bob::io::base::TensorFile::initHeader(const bob::io::base::array::typeinfo&
   m_header.write(m_stream);
 
   // Temporary buffer to help with data transposition...
-  m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+  m_buffer.reset(new char[BobIoTypeinfo_BufferSize(&m_header.m_type)]);
 
   m_header_init = true;
 }
 
 void bob::io::base::TensorFile::write(const bob::io::base::array::interface& data) {
 
-  const bob::io::base::array::typeinfo& info = data.type();
+  const BobIoTypeinfo& info = data.type();
 
   if (!m_header_init) initHeader(info);
   else {
     //checks compatibility with previously written stuff
-    if (!m_header.m_type.is_compatible(info))
+    if (!BobIoTypeinfo_IsCompatible(&m_header.m_type, &info))
       throw std::runtime_error("buffer does not conform to expected type");
   }
 
-  bob::io::base::row_to_col_order(data.ptr(), m_buffer.get(), info);
+  BobIoReorder_RowToCol(data.ptr(), m_buffer.get(), &info);
 
-  m_stream.write(static_cast<const char*>(m_buffer.get()), info.buffer_size());
+  m_stream.write(static_cast<const char*>(m_buffer.get()), BobIoTypeinfo_BufferSize(&info));
 
   // increment m_n_arrays_written and m_current_array
   ++m_current_array;
@@ -125,12 +124,12 @@ void bob::io::base::TensorFile::read (bob::io::base::array::interface& buf) {
   if(!m_header_init) {
     throw std::runtime_error("TensorFile: header is not initialized");
   }
-  if(!buf.type().is_compatible(m_header.m_type)) buf.set(m_header.m_type);
+  if(!BobIoTypeinfo_IsCompatible(&buf.type(), &m_header.m_type)) buf.set(m_header.m_type);
 
   m_stream.read(reinterpret_cast<char*>(m_buffer.get()),
-      m_header.m_type.buffer_size());
+      BobIoTypeinfo_BufferSize(&m_header.m_type));
 
-  bob::io::base::col_to_row_order(m_buffer.get(), buf.ptr(), m_header.m_type);
+  BobIoReorder_ColToRow(m_buffer.get(), buf.ptr(), &m_header.m_type);
 
   ++m_current_array;
 }

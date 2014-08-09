@@ -340,14 +340,14 @@ namespace bob { namespace io { namespace base {
       HDF5Type(hdf5type type);
 
       /**
-       * Creates a HDF5Type from an bob::io::base::array::typeinfo
+       * Creates a HDF5Type from an BobIoTypeinfo
        */
-      HDF5Type(const bob::io::base::array::typeinfo& ti);
+      HDF5Type(const BobIoTypeinfo& ti);
 
       /**
        * Creates a HDF5Type from a type enumeration and an explicit shape
        */
-      HDF5Type(bob::io::base::array::ElementType eltype, const HDF5Shape& extents);
+      HDF5Type(int dtype, const HDF5Shape& extents);
 
       /**
        * Creates a HDF5Type from a type enumeration and an explicit shape
@@ -400,7 +400,7 @@ namespace bob { namespace io { namespace base {
       /**
        * Checks if an existing object is compatible with my type
        */
-      bool compatible (const bob::io::base::array::typeinfo& value) const;
+      bool compatible (const BobIoTypeinfo& value) const;
 
       /**
        * Returns the HDF5Shape of this type
@@ -436,12 +436,12 @@ namespace bob { namespace io { namespace base {
        * Returns a mapping between the current type and the supported element
        * types in bob::io::base::array
        */
-      bob::io::base::array::ElementType element_type() const;
+      int element_type() const;
 
       /**
-       * Copies this type information to a stock bob::io::base::array::typeinfo
+       * Copies this type information to a stock BobIoTypeinfo
        */
-      void copy_to (bob::io::base::array::typeinfo& ti) const;
+      void copy_to (BobIoTypeinfo& ti) const;
 
     private: //representation
 

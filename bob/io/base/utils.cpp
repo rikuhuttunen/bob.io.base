@@ -7,24 +7,30 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#include <bob.io.base/CodecRegistry.h>
-#include <bob.io.base/utils.h>
+#define BOB_IO_BASE_MODULE
+#include <bob.io.base/api.h>
+#include "cpp/CodecRegistry.h"
 
-boost::shared_ptr<bob::io::base::File> bob::io::base::open (const char* filename,
+boost::shared_ptr<bob::io::base::File> BobIoFile_Open (const char* filename,
     char mode, const char* pretend_extension) {
+
   boost::shared_ptr<bob::io::base::CodecRegistry> instance = bob::io::base::CodecRegistry::instance();
   return instance->findByExtension(pretend_extension)(filename, mode);
+
 }
 
-boost::shared_ptr<bob::io::base::File> bob::io::base::open (const char* filename, char mode) {
+boost::shared_ptr<bob::io::base::File> BobIoFile_OpenWithExtension
+  (const char* filename, char mode) {
+
   boost::shared_ptr<bob::io::base::CodecRegistry> instance = bob::io::base::CodecRegistry::instance();
   return instance->findByFilenameExtension(filename)(filename, mode);
+
 }
 
-bob::io::base::array::typeinfo bob::io::base::peek (const char* filename) {
-  return open(filename, 'r')->type();
+void BobIoFile_Peek (const char* filename, BobIoTypeinfo* info) {
+  BobIoTypeinfo_Copy(info, BobIoFile_Open(filename, 'r')->type());
 }
 
-bob::io::base::array::typeinfo bob::io::base::peek_all (const char* filename) {
-  return open(filename, 'r')->type_all();
+void BobIoFile_PeekAll (const char* filename, BobIoTypeinfo* info) {
+  BobIoTypeinfo_Copy(info, BobIoFile_Open(filename, 'r')->type_all());
 }

@@ -11,10 +11,9 @@
 #ifndef BOB_IO_BASE_TENSORFILEHEADER_H
 #define BOB_IO_BASE_TENSORFILEHEADER_H
 
-#include <fstream>
+#include <bob.io.base/api.h>
 #include <blitz/array.h>
-
-#include <bob.io.base/array.h>
+#include <fstream>
 
 namespace bob { namespace io { namespace base {
 
@@ -29,8 +28,8 @@ namespace bob { namespace io { namespace base {
     Double
   };
 
-  TensorType arrayTypeToTensorType(bob::io::base::array::ElementType eltype);
-  bob::io::base::array::ElementType tensorTypeToArrayType(bob::io::base::TensorType tensortype);
+  TensorType arrayTypeToTensorType(int dtype);
+  int tensorTypeToArrayType(bob::io::base::TensorType tensortype);
 
   namespace detail {
     /**
@@ -85,7 +84,7 @@ namespace bob { namespace io { namespace base {
 
       //representation
       TensorType m_tensor_type; ///< array element type
-      bob::io::base::array::typeinfo m_type; ///< the type information
+      BobIoTypeinfo m_type; ///< the type information
       size_t m_n_samples; ///< total number of arrays in the file
       size_t m_tensor_size; ///< the number of dimensions in each array
     };

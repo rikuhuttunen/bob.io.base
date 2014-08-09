@@ -7,9 +7,8 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#include <boost/format.hpp>
-
 #include <bob.io.base/HDF5File.h>
+#include <boost/format.hpp>
 
 static unsigned int getH5Access (bob::io::base::HDF5File::mode_t v) {
   switch(v) {

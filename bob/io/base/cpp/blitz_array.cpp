@@ -27,21 +27,26 @@ bob::io::base::array::blitz_array::blitz_array(const interface& other) {
   set(other);
 }
 
-bob::io::base::array::blitz_array::blitz_array(const typeinfo& info) {
+bob::io::base::array::blitz_array::blitz_array(const BobIoTypeinfo& info) {
   set(info);
 }
 
-bob::io::base::array::blitz_array::blitz_array(void* data, const typeinfo& info):
-  m_type(info),
+bob::io::base::array::blitz_array::blitz_array(void* data, const BobIoTypeinfo& info):
+  m_type(),
   m_ptr(data),
   m_is_blitz(false) {
+  if (!BobIoTypeinfo_Copy(&m_type, &info)) {
+    throw std::runtime_error("error already set");
+  }
 }
 
 bob::io::base::array::blitz_array::~blitz_array() {
 }
 
 void bob::io::base::array::blitz_array::set(boost::shared_ptr<blitz_array> other) {
-  m_type = other->m_type;
+  if (!BobIoTypeinfo_Copy(&m_type, &other->m_type)) {
+    throw std::runtime_error("error already set");
+  }
   m_ptr = other->m_ptr;
   m_is_blitz = other->m_is_blitz;
   m_data = other->m_data;
@@ -49,11 +54,13 @@ void bob::io::base::array::blitz_array::set(boost::shared_ptr<blitz_array> other
 
 void bob::io::base::array::blitz_array::set(const interface& other) {
   set(other.type());
-  memcpy(m_ptr, other.ptr(), m_type.buffer_size());
+  memcpy(m_ptr, other.ptr(), BobIoTypeinfo_BufferSize(&m_type));
 }
 
 void bob::io::base::array::blitz_array::set(boost::shared_ptr<interface> other) {
-  m_type = other->type();
+  if (!BobIoTypeinfo_Copy(&m_type, &other->type())) {
+    throw std::runtime_error("error already set");
+  }
   m_ptr = other->ptr();
   m_is_blitz = false;
   m_data = other;
@@ -105,58 +112,66 @@ static boost::shared_ptr<void> make_array(size_t nd, const size_t* shape,
   throw std::runtime_error("unsupported number of dimensions -- debug me");
 }
 
-void bob::io::base::array::blitz_array::set (const bob::io::base::array::typeinfo& req) {
-  if (m_type.is_compatible(req)) return; ///< double-check requirement first!
+void bob::io::base::array::blitz_array::set (const BobIoTypeinfo& req) {
+  if (BobIoTypeinfo_IsCompatible(&m_type, &req)) return; ///< double-check requirement first!
 
-  //ok, have to go through reallocation
-  m_type = req;
+  //have to go through reallocation
+  if (!BobIoTypeinfo_Copy(&m_type, &req)) {
+    throw std::runtime_error("error already set");
+  }
+
   m_is_blitz = true;
+
   switch (m_type.dtype) {
-    case bob::io::base::array::t_bool:
+    case NPY_BOOL:
       m_data = make_array<bool>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_int8:
+    case NPY_INT8:
       m_data = make_array<int8_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_int16:
+    case NPY_INT16:
       m_data = make_array<int16_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_int32:
+    case NPY_INT32:
       m_data = make_array<int32_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_int64:
+    case NPY_INT64:
       m_data = make_array<int64_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_uint8:
+    case NPY_UINT8:
       m_data = make_array<uint8_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_uint16:
+    case NPY_UINT16:
       m_data = make_array<uint16_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_uint32:
+    case NPY_UINT32:
       m_data = make_array<uint32_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_uint64:
+    case NPY_UINT64:
       m_data = make_array<uint64_t>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_float32:
+    case NPY_FLOAT32:
       m_data = make_array<float>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_float64:
+    case NPY_FLOAT64:
       m_data = make_array<double>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_float128:
+#   ifdef NPY_FLOAT128
+    case NPY_FLOAT128:
       m_data = make_array<long double>(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_complex64:
+#   endif
+    case NPY_COMPLEX64:
       m_data = make_array<std::complex<float> >(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_complex128:
+    case NPY_COMPLEX128:
       m_data = make_array<std::complex<double> >(req.nd, req.shape, m_ptr);
       return;
-    case bob::io::base::array::t_complex256:
+#   ifdef NPY_COMPLEX256
+    case NPY_COMPLEX256:
       m_data = make_array<std::complex<long double> >(req.nd, req.shape, m_ptr);
       return;
+#   endif
     default:
       break;
   }

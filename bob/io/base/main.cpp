@@ -15,6 +15,9 @@
 #include <bob.blitz/cleanup.h>
 #include <bob.core/logging.h>
 
+#include "cpp/CodecRegistry.h"
+#include "plugin.h"
+
 /**
  * Creates an str object, from a C or C++ string. Returns a **new
  * reference**.
@@ -121,6 +124,52 @@ static PyObject* create_module (void) {
 
   PyBobIo_API[PyBobIo_APIVersion_NUM] = (void *)&PyBobIo_APIVersion;
 
+  /********************
+   * Type Information *
+   ********************/
+
+  PyBobIo_API[BobIoTypeinfo_Init_NUM] = (void *)&BobIoTypeinfo_Init;
+
+  PyBobIo_API[BobIoTypeinfo_Copy_NUM] = (void *)&BobIoTypeinfo_Copy;
+
+  PyBobIo_API[BobIoTypeinfo_Set_NUM] = (void *)&BobIoTypeinfo_Set;
+
+  PyBobIo_API[BobIoTypeinfo_SetWithStrides_NUM] = (void *)&BobIoTypeinfo_SetWithStrides;
+
+  PyBobIo_API[BobIoTypeinfo_SignedSet_NUM] = (void *)&BobIoTypeinfo_SignedSet;
+
+  PyBobIo_API[BobIoTypeinfo_SignedSetWithStrides_NUM] = (void *)&BobIoTypeinfo_SignedSetWithStrides;
+
+  PyBobIo_API[BobIoTypeinfo_Reset_NUM] = (void *)&BobIoTypeinfo_Reset;
+
+  PyBobIo_API[BobIoTypeinfo_IsValid_NUM] = (void *)&BobIoTypeinfo_IsValid;
+
+  PyBobIo_API[BobIoTypeinfo_HasValidShape_NUM] = (void *)&BobIoTypeinfo_HasValidShape;
+
+  PyBobIo_API[BobIoTypeinfo_ResetShape_NUM] = (void *)&BobIoTypeinfo_ResetShape;
+
+  PyBobIo_API[BobIoTypeinfo_UpdateStrides_NUM] = (void *)&BobIoTypeinfo_UpdateStrides;
+
+  PyBobIo_API[BobIoTypeinfo_Size_NUM] = (void *)&BobIoTypeinfo_Size;
+
+  PyBobIo_API[BobIoTypeinfo_BufferSize_NUM] = (void *)&BobIoTypeinfo_BufferSize;
+
+  PyBobIo_API[BobIoTypeinfo_IsCompatible_NUM] = (void *)&BobIoTypeinfo_IsCompatible;
+
+  PyBobIo_API[BobIoTypeinfo_Str_NUM] = (void *)&BobIoTypeinfo_Str;
+
+  /********************
+   * Array reordering *
+   ********************/
+
+  PyBobIo_API[BobIoReorder_RowToCol_NUM] = (void *)&BobIoReorder_RowToCol;
+
+  PyBobIo_API[BobIoReorder_ColToRow_NUM] = (void *)&BobIoReorder_ColToRow;
+
+  PyBobIo_API[BobIoReorder_RowToColComplex_NUM] = (void *)&BobIoReorder_RowToColComplex;
+
+  PyBobIo_API[BobIoReorder_ColToRowComplex_NUM] = (void *)&BobIoReorder_ColToRowComplex;
+
   /**********************************
    * Bindings for bob.io.base.File *
    **********************************/
@@ -129,13 +178,23 @@ static PyObject* create_module (void) {
 
   PyBobIo_API[PyBobIoFileIterator_Type_NUM] = (void *)&PyBobIoFileIterator_Type;
 
+  /**************************************
+   * File loading and data type peeking *
+   **************************************/
+
+  PyBobIo_API[BobIoFile_Open_NUM] = (void *)&BobIoFile_Open;
+
+  PyBobIo_API[BobIoFile_OpenWithExtension_NUM] = (void *)&BobIoFile_OpenWithExtension;
+
+  PyBobIo_API[BobIoFile_Peek_NUM] = (void *)&BobIoFile_Peek;
+
+  PyBobIo_API[BobIoFile_PeekAll_NUM] = (void *)&BobIoFile_PeekAll;
+
   /************************
    * I/O generic bindings *
    ************************/
 
-  PyBobIo_API[PyBobIo_AsTypenum_NUM] = (void *)PyBobIo_AsTypenum;
-
-  PyBobIo_API[PyBobIo_TypeInfoAsTuple_NUM] = (void *)PyBobIo_TypeInfoAsTuple;
+  PyBobIo_API[PyBobIo_TypeinfoAsTuple_NUM] = (void *)PyBobIo_TypeinfoAsTuple;
 
   PyBobIo_API[PyBobIo_FilenameConverter_NUM] = (void *)PyBobIo_FilenameConverter;
 
@@ -149,9 +208,9 @@ static PyObject* create_module (void) {
 
   PyBobIo_API[PyBobIoHDF5File_Converter_NUM] = (void *)&PyBobIoHDF5File_Converter;
 
-/*****************************************
- * Code Registration and De-registration *
- *****************************************/
+  /*****************************************
+   * Code Registration and De-registration *
+   *****************************************/
 
   PyBobIo_API[PyBobIoCodec_Register_NUM] = (void *)&PyBobIoCodec_Register;
 
@@ -190,6 +249,41 @@ static PyObject* create_module (void) {
     PyErr_Print();
     PyErr_Format(PyExc_ImportError, "cannot import `%s'", BOB_EXT_MODULE_NAME);
     return 0;
+  }
+
+  /* activates built-in plugins */
+  if (!PyBobIoCodec_Register(".csv", "Comma-Separated Values (built-in)",
+        &make_csv_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".txt", "Comma-Separated Values (built-in)",
+        &make_csv_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".h5", "Hierarchical Data Format v5 (libhdf5)",
+        &make_hdf5_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".hdf5", "Hierarchical Data Format v5 (libhdf5)",
+        &make_hdf5_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".hdf", "Hierarchical Data Format v5 (libhdf5)",
+        &make_hdf5_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".bindata", "Torch3 binary data format (built-in)",
+        &make_torch3_file)) {
+    PyErr_Print();
+  }
+
+  if (!PyBobIoCodec_Register(".tensor", "Torch3vision v2.1 tensor format (built-in)", &make_tensor_file)) {
+    PyErr_Print();
   }
 
   Py_INCREF(m);

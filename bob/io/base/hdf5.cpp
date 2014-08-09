@@ -7,6 +7,7 @@
 
 #define BOB_IO_BASE_MODULE
 #include <bob.io.base/api.h>
+#include <bob.io.base/HDF5File.h>
 
 #include <boost/make_shared.hpp>
 #include <numpy/arrayobject.h>

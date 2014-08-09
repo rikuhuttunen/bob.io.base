@@ -11,9 +11,8 @@
 #ifndef BOB_IO_BASE_FILE_H
 #define BOB_IO_BASE_FILE_H
 
-#include <boost/shared_ptr.hpp>
-#include <bob.io.base/array.h>
 #include <bob.io.base/blitz_array.h>
+#include <boost/shared_ptr.hpp>
 
 namespace bob { namespace io { namespace base {
 
@@ -33,16 +32,16 @@ namespace bob { namespace io { namespace base {
       virtual const char* filename() const =0;
 
       /**
-       * The typeinfo of data within this file, if it is supposed to be read as
-       * as a sequence of arrays
+       * The type information of data within this file, if it is supposed to be
+       * read as as a sequence of arrays
        */
-      virtual const bob::io::base::array::typeinfo& type() const =0;
+      virtual const BobIoTypeinfo& type() const =0;
 
       /**
-       * The typeinfo of data within this file, if it is supposed to be read as
-       * a single array.
+       * The type information of data within this file, if it is supposed to be
+       * read as a single array.
        */
-      virtual const bob::io::base::array::typeinfo& type_all() const =0;
+      virtual const BobIoTypeinfo& type_all() const =0;
 
       /**
        * The number of arrays available in this file, if it is supposed to be
@@ -156,28 +155,6 @@ namespace bob { namespace io { namespace base {
       }
 
   };
-
-  /**
-   * @brief This defines the factory method F that can create codecs. Your
-   * task, as a codec developer is to create one of such methods for each of
-   * your codecs and statically register them to the codec registry.
-   *
-   * Here are the meanings of the mode flag that should be respected by your
-   * factory implementation:
-   *
-   * 'r': opens for reading only - no modifications can occur; it is an
-   *      error to open a file that does not exist for read-only operations.
-   * 'w': opens for reading and writing, but truncates the file if it
-   *      exists; it is not an error to open files that do not exist with
-   *      this flag.
-   * 'a': opens for reading and writing - any type of modification can
-   *      occur. If the file does not exist, this flag is effectively like
-   *      'w'.
-   *
-   * Returns a newly allocated File object that can read and write data to the
-   * file using a specific backend.
-   */
-  typedef boost::shared_ptr<File> (*file_factory_t) (const char* filename, char mode);
 
 }}}
 

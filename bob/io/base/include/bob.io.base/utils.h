@@ -8,9 +8,8 @@
 #ifndef BOB_IO_BASE_BASE_UTILS_H
 #define BOB_IO_BASE_BASE_UTILS_H
 
-#include <boost/shared_ptr.hpp>
-
 #include <bob.io.base/File.h>
+#include <boost/shared_ptr.hpp>
 
 namespace bob { namespace io { namespace base {
 
@@ -42,22 +41,22 @@ namespace bob { namespace io { namespace base {
       const char* pretend_extension);
 
   /**
-   * Peeks the file and returns the typeinfo for reading individual frames (or
-   * samples) from the file.
+   * Peeks the file and returns the type information for reading individual
+   * frames (or samples) from the file.
    *
    * This method is equivalent to calling open() with 'r' as mode flag and then
    * calling type() on the returned bob::io::base::File object.
    */
-  bob::io::base::array::typeinfo peek (const char* filename);
+  BobIoTypeinfo peek (const char* filename);
 
   /**
-   * Peeks the file and returns the typeinfo for reading the whole contents in
-   * a single shot.
+   * Peeks the file and returns the type information for reading the whole
+   * contents in a single shot.
    *
    * This method is equivalent to calling open() with 'r' as mode flag and then
    * calling type_all() on the returned bob::io::base::File object.
    */
-  bob::io::base::array::typeinfo peek_all (const char* filename);
+  BobIoTypeinfo peek_all (const char* filename);
 
   /**
    * Opens for reading and load all contents

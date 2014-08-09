@@ -22,9 +22,9 @@
 namespace bob { namespace io { namespace base { namespace array {
 
   /**
-   * @brief Fills in shape and stride starting from a typeinfo object
+   * @brief Fills in shape and stride starting from a type information object
    */
-  template <int N> void set_shape_and_stride(const typeinfo& info,
+  template <int N> void set_shape_and_stride(const BobIoTypeinfo& info,
       blitz::TinyVector<int,N>& shape, blitz::TinyVector<int,N>& stride) {
     for (int k=0; k<N; ++k) {
       shape[k] = info.shape[k];
@@ -43,19 +43,19 @@ namespace bob { namespace io { namespace base { namespace array {
   template <typename T, int N>
     blitz::Array<T,N> wrap(const interface& buf) {
 
-      const typeinfo& type = buf.type();
+      const BobIoTypeinfo& type = buf.type();
 
       if (!buf.ptr()) throw std::runtime_error("empty buffer");
 
-      if (type.dtype != bob::io::base::array::getElementType<T>()) {
+      if (type.dtype != PyBlitzArrayCxx_CToTypenum<T>()) {
         boost::format m("cannot efficiently retrieve blitz::Array<%s,%d> from buffer of type '%s'");
-        m % stringize<T>() % N % type.str();
+        m % PyBlitzArray_TypenumAsString(PyBlitzArrayCxx_CToTypenum<T>()) % N % BobIoTypeinfo_Str(&type);
         throw std::runtime_error(m.str());
       }
 
       if (type.nd != N) {
         boost::format m("cannot retrieve blitz::Array<%s,%d> from buffer of type '%s'");
-        m % stringize<T>() % N % type.str();
+        m % PyBlitzArray_TypenumAsString(PyBlitzArrayCxx_CToTypenum<T>()) % N % BobIoTypeinfo_Str(&type);
         throw std::runtime_error(m.str());
       }
 
@@ -80,45 +80,49 @@ namespace bob { namespace io { namespace base { namespace array {
   template <typename T, int N>
     blitz::Array<T,N> cast(const interface& buf) {
 
-      const typeinfo& type = buf.type();
+      const BobIoTypeinfo& type = buf.type();
 
       if (type.nd != N) {
         boost::format m("cannot cast blitz::Array<%s,%d> from buffer of type '%s'");
-        m % stringize<T>() % N % type.str();
+        m % PyBlitzArray_TypenumAsString(PyBlitzArrayCxx_CToTypenum<T>()) % N % BobIoTypeinfo_Str(&type);
         throw std::runtime_error(m.str());
       }
 
       switch (type.dtype) {
-        case bob::io::base::array::t_bool:
+        case NPY_BOOL:
           return bob::core::array::cast<T>(wrap<bool,N>(buf));
-        case bob::io::base::array::t_int8:
+        case NPY_INT8:
           return bob::core::array::cast<T>(wrap<int8_t,N>(buf));
-        case bob::io::base::array::t_int16:
+        case NPY_INT16:
           return bob::core::array::cast<T>(wrap<int16_t,N>(buf));
-        case bob::io::base::array::t_int32:
+        case NPY_INT32:
           return bob::core::array::cast<T>(wrap<int32_t,N>(buf));
-        case bob::io::base::array::t_int64:
+        case NPY_INT64:
           return bob::core::array::cast<T>(wrap<int64_t,N>(buf));
-        case bob::io::base::array::t_uint8:
+        case NPY_UINT8:
           return bob::core::array::cast<T>(wrap<uint8_t,N>(buf));
-        case bob::io::base::array::t_uint16:
+        case NPY_UINT16:
           return bob::core::array::cast<T>(wrap<uint16_t,N>(buf));
-        case bob::io::base::array::t_uint32:
+        case NPY_UINT32:
           return bob::core::array::cast<T>(wrap<uint32_t,N>(buf));
-        case bob::io::base::array::t_uint64:
+        case NPY_UINT64:
           return bob::core::array::cast<T>(wrap<uint64_t,N>(buf));
-        case bob::io::base::array::t_float32:
+        case NPY_FLOAT32:
           return bob::core::array::cast<T>(wrap<float,N>(buf));
-        case bob::io::base::array::t_float64:
+        case NPY_FLOAT64:
           return bob::core::array::cast<T>(wrap<double,N>(buf));
-        case bob::io::base::array::t_float128:
+#       ifdef NPY_FLOAT128
+        case NPY_FLOAT128:
           return bob::core::array::cast<T>(wrap<long double,N>(buf));
-        case bob::io::base::array::t_complex64:
+#       endif
+        case NPY_COMPLEX64:
           return bob::core::array::cast<T>(wrap<std::complex<float>,N>(buf));
-        case bob::io::base::array::t_complex128:
+        case NPY_COMPLEX128:
           return bob::core::array::cast<T>(wrap<std::complex<double>,N>(buf));
-        case bob::io::base::array::t_complex256:
+#       ifdef NPY_COMPLEX256
+        case NPY_COMPLEX256:
           return bob::core::array::cast<T>(wrap<std::complex<long double>,N>(buf));
+#       endif
         default:
           break;
       }

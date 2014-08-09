@@ -8,6 +8,10 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#define BOB_IO_BASE_MODULE
+#include <bob.io.base/api.h>
+#include <bob.io.base/File.h>
+
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -19,8 +23,6 @@
 
 #include <boost/shared_array.hpp>
 #include <boost/algorithm/string.hpp>
-
-#include <bob.io.base/CodecRegistry.h>
 
 typedef boost::tokenizer<boost::escaped_list_separator<char> > Tokenizer;
 
@@ -62,16 +64,16 @@ class CSVFile: public bob::io::base::File {
         return;
       }
 
-      m_arrayset_type.dtype = bob::io::base::array::t_float64;
+      m_arrayset_type.dtype = NPY_FLOAT64;
       m_arrayset_type.nd = 1;
       m_arrayset_type.shape[0] = entries;
-      m_arrayset_type.update_strides();
+      BobIoTypeinfo_UpdateStrides(&m_arrayset_type);
 
       m_array_type = m_arrayset_type;
       m_array_type.nd = 2;
       m_array_type.shape[0] = m_pos.size();
       m_array_type.shape[1] = entries;
-      m_array_type.update_strides();
+      BobIoTypeinfo_UpdateStrides(&m_array_type);
     }
 
     CSVFile(const char* path, char mode):
@@ -116,11 +118,11 @@ class CSVFile: public bob::io::base::File {
       return m_filename.c_str();
     }
 
-    virtual const bob::io::base::array::typeinfo& type() const {
+    virtual const BobIoTypeinfo& type() const {
       return m_arrayset_type;
     }
 
-    virtual const bob::io::base::array::typeinfo& type_all() const {
+    virtual const BobIoTypeinfo& type_all() const {
       return m_array_type;
     }
 
@@ -136,7 +138,7 @@ class CSVFile: public bob::io::base::File {
       if (m_newfile)
         throw std::runtime_error("uninitialized CSV file cannot be read");
 
-      if (!buffer.type().is_compatible(m_array_type)) buffer.set(m_array_type);
+      if (!BobIoTypeinfo_IsCompatible(&buffer.type(), &m_array_type)) buffer.set(m_array_type);
 
       //read contents
       std::string line;
@@ -156,7 +158,7 @@ class CSVFile: public bob::io::base::File {
       if (m_newfile)
         throw std::runtime_error("uninitialized CSV file cannot be read");
 
-      if (!buffer.type().is_compatible(m_arrayset_type))
+      if (!BobIoTypeinfo_IsCompatible(&buffer.type(), &m_arrayset_type))
         buffer.set(m_arrayset_type);
 
       if (index >= m_pos.size()) {
@@ -184,12 +186,12 @@ class CSVFile: public bob::io::base::File {
 
     virtual size_t append (const bob::io::base::array::interface& buffer) {
 
-      const bob::io::base::array::typeinfo& type = buffer.type();
+      const BobIoTypeinfo& type = buffer.type();
 
       if (m_newfile) {
-        if (type.nd != 1 || type.dtype != bob::io::base::array::t_float64) {
+        if (type.nd != 1 || type.dtype != NPY_FLOAT64) {
           boost::format m("cannot append %s to file '%s' - CSV files only accept 1D double precision float arrays");
-          m % type.str() % m_filename;
+          m % BobIoTypeinfo_Str(&type) % m_filename;
           throw std::runtime_error(m.str());
         }
         m_pos.clear();
@@ -201,9 +203,9 @@ class CSVFile: public bob::io::base::File {
       else {
 
         //check compatibility
-        if (!m_arrayset_type.is_compatible(buffer.type())) {
+        if (!BobIoTypeinfo_IsCompatible(&m_arrayset_type, &buffer.type())) {
           boost::format m("CSV file '%s' only accepts arrays of type %s");
-          m % m_filename % m_arrayset_type.str();
+          m % m_filename % BobIoTypeinfo_Str(&m_arrayset_type);
           throw std::runtime_error(m.str());
         }
 
@@ -215,19 +217,19 @@ class CSVFile: public bob::io::base::File {
       for (size_t k=1; k<type.shape[0]; ++k) m_file << *(p++) << ",";
       m_file << *(p++);
       m_array_type.shape[0] = m_pos.size();
-      m_array_type.update_strides();
+      BobIoTypeinfo_UpdateStrides(&m_array_type);
       return (m_pos.size()-1);
 
     }
 
     virtual void write (const bob::io::base::array::interface& buffer) {
 
-      const bob::io::base::array::typeinfo& type = buffer.type();
+      const BobIoTypeinfo& type = buffer.type();
 
       if (m_newfile) {
-        if (type.nd != 2 || type.dtype != bob::io::base::array::t_float64) {
+        if (type.nd != 2 || type.dtype != NPY_FLOAT64) {
           boost::format m("cannot write %s to file '%s' - CSV files only accept a single 2D double precision float array as input");
-          m % type.str() % m_filename;
+          m % BobIoTypeinfo_Str(&type) % m_filename;
           throw std::runtime_error(m.str());
         }
         const double* p = static_cast<const double*>(buffer.ptr());
@@ -241,7 +243,7 @@ class CSVFile: public bob::io::base::File {
         m_arrayset_type = type;
         m_arrayset_type.nd = 1;
         m_arrayset_type.shape[0] = type.shape[1];
-        m_arrayset_type.update_strides();
+        BobIoTypeinfo_UpdateStrides(&m_arrayset_type);
         m_array_type = type;
         m_newfile = false;
         return;
@@ -256,8 +258,8 @@ class CSVFile: public bob::io::base::File {
     std::fstream m_file;
     std::string m_filename;
     bool m_newfile;
-    bob::io::base::array::typeinfo m_array_type;
-    bob::io::base::array::typeinfo m_arrayset_type;
+    BobIoTypeinfo m_array_type;
+    BobIoTypeinfo m_arrayset_type;
     std::vector<std::streampos> m_pos; ///< dictionary of line starts
 
     static std::string s_codecname;
@@ -267,48 +269,10 @@ class CSVFile: public bob::io::base::File {
 std::string CSVFile::s_codecname = "bob.csv";
 
 /**
- * From this point onwards we have the registration procedure. If you are
- * looking at this file for a coding example, just follow the procedure bellow,
- * minus local modifications you may need to apply.
+ * Registration method: use an unique name. Copy the definition to "plugin.h"
+ * and then call it on "main.cpp" to register the codec.
  */
-
-/**
- * This defines the factory method F that can create codecs of this type.
- *
- * Here are the meanings of the mode flag that should be respected by your
- * factory implementation:
- *
- * 'r': opens for reading only - no modifications can occur; it is an
- *      error to open a file that does not exist for read-only operations.
- * 'w': opens for reading and writing, but truncates the file if it
- *      exists; it is not an error to open files that do not exist with
- *      this flag.
- * 'a': opens for reading and writing - any type of modification can
- *      occur. If the file does not exist, this flag is effectively like
- *      'w'.
- *
- * Returns a newly allocated File object that can read and write data to the
- * file using a specific backend.
- *
- * @note: This method can be static.
- */
-static boost::shared_ptr<bob::io::base::File> make_file (const char* path, char mode) {
+boost::shared_ptr<bob::io::base::File>
+  make_csv_file (const char* path, char mode) {
   return boost::make_shared<CSVFile>(path, mode);
 }
-
-/**
- * Takes care of codec registration per se.
- */
-static bool register_codec() {
-
-  boost::shared_ptr<bob::io::base::CodecRegistry> instance =
-    bob::io::base::CodecRegistry::instance();
-
-  instance->registerExtension(".csv", "Comma-Separated Values", &make_file);
-  instance->registerExtension(".txt", "Comma-Separated Values", &make_file);
-
-  return true;
-
-}
-
-static bool codec_registered = register_codec();
