@@ -8,6 +8,7 @@
 #define BOB_IO_BASE_MODULE
 #include "bobskin.h"
 #include <bob.io.base/api.h>
+#include <bob.io.base/File.h>
 #include <numpy/arrayobject.h>
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
@@ -118,10 +119,10 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
 
   try {
     if (pretend_extension) {
-      self->f = BobIo_OpenWithExtension(c_filename, mode, pretend_extension);
+      self->f = BobIoFile_OpenWithExtension(c_filename, mode, pretend_extension);
     }
     else {
-      self->f = BobIo_Open(c_filename, mode);
+      self->f = BobIoFile_Open(c_filename, mode);
     }
   }
   catch (std::exception& e) {
@@ -493,7 +494,7 @@ Returns the current position of the newly written array.\n\
 "
 );
 
-PyObject* PyBobIo_TypeInfoAsTuple (const BobIoTypeinfo& ti) {
+PyObject* PyBobIo_TypeinfoAsTuple (const BobIoTypeinfo& ti) {
 
   if (ti.dtype == NPY_NOTYPE) return 0;
 
@@ -529,7 +530,7 @@ static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, P
   else info = &self->f->type();
 
   /* Now return type description and tuples with shape and strides */
-  return PyBobIo_TypeInfoAsTuple(*info);
+  return PyBobIo_TypeinfoAsTuple(*info);
 }
 
 PyDoc_STRVAR(s_describe_str, "describe");

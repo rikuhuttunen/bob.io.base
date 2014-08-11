@@ -5,6 +5,7 @@
  * @brief Implementation of our bobskin class
  */
 
+#define BOB_IO_BASE_MODULE
 #include "bobskin.h"
 #include <stdexcept>
 

@@ -168,11 +168,9 @@ setup(
         ),
       Extension("bob.io.base._library",
         [
-          "bob/io/base/utils.cpp",
           "bob/io/base/cpp/TensorFileHeader.cpp",
           "bob/io/base/cpp/TensorFile.cpp",
           "bob/io/base/cpp/blitz_array.cpp",
-
           "bob/io/base/cpp/CodecRegistry.cpp",
           "bob/io/base/cpp/HDF5Attribute.cpp",
           "bob/io/base/cpp/HDF5Dataset.cpp",
@@ -181,6 +179,8 @@ setup(
           "bob/io/base/cpp/HDF5Types.cpp",
           "bob/io/base/cpp/HDF5Utils.cpp",
 
+          "bob/io/base/file.cpp",
+          "bob/io/base/utils.cpp",
           "bob/io/base/csv.cpp",
           "bob/io/base/hdf5plugin.cpp",
           "bob/io/base/torch3.cpp",
@@ -189,7 +189,6 @@ setup(
           "bob/io/base/typeinfo.cpp",
           "bob/io/base/bobskin.cpp",
           "bob/io/base/codec.cpp",
-          "bob/io/base/file.cpp",
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
           ],

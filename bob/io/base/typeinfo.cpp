@@ -67,7 +67,7 @@ int BobIoTypeinfo_SignedSet (BobIoTypeinfo* self, int dtype, Py_ssize_t nd,
 }
 
 int BobIoTypeinfo_SetWithStrides (BobIoTypeinfo* self, int dtype,
-    Py_ssize_t nd, const Py_ssize_t* shape, const Py_ssize_t* stride) {
+    size_t nd, const size_t* shape, const size_t* stride) {
   self->dtype = dtype;
 
   if (nd > (BOB_BLITZ_MAXDIMS+1)) {

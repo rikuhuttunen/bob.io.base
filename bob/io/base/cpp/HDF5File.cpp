@@ -7,6 +7,7 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#define BOB_IO_BASE_MODULE
 #include <bob.io.base/HDF5File.h>
 #include <boost/format.hpp>
 

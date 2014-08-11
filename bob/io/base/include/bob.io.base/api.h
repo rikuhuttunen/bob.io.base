@@ -148,10 +148,10 @@ typedef struct {
 #define BobIoReorder_ColToRow_PROTO (const void*, void*, const BobIoTypeinfo*)
 
 #define BobIoReorder_RowToColComplex_RET int
-#define BobIoReorder_RowToColComplex_PROTO (const void*, void*, const BobIoTypeinfo*)
+#define BobIoReorder_RowToColComplex_PROTO (const void*, void*, void*, const BobIoTypeinfo*)
 
 #define BobIoReorder_ColToRowComplex_RET int
-#define BobIoReorder_ColToRowComplex_PROTO (const void*, void*, const BobIoTypeinfo*)
+#define BobIoReorder_ColToRowComplex_PROTO (const void*, const void*, void*, const BobIoTypeinfo*)
 
 /**********************************
  * Bindings for bob.io.base.File *

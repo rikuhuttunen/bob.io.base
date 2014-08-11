@@ -7,6 +7,7 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
+#define BOB_IO_BASE_MODULE
 #include <stdexcept>
 
 #include <bob.io.base/blitz_array.h>
