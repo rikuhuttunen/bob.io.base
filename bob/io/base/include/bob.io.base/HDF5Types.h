@@ -10,12 +10,6 @@
 #ifndef BOB_IO_BASE_HDF5TYPES_H
 #define BOB_IO_BASE_HDF5TYPES_H
 
-#include <vector>
-#include <string>
-#include <boost/shared_ptr.hpp>
-#include <blitz/array.h>
-#include <hdf5.h>
-
 /**
  * Checks if the version of HDF5 installed is greater or equal to some set of
  * values. (extracted from hdf5-1.8.7)
@@ -28,6 +22,12 @@
 #endif
 
 #include <bob.io.base/array.h>
+
+#include <vector>
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include <blitz/array.h>
+#include <hdf5.h>
 
 namespace bob { namespace io { namespace base {
 

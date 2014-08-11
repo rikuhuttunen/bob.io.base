@@ -8,9 +8,8 @@
  */
 
 #define BOB_IO_BASE_MODULE
-#include <stdexcept>
-
 #include <bob.io.base/blitz_array.h>
+#include <stdexcept>
 
 bob::io::base::array::blitz_array::blitz_array(boost::shared_ptr<blitz_array> other) {
   set(other);

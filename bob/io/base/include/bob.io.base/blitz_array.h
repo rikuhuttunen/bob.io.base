@@ -11,17 +11,17 @@
 #ifndef BOB_IO_BASE_BLITZ_ARRAY_H
 #define BOB_IO_BASE_BLITZ_ARRAY_H
 
-#include <stdexcept>
-#include <boost/make_shared.hpp>
-#include <boost/format.hpp>
-#include <blitz/array.h>
+#include <bob.io.base/array.h>
+#include <bob.io.base/array_utils.h>
 
 #include <bob.core/check.h>
 #include <bob.core/cast.h>
 #include <bob.core/array_copy.h>
 
-#include <bob.io.base/array.h>
-#include <bob.io.base/array_utils.h>
+#include <stdexcept>
+#include <boost/make_shared.hpp>
+#include <boost/format.hpp>
+#include <blitz/array.h>
 
 namespace bob { namespace io { namespace base { namespace array {
 

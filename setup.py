@@ -168,9 +168,9 @@ setup(
         ),
       Extension("bob.io.base._library",
         [
+          "bob/io/base/cpp/blitz_array.cpp",
           "bob/io/base/cpp/TensorFileHeader.cpp",
           "bob/io/base/cpp/TensorFile.cpp",
-          "bob/io/base/cpp/blitz_array.cpp",
           "bob/io/base/cpp/CodecRegistry.cpp",
           "bob/io/base/cpp/HDF5Attribute.cpp",
           "bob/io/base/cpp/HDF5Dataset.cpp",
