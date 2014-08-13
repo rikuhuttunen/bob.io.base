@@ -9,7 +9,7 @@
 
 #include <boost/format.hpp>
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 #include <bob.io.base/HDF5Attribute.h>
 

@@ -13,7 +13,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 #include <bob.io.base/HDF5Group.h>
 #include <bob.io.base/HDF5Utils.h>

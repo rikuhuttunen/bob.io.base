@@ -24,7 +24,7 @@
 #warning Disabling MT locks because Boost < 1.35!
 #endif
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 #include <bob.io.base/HDF5Types.h>
 

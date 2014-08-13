@@ -6,15 +6,12 @@
 from setuptools import setup, find_packages, dist
 dist.Distribution(dict(setup_requires=['bob.blitz', 'bob.core']))
 from bob.extension.utils import egrep, find_header, find_library
-from bob.blitz.extension import Extension
-import bob.core
+from bob.blitz.extension import Extension, Library, build_ext
 
 import os
 package_dir = os.path.dirname(os.path.realpath(__file__))
-package_dir = os.path.join(package_dir, 'bob', 'io', 'base', 'include')
-include_dirs = [package_dir, bob.core.get_include()]
+target_dir = os.path.join(package_dir, 'bob', 'io', 'base')
 
-packages = ['bob-core >= 1.2.2']
 version = '2.0.0a0'
 
 def libhdf5_version(header):
@@ -160,13 +157,13 @@ setup(
         [
           "bob/io/base/version.cpp",
           ],
-        packages = packages,
-        include_dirs = include_dirs,
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
+        bob_packages = ['bob.core'],
         ),
-      Extension("bob.io.base._library",
+
+      Library("bob_io_base",
         [
           "bob/io/base/cpp/CodecRegistry.cpp",
           "bob/io/base/cpp/CSVFile.cpp",
@@ -187,22 +184,39 @@ setup(
           "bob/io/base/cpp/array.cpp",
           "bob/io/base/cpp/array_type.cpp",
           "bob/io/base/cpp/blitz_array.cpp",
+        ],
+        package_directory = package_dir,
+        target_directory = target_dir,
+        libraries = libraries,
+        library_dirs = library_dirs,
+        include_dirs = [hdf5_pkg.include_directory],
+        define_macros = define_macros,
+        version = version,
+        bob_packages = ['bob.core', 'bob.blitz'],
+        packages = ['boost'],
+      ),
 
+      Extension("bob.io.base._library",
+        [
           "bob/io/base/bobskin.cpp",
           "bob/io/base/codec.cpp",
           "bob/io/base/file.cpp",
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
           ],
-        packages = packages,
-        include_dirs = include_dirs,
         library_dirs = library_dirs,
-        libraries = libraries,
+        libraries = libraries + ['bob_io_base'],
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
+        bob_packages = ['bob.core'],
+        packages = ['boost'],
         ),
       ],
+
+    cmdclass = {
+      'build_ext': build_ext
+    },
 
     classifiers = [
       'Development Status :: 3 - Alpha',

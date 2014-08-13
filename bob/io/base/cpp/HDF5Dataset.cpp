@@ -11,7 +11,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_array.hpp>
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 #include <bob.io.base/HDF5Utils.h>
 #include <bob.io.base/HDF5Group.h>

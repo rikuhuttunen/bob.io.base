@@ -14,7 +14,7 @@
 
 #include <bob.io.base/CodecRegistry.h>
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 boost::shared_ptr<bob::io::base::CodecRegistry> bob::io::base::CodecRegistry::instance() {
   static boost::shared_ptr<bob::io::base::CodecRegistry> s_instance(new CodecRegistry());

@@ -10,7 +10,7 @@
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
 
-#include <bob/core/logging.h>
+#include <bob.core/logging.h>
 
 #include <bob.io.base/HDF5Utils.h>
 
