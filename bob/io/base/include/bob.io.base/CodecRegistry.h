@@ -14,7 +14,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include <bob.io.base/api.h>
+#include <bob.io.base/File.h>
 
 namespace bob { namespace io { namespace base {
 
@@ -47,9 +47,9 @@ namespace bob { namespace io { namespace base {
     public: //object access
 
       void registerExtension(const char* extension, const char* description,
-          BobIoFileFactory factory);
+          file_factory_t factory);
 
-      void deregisterFactory(BobIoFileFactory factory);
+      void deregisterFactory(file_factory_t factory);
       void deregisterExtension(const char* ext);
 
       /**
@@ -58,8 +58,8 @@ namespace bob { namespace io { namespace base {
        */
       const char* getDescription(const char* ext);
 
-      BobIoFileFactory findByExtension(const char* ext);
-      BobIoFileFactory findByFilenameExtension(const char* fn);
+      file_factory_t findByExtension(const char* ext);
+      file_factory_t findByFilenameExtension(const char* fn);
 
       bool isRegistered(const char* ext);
 
@@ -70,7 +70,7 @@ namespace bob { namespace io { namespace base {
       // Not implemented
       CodecRegistry( const CodecRegistry&);
 
-      std::map<std::string, BobIoFileFactory> s_extension2codec;
+      std::map<std::string, file_factory_t> s_extension2codec;
       std::map<std::string, std::string> s_extension2description;
       bool s_ignore; ///< shall I ignore double-registrations?
 

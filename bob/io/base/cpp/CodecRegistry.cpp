@@ -7,15 +7,14 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include <bob.core/logging.h>
-
-#include "CodecRegistry.h"
-
 #include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+
+#include <bob.io.base/CodecRegistry.h>
+
+#include <bob/core/logging.h>
 
 boost::shared_ptr<bob::io::base::CodecRegistry> bob::io::base::CodecRegistry::instance() {
   static boost::shared_ptr<bob::io::base::CodecRegistry> s_instance(new CodecRegistry());
@@ -33,7 +32,7 @@ const char* bob::io::base::CodecRegistry::getDescription(const char* ext) {
   return it->second.c_str();
 }
 
-void bob::io::base::CodecRegistry::deregisterFactory(BobIoFileFactory factory) {
+void bob::io::base::CodecRegistry::deregisterFactory(bob::io::base::file_factory_t factory) {
 
   std::vector<std::string> to_remove;
   for (auto it = s_extension2codec.begin(); it != s_extension2codec.end(); ++it) {
@@ -48,7 +47,7 @@ void bob::io::base::CodecRegistry::deregisterFactory(BobIoFileFactory factory) {
 }
 
 void bob::io::base::CodecRegistry::registerExtension(const char* extension,
-    const char* description, BobIoFileFactory codec) {
+    const char* description, bob::io::base::file_factory_t codec) {
 
   auto it = s_extension2codec.find(extension);
 
@@ -59,8 +58,7 @@ void bob::io::base::CodecRegistry::registerExtension(const char* extension,
   else if (!s_ignore) {
     boost::format m("extension already registered: %s - ignoring second registration with description `%s'");
     m % extension % description;
-    auto& error_stream = PyBobCoreLogging_Error();
-    error_stream << m.str() << std::endl;
+    bob::core::error << m.str() << std::endl;
     throw std::runtime_error(m.str());
   }
 
@@ -73,13 +71,13 @@ bool bob::io::base::CodecRegistry::isRegistered(const char* ext) {
   return (s_extension2codec.find(lower_extension) != s_extension2codec.end());
 }
 
-BobIoFileFactory bob::io::base::CodecRegistry::findByExtension (const char* ext) {
+bob::io::base::file_factory_t bob::io::base::CodecRegistry::findByExtension (const char* ext) {
 
   std::string extension(ext);
   std::string lower_extension = extension;
   std::transform(extension.begin(), extension.end(), lower_extension.begin(), ::tolower);
 
-  std::map<std::string, BobIoFileFactory>::iterator it =
+  std::map<std::string, bob::io::base::file_factory_t >::iterator it =
     s_extension2codec.find(lower_extension);
 
   if (it == s_extension2codec.end()) {
@@ -92,7 +90,7 @@ BobIoFileFactory bob::io::base::CodecRegistry::findByExtension (const char* ext)
 
 }
 
-BobIoFileFactory bob::io::base::CodecRegistry::findByFilenameExtension
+bob::io::base::file_factory_t bob::io::base::CodecRegistry::findByFilenameExtension
 (const char* filename) {
 
   return findByExtension(boost::filesystem::path(filename).extension().c_str());

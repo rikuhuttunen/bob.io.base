@@ -12,8 +12,9 @@
 #ifndef BOB_IO_BASE_HDF5FILE_H
 #define BOB_IO_BASE_HDF5FILE_H
 
-#include <bob.io.base/HDF5Utils.h>
 #include <boost/format.hpp>
+
+#include <bob.io.base/HDF5Utils.h>
 
 namespace bob { namespace io { namespace base {
 

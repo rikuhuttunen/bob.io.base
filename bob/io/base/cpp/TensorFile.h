@@ -10,11 +10,12 @@
 #ifndef BOB_IO_TENSORFILE_H
 #define BOB_IO_TENSORFILE_H
 
-#include "TensorFileHeader.h"
-
-#include <bob.io.base/blitz_array.h>
 #include <boost/format.hpp>
 #include <stdexcept>
+
+#include <bob.io.base/blitz_array.h>
+
+#include "TensorFileHeader.h"
 
 namespace bob { namespace io { namespace base {
 
@@ -93,9 +94,9 @@ namespace bob { namespace io { namespace base {
       void read (size_t index, bob::io::base::array::interface& data);
 
       /**
-       * Peeks the file and returns the currently set type information
+       * Peeks the file and returns the currently set typeinfo
        */
-      void peek(BobIoTypeinfo& info) const;
+      void peek(bob::io::base::array::typeinfo& info) const;
 
       /**
        * Gets the number of samples/arrays written so far
@@ -129,7 +130,7 @@ namespace bob { namespace io { namespace base {
       /**
        * Initializes the tensor file with the given type and shape.
        */
-      inline void initTensorFile(const BobIoTypeinfo& info) {
+      inline void initTensorFile(const bob::io::base::array::typeinfo& info) {
         initHeader(info);
       }
 
@@ -160,7 +161,7 @@ namespace bob { namespace io { namespace base {
        * Initializes the header of the (output) stream with the given type
        * and shape
        */
-      void initHeader(const BobIoTypeinfo& info);
+      void initHeader(const bob::io::base::array::typeinfo& info);
 
     public:
 
@@ -185,7 +186,7 @@ namespace bob { namespace io { namespace base {
        * multiarrays saved have the same dimensions.
        */
       template <typename T, int D> inline blitz::Array<T,D> read() {
-        BobIoTypeinfo info;
+        bob::io::base::array::typeinfo info;
         peek(info);
         bob::io::base::array::blitz_array buf(info);
         read(buf);
@@ -194,7 +195,7 @@ namespace bob { namespace io { namespace base {
 
       template <typename T, int D> inline blitz::Array<T,D> read(size_t
           index) {
-        BobIoTypeinfo info;
+        bob::io::base::array::typeinfo info;
         peek(info);
         bob::io::base::array::blitz_array buf(info);
         read(index, buf);

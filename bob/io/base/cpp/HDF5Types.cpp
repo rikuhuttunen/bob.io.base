@@ -7,11 +7,8 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include <bob.core/logging.h>
-
-#include <sstream>
 #include <boost/format.hpp>
+#include <sstream>
 #include <boost/make_shared.hpp>
 
 /**
@@ -26,6 +23,8 @@
 #else
 #warning Disabling MT locks because Boost < 1.35!
 #endif
+
+#include <bob/core/logging.h>
 
 #include <bob.io.base/HDF5Types.h>
 
@@ -214,9 +213,8 @@ static void delete_h5datatype (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Tclose(*p);
     if (err < 0) {
-      auto& error_stream = PyBobCoreLogging_Error();
-      error_stream << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      error_stream << bob::io::base::format_hdf5_error() << std::endl;
+      bob::core::error << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;
@@ -416,7 +414,7 @@ static bob::io::base::hdf5type get_datatype
   throw std::runtime_error("cannot handle HDF5 datatype on file using one of the native types supported by this API");
 }
 
-bool bob::io::base::HDF5Type::compatible (const BobIoTypeinfo& value) const
+bool bob::io::base::HDF5Type::compatible (const bob::io::base::array::typeinfo& value) const
 {
   return *this == HDF5Type(value);
 }
@@ -620,9 +618,9 @@ bob::io::base::HDF5Type::HDF5Type(const std::string& value):
     (const blitz::Array<T,N>& value): \
       m_type(E), \
       m_shape(value.shape()) { \
-        if (N > BOB_BLITZ_MAXDIMS) {\
+        if (N > bob::io::base::array::N_MAX_DIMENSIONS_ARRAY) {\
           boost::format m("you passed an array with %d dimensions, but this HDF5 API only supports arrays with up to %d dimensions"); \
-          m % N % BOB_BLITZ_MAXDIMS; \
+          m % N % bob::io::base::array::N_MAX_DIMENSIONS_ARRAY; \
           throw std::runtime_error(m.str()); \
         } \
       }
@@ -670,56 +668,53 @@ bob::io::base::HDF5Type::HDF5Type(bob::io::base::hdf5type type, const bob::io::b
 {
 }
 
-static bob::io::base::hdf5type array_to_hdf5 (int dtype) {
-  switch(dtype) {
-    case NPY_NOTYPE:
+static bob::io::base::hdf5type array_to_hdf5 (bob::io::base::array::ElementType eltype) {
+  switch(eltype) {
+    case bob::io::base::array::t_unknown:
       return bob::io::base::unsupported;
-    case NPY_BOOL:
+    case bob::io::base::array::t_bool:
       return bob::io::base::b;
-    case NPY_INT8:
+    case bob::io::base::array::t_int8:
       return bob::io::base::i8;
-    case NPY_INT16:
+    case bob::io::base::array::t_int16:
       return bob::io::base::i16;
-    case NPY_INT32:
+    case bob::io::base::array::t_int32:
       return bob::io::base::i32;
-    case NPY_INT64:
+    case bob::io::base::array::t_int64:
       return bob::io::base::i64;
-    case NPY_UINT8:
+    case bob::io::base::array::t_uint8:
       return bob::io::base::u8;
-    case NPY_UINT16:
+    case bob::io::base::array::t_uint16:
       return bob::io::base::u16;
-    case NPY_UINT32:
+    case bob::io::base::array::t_uint32:
       return bob::io::base::u32;
-    case NPY_UINT64:
+    case bob::io::base::array::t_uint64:
       return bob::io::base::u64;
-    case NPY_FLOAT32:
+    case bob::io::base::array::t_float32:
       return bob::io::base::f32;
-    case NPY_FLOAT64:
+    case bob::io::base::array::t_float64:
       return bob::io::base::f64;
-#   ifdef NPY_FLOAT128
-    case NPY_FLOAT128:
+    case bob::io::base::array::t_float128:
       return bob::io::base::f128;
-#   endif
-    case NPY_COMPLEX64:
+    case bob::io::base::array::t_complex64:
       return bob::io::base::c64;
-    case NPY_COMPLEX128:
+    case bob::io::base::array::t_complex128:
       return bob::io::base::c128;
-#   ifdef NPY_COMPLEX256
-    case NPY_COMPLEX256:
+    case bob::io::base::array::t_complex256:
       return bob::io::base::c256;
-#   endif
   }
   throw std::runtime_error("unsupported dtype <=> hdf5 type conversion -- FIXME");
 }
 
-bob::io::base::HDF5Type::HDF5Type(const BobIoTypeinfo& ti):
+bob::io::base::HDF5Type::HDF5Type(const bob::io::base::array::typeinfo& ti):
   m_type(array_to_hdf5(ti.dtype)),
   m_shape(ti.nd, ti.shape)
 {
 }
 
-bob::io::base::HDF5Type::HDF5Type(int dtype, const HDF5Shape& extents):
-  m_type(array_to_hdf5(dtype)),
+bob::io::base::HDF5Type::HDF5Type(bob::io::base::array::ElementType eltype,
+    const HDF5Shape& extents):
+  m_type(array_to_hdf5(eltype)),
   m_shape(extents)
 {
 }
@@ -769,63 +764,56 @@ std::string bob::io::base::HDF5Type::str() const {
   return retval.str();
 }
 
-int bob::io::base::HDF5Type::element_type() const {
-
+bob::io::base::array::ElementType bob::io::base::HDF5Type::element_type() const {
   switch (m_type) {
     case b:
-      return NPY_BOOL;
+      return bob::io::base::array::t_bool;
     case i8:
-      return NPY_INT8;
+      return bob::io::base::array::t_int8;
     case i16:
-      return NPY_INT16;
+      return bob::io::base::array::t_int16;
     case i32:
-      return NPY_INT32;
+      return bob::io::base::array::t_int32;
     case i64:
-      return NPY_INT64;
+      return bob::io::base::array::t_int64;
     case u8:
-      return NPY_UINT8;
+      return bob::io::base::array::t_uint8;
     case u16:
-      return NPY_UINT16;
+      return bob::io::base::array::t_uint16;
     case u32:
-      return NPY_UINT32;
+      return bob::io::base::array::t_uint32;
     case u64:
-      return NPY_UINT64;
+      return bob::io::base::array::t_uint64;
     case f32:
-      return NPY_FLOAT32;
+      return bob::io::base::array::t_float32;
     case f64:
-      return NPY_FLOAT64;
-#   ifdef NPY_FLOAT128
+      return bob::io::base::array::t_float64;
     case f128:
-      return NPY_FLOAT128;
-#   endif
+      return bob::io::base::array::t_float128;
     case c64:
-      return NPY_COMPLEX64;
+      return bob::io::base::array::t_complex64;
     case c128:
-      return NPY_COMPLEX128;
-#   ifdef NPY_COMPLEX256
+      return bob::io::base::array::t_complex128;
     case c256:
-      return NPY_COMPLEX256;
-#   endif
+      return bob::io::base::array::t_complex256;
     case s:
       throw std::runtime_error("Cannot convert HDF5 string type to an element type to be used in blitz::Array's - FIXME: something is wrong in the logic");
     default:
       break;
   }
-
-  return NPY_NOTYPE;
-
+  return bob::io::base::array::t_unknown;
 }
 
-void bob::io::base::HDF5Type::copy_to (BobIoTypeinfo& ti) const {
+void bob::io::base::HDF5Type::copy_to (bob::io::base::array::typeinfo& ti) const {
   ti.dtype = element_type();
   ti.nd = shape().n();
-  if (ti.nd > (BOB_BLITZ_MAXDIMS+1)) {
+  if (ti.nd > (BOB_MAX_DIM+1)) {
     boost::format f("HDF5 type has more (%d) than the allowed maximum number of dimensions (%d)");
-    f % ti.nd % (BOB_BLITZ_MAXDIMS+1);
+    f % ti.nd % (BOB_MAX_DIM+1);
     throw std::runtime_error(f.str());
   }
   for (size_t i=0; i<ti.nd; ++i) ti.shape[i] = shape()[i];
-  BobIoTypeinfo_UpdateStrides(&ti);
+  ti.update_strides();
 }
 
 bob::io::base::HDF5Descriptor::HDF5Descriptor(const HDF5Type& type, size_t size,

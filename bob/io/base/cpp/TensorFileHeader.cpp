@@ -7,10 +7,9 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include "TensorFileHeader.h"
-#include <bob.blitz/capi.h>
 #include <boost/format.hpp>
+
+#include "TensorFileHeader.h"
 
 bob::io::base::detail::TensorFileHeader::TensorFileHeader()
   : m_tensor_type(bob::io::base::Char),
@@ -32,28 +31,28 @@ void bob::io::base::detail::TensorFileHeader::read(std::istream& str) {
   str.seekg(std::ios_base::beg);
 
   int val;
-  str.read(reinterpret_cast<char*>(&val), sizeof(int));
+  str.read( reinterpret_cast<char*>(&val), sizeof(int));
   m_tensor_type = (bob::io::base::TensorType)val;
   m_type.dtype = bob::io::base::tensorTypeToArrayType(m_tensor_type);
 
-  str.read(reinterpret_cast<char*>(&val), sizeof(int));
+  str.read( reinterpret_cast<char*>(&val), sizeof(int));
   m_n_samples = (size_t)val;
 
-  str.read(reinterpret_cast<char*>(&val), sizeof(int));
-  size_t nd = (size_t)val;
+  int nd;
+  str.read(reinterpret_cast<char*>(&nd), sizeof(int));
 
-  size_t shape[BOB_BLITZ_MAXDIMS];
+  int shape[BOB_MAX_DIM];
 
-  str.read(reinterpret_cast<char*>(&val), sizeof(int));
+  str.read( reinterpret_cast<char*>(&val), sizeof(int));
   shape[0] = (size_t)val;
-  str.read(reinterpret_cast<char*>(&val), sizeof(int));
+  str.read( reinterpret_cast<char*>(&val), sizeof(int));
   shape[1] = (size_t)val;
   str.read( reinterpret_cast<char*>(&val), sizeof(int));
   shape[2] = (size_t)val;
   str.read( reinterpret_cast<char*>(&val), sizeof(int));
   shape[3] = (size_t)val;
 
-  BobIoTypeinfo_Set(&m_type, m_type.dtype, nd, shape);
+  m_type.set_shape(nd, shape);
 
   header_ok();
 }
@@ -65,19 +64,19 @@ void bob::io::base::detail::TensorFileHeader::write(std::ostream& str) const
 
   int val;
   val = (int)m_tensor_type;
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_n_samples;
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_type.nd;
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_type.shape[0];
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_type.shape[1];
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_type.shape[2];
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
   val = (int)m_type.shape[3];
-  str.write(reinterpret_cast<char*>(&val), sizeof(int));
+  str.write( reinterpret_cast<char*>(&val), sizeof(int));
 }
 
 void bob::io::base::detail::TensorFileHeader::header_ok()
@@ -101,7 +100,7 @@ void bob::io::base::detail::TensorFileHeader::header_ok()
   // Check the number of samples and dimensions
   if( m_type.nd < 1 || m_type.nd > 4) {
     boost::format m("header for tensor file indicates an unsupported type: %s");
-    m % BobIoTypeinfo_Str(&m_type);
+    m % m_type.str();
     throw std::runtime_error(m.str());
   }
 
@@ -131,43 +130,43 @@ void bob::io::base::detail::TensorFileHeader::update()
 }
 
 
-bob::io::base::TensorType bob::io::base::arrayTypeToTensorType(int dtype)
+bob::io::base::TensorType bob::io::base::arrayTypeToTensorType(bob::io::base::array::ElementType eltype)
 {
-  switch(dtype)
+  switch(eltype)
   {
-    case NPY_INT8:
+    case bob::io::base::array::t_int8:
       return bob::io::base::Char;
-    case NPY_INT16:
+    case bob::io::base::array::t_int16:
       return bob::io::base::Short;
-    case NPY_INT32:
+    case bob::io::base::array::t_int32:
       return bob::io::base::Int;
-    case NPY_INT64:
+    case bob::io::base::array::t_int64:
       return bob::io::base::Long;
-    case NPY_FLOAT32:
+    case bob::io::base::array::t_float32:
       return bob::io::base::Float;
-    case NPY_FLOAT64:
+    case bob::io::base::array::t_float64:
       return bob::io::base::Double;
     default:
       throw std::runtime_error("unsupported data type found while converting array type to tensor type");
   }
 }
 
-int bob::io::base::tensorTypeToArrayType(bob::io::base::TensorType tensortype)
+bob::io::base::array::ElementType bob::io::base::tensorTypeToArrayType(bob::io::base::TensorType tensortype)
 {
   switch(tensortype)
   {
     case bob::io::base::Char:
-      return NPY_INT8;
+      return bob::io::base::array::t_int8;
     case bob::io::base::Short:
-      return NPY_INT16;
+      return bob::io::base::array::t_int16;
     case bob::io::base::Int:
-      return NPY_INT32;
+      return bob::io::base::array::t_int32;
     case bob::io::base::Long:
-      return NPY_INT64;
+      return bob::io::base::array::t_int64;
     case bob::io::base::Float:
-      return NPY_FLOAT32;
+      return bob::io::base::array::t_float32;
     case bob::io::base::Double:
-      return NPY_FLOAT64;
+      return bob::io::base::array::t_float64;
     default:
       throw std::runtime_error("unsupported data type found while converting tensor type to array type");
   }

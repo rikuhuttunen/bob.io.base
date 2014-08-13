@@ -13,7 +13,6 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include <blitz/array.h>
 #include <hdf5.h>
 

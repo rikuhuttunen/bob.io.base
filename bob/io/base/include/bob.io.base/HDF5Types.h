@@ -10,6 +10,12 @@
 #ifndef BOB_IO_BASE_HDF5TYPES_H
 #define BOB_IO_BASE_HDF5TYPES_H
 
+#include <vector>
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include <blitz/array.h>
+#include <hdf5.h>
+
 /**
  * Checks if the version of HDF5 installed is greater or equal to some set of
  * values. (extracted from hdf5-1.8.7)
@@ -22,12 +28,6 @@
 #endif
 
 #include <bob.io.base/array.h>
-
-#include <vector>
-#include <string>
-#include <boost/shared_ptr.hpp>
-#include <blitz/array.h>
-#include <hdf5.h>
 
 namespace bob { namespace io { namespace base {
 
@@ -340,14 +340,14 @@ namespace bob { namespace io { namespace base {
       HDF5Type(hdf5type type);
 
       /**
-       * Creates a HDF5Type from an BobIoTypeinfo
+       * Creates a HDF5Type from an bob::io::base::array::typeinfo
        */
-      HDF5Type(const BobIoTypeinfo& ti);
+      HDF5Type(const bob::io::base::array::typeinfo& ti);
 
       /**
        * Creates a HDF5Type from a type enumeration and an explicit shape
        */
-      HDF5Type(int dtype, const HDF5Shape& extents);
+      HDF5Type(bob::io::base::array::ElementType eltype, const HDF5Shape& extents);
 
       /**
        * Creates a HDF5Type from a type enumeration and an explicit shape
@@ -400,7 +400,7 @@ namespace bob { namespace io { namespace base {
       /**
        * Checks if an existing object is compatible with my type
        */
-      bool compatible (const BobIoTypeinfo& value) const;
+      bool compatible (const bob::io::base::array::typeinfo& value) const;
 
       /**
        * Returns the HDF5Shape of this type
@@ -436,12 +436,12 @@ namespace bob { namespace io { namespace base {
        * Returns a mapping between the current type and the supported element
        * types in bob::io::base::array
        */
-      int element_type() const;
+      bob::io::base::array::ElementType element_type() const;
 
       /**
-       * Copies this type information to a stock BobIoTypeinfo
+       * Copies this type information to a stock bob::io::base::array::typeinfo
        */
-      void copy_to (BobIoTypeinfo& ti) const;
+      void copy_to (bob::io::base::array::typeinfo& ti) const;
 
     private: //representation
 

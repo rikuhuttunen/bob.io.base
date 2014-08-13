@@ -8,11 +8,13 @@
 #define BOB_IO_BASE_MODULE
 #include "bobskin.h"
 #include <bob.io.base/api.h>
-#include <bob.io.base/File.h>
 #include <numpy/arrayobject.h>
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
 #include <stdexcept>
+
+#include <bob.io.base/CodecRegistry.h>
+#include <bob.io.base/utils.h>
 
 #define FILETYPE_NAME "File"
 PyDoc_STRVAR(s_file_str, BOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
@@ -119,10 +121,10 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
 
   try {
     if (pretend_extension) {
-      self->f = BobIoFile_OpenWithExtension(c_filename, mode, pretend_extension);
+      self->f = bob::io::base::open(c_filename, mode, pretend_extension);
     }
     else {
-      self->f = BobIoFile_Open(c_filename, mode);
+      self->f = bob::io::base::open(c_filename, mode);
     }
   }
   catch (std::exception& e) {
@@ -191,6 +193,51 @@ static Py_ssize_t PyBobIoFile_Len (PyBobIoFileObject* self) {
   return retval;
 }
 
+int PyBobIo_AsTypenum (bob::io::base::array::ElementType type) {
+
+  switch(type) {
+    case bob::io::base::array::t_bool:
+      return NPY_BOOL;
+    case bob::io::base::array::t_int8:
+      return NPY_INT8;
+    case bob::io::base::array::t_int16:
+      return NPY_INT16;
+    case bob::io::base::array::t_int32:
+      return NPY_INT32;
+    case bob::io::base::array::t_int64:
+      return NPY_INT64;
+    case bob::io::base::array::t_uint8:
+      return NPY_UINT8;
+    case bob::io::base::array::t_uint16:
+      return NPY_UINT16;
+    case bob::io::base::array::t_uint32:
+      return NPY_UINT32;
+    case bob::io::base::array::t_uint64:
+      return NPY_UINT64;
+    case bob::io::base::array::t_float32:
+      return NPY_FLOAT32;
+    case bob::io::base::array::t_float64:
+      return NPY_FLOAT64;
+#ifdef NPY_FLOAT128
+    case bob::io::base::array::t_float128:
+      return NPY_FLOAT128;
+#endif
+    case bob::io::base::array::t_complex64:
+      return NPY_COMPLEX64;
+    case bob::io::base::array::t_complex128:
+      return NPY_COMPLEX128;
+#ifdef NPY_COMPLEX256
+    case bob::io::base::array::t_complex256:
+      return NPY_COMPLEX256;
+#endif
+    default:
+      PyErr_Format(PyExc_TypeError, "unsupported Bob/C++ element type (%s)", bob::io::base::array::stringize(type));
+  }
+
+  return NPY_NOTYPE;
+
+}
+
 static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
   if (i < 0) i += self->f->size(); ///< adjust for negative indexing
@@ -200,14 +247,15 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
     return 0;
   }
 
-  const BobIoTypeinfo& info = self->f->type();
+  const bob::io::base::array::typeinfo& info = self->f->type();
 
   npy_intp shape[NPY_MAXDIMS];
   for (size_t k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
-  if (info.dtype == NPY_NOTYPE) return 0; ///< failure
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
 
-  PyObject* retval = PyArray_SimpleNew(info.nd, shape, info.dtype);
+  PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
@@ -240,17 +288,18 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
         self->f->size(), &start, &stop, &step, &slicelength) < 0) return 0;
 
   //creates the return array
-  const BobIoTypeinfo& info = self->f->type();
+  const bob::io::base::array::typeinfo& info = self->f->type();
 
-  if (info.dtype == NPY_NOTYPE) return 0; ///< failure
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
 
-  if (slicelength <= 0) return PyArray_SimpleNew(0, 0, info.dtype);
+  if (slicelength <= 0) return PyArray_SimpleNew(0, 0, type_num);
 
   npy_intp shape[NPY_MAXDIMS];
   shape[0] = slicelength;
   for (size_t k=0; k<info.nd; ++k) shape[k+1] = info.shape[k];
 
-  PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, info.dtype);
+  PyObject* retval = PyArray_SimpleNew(info.nd+1, shape, type_num);
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
@@ -334,14 +383,15 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
 
   // reads the whole file in a single shot
 
-  const BobIoTypeinfo& info = self->f->type_all();
+  const bob::io::base::array::typeinfo& info = self->f->type_all();
 
   npy_intp shape[NPY_MAXDIMS];
   for (size_t k=0; k<info.nd; ++k) shape[k] = info.shape[k];
 
-  if (info.dtype == NPY_NOTYPE) return 0; ///< failure
+  int type_num = PyBobIo_AsTypenum(info.dtype);
+  if (type_num == NPY_NOTYPE) return 0; ///< failure
 
-  PyObject* retval = PyArray_SimpleNew(info.nd, shape, info.dtype);
+  PyObject* retval = PyArray_SimpleNew(info.nd, shape, type_num);
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
@@ -494,12 +544,13 @@ Returns the current position of the newly written array.\n\
 "
 );
 
-PyObject* PyBobIo_TypeinfoAsTuple (const BobIoTypeinfo& ti) {
+PyObject* PyBobIo_TypeInfoAsTuple (const bob::io::base::array::typeinfo& ti) {
 
-  if (ti.dtype == NPY_NOTYPE) return 0;
+  int type_num = PyBobIo_AsTypenum(ti.dtype);
+  if (type_num == NPY_NOTYPE) return 0;
 
   PyObject* retval = Py_BuildValue("NNN",
-      reinterpret_cast<PyObject*>(PyArray_DescrFromType(ti.dtype)),
+      reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num)),
       PyTuple_New(ti.nd), //shape
       PyTuple_New(ti.nd)  //strides
       );
@@ -525,12 +576,12 @@ static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, P
   PyObject* all = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &all)) return 0;
 
-  const BobIoTypeinfo* info = 0;
+  const bob::io::base::array::typeinfo* info = 0;
   if (all && PyObject_IsTrue(all)) info = &self->f->type_all();
   else info = &self->f->type();
 
   /* Now return type description and tuples with shape and strides */
-  return PyBobIo_TypeinfoAsTuple(*info);
+  return PyBobIo_TypeInfoAsTuple(*info);
 }
 
 PyDoc_STRVAR(s_describe_str, "describe");

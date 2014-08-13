@@ -14,6 +14,7 @@ package_dir = os.path.dirname(os.path.realpath(__file__))
 package_dir = os.path.join(package_dir, 'bob', 'io', 'base', 'include')
 include_dirs = [package_dir, bob.core.get_include()]
 
+packages = ['bob-core >= 1.2.2']
 version = '2.0.0a0'
 
 def libhdf5_version(header):
@@ -147,7 +148,6 @@ setup(
     install_requires=[
       'setuptools',
       'bob.blitz',
-      'bob.core',
     ],
 
     namespace_packages=[
@@ -160,46 +160,47 @@ setup(
         [
           "bob/io/base/version.cpp",
           ],
+        packages = packages,
         include_dirs = include_dirs,
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
-        packages = ['boost'],
         ),
       Extension("bob.io.base._library",
         [
-          "bob/io/base/cpp/blitz_array.cpp",
-          "bob/io/base/cpp/TensorFileHeader.cpp",
-          "bob/io/base/cpp/TensorFile.cpp",
           "bob/io/base/cpp/CodecRegistry.cpp",
+          "bob/io/base/cpp/CSVFile.cpp",
+          "bob/io/base/cpp/File.cpp",
+          "bob/io/base/cpp/HDF5ArrayFile.cpp",
           "bob/io/base/cpp/HDF5Attribute.cpp",
           "bob/io/base/cpp/HDF5Dataset.cpp",
           "bob/io/base/cpp/HDF5File.cpp",
           "bob/io/base/cpp/HDF5Group.cpp",
           "bob/io/base/cpp/HDF5Types.cpp",
           "bob/io/base/cpp/HDF5Utils.cpp",
+          "bob/io/base/cpp/reorder.cpp",
+          "bob/io/base/cpp/T3File.cpp",
+          "bob/io/base/cpp/TensorArrayFile.cpp",
+          "bob/io/base/cpp/TensorFileHeader.cpp",
+          "bob/io/base/cpp/utils.cpp",
+          "bob/io/base/cpp/TensorFile.cpp",
+          "bob/io/base/cpp/array.cpp",
+          "bob/io/base/cpp/array_type.cpp",
+          "bob/io/base/cpp/blitz_array.cpp",
 
-          "bob/io/base/file.cpp",
-          "bob/io/base/utils.cpp",
-          "bob/io/base/csv.cpp",
-          "bob/io/base/hdf5plugin.cpp",
-          "bob/io/base/torch3.cpp",
-          "bob/io/base/tensor.cpp",
-          "bob/io/base/reorder.cpp",
-          "bob/io/base/typeinfo.cpp",
           "bob/io/base/bobskin.cpp",
           "bob/io/base/codec.cpp",
+          "bob/io/base/file.cpp",
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
           ],
+        packages = packages,
         include_dirs = include_dirs,
         library_dirs = library_dirs,
         libraries = libraries,
         define_macros = define_macros,
         extra_compile_args = extra_compile_args,
         version = version,
-        packages = ['boost'],
-        boost_modules = ['iostreams', 'filesystem'],
         ),
       ],
 

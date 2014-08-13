@@ -10,8 +10,13 @@
 #define PYTHON_BOB_IO_BOBSKIN_H
 
 #include <Python.h>
+
 #include <bob.io.base/array.h>
-#include <bob.blitz/cppapi.h>
+
+extern "C" {
+#include <bob.blitz/capi.h>
+}
+
 
 /**
  * Wraps a PyArrayObject such that we can access it from bob::io
@@ -23,12 +28,12 @@ class bobskin: public bob::io::base::array::interface {
     /**
      * @brief Builds a new skin from an array like object
      */
-    bobskin(PyObject* array, int dtype);
+    bobskin(PyObject* array, bob::io::base::array::ElementType eltype);
 
     /**
      * @brief Builds a new skin from a numpy array object
      */
-    bobskin(PyArrayObject* array, int dtype);
+    bobskin(PyArrayObject* array, bob::io::base::array::ElementType eltype);
 
     /**
      * @brief Builds a new skin around a blitz array object
@@ -55,12 +60,12 @@ class bobskin: public bob::io::base::array::interface {
      * @brief Re-allocates this interface taking into consideration new
      * requirements. The internal memory should be considered uninitialized.
      */
-    virtual void set (const BobIoTypeinfo& req);
+    virtual void set (const bob::io::base::array::typeinfo& req);
 
     /**
      * @brief Type information for this interface.
      */
-    virtual const BobIoTypeinfo& type() const { return m_type; }
+    virtual const bob::io::base::array::typeinfo& type() const { return m_type; }
 
     /**
      * @brief Borrows a reference from the underlying memory. This means
@@ -80,7 +85,7 @@ class bobskin: public bob::io::base::array::interface {
 
   private: //representation
 
-    BobIoTypeinfo m_type; ///< type information
+    bob::io::base::array::typeinfo m_type; ///< type information
     void* m_ptr; ///< pointer to the data
 
 };

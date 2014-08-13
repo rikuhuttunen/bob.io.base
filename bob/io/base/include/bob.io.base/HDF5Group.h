@@ -10,13 +10,13 @@
 #ifndef BOB_IO_BASE_HDF5GROUP_H
 #define BOB_IO_BASE_HDF5GROUP_H
 
-#include <bob.io.base/HDF5Types.h>
-#include <bob.io.base/HDF5Dataset.h>
-#include <bob.io.base/HDF5Attribute.h>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <hdf5.h>
+
+#include <bob.io.base/HDF5Types.h>
+#include <bob.io.base/HDF5Dataset.h>
+#include <bob.io.base/HDF5Attribute.h>
 
 namespace bob { namespace io { namespace base { namespace detail { namespace hdf5 {
 

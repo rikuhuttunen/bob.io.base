@@ -11,17 +11,18 @@
 #ifndef BOB_IO_BASE_BLITZ_ARRAY_H
 #define BOB_IO_BASE_BLITZ_ARRAY_H
 
-#include <bob.io.base/array.h>
-#include <bob.io.base/array_utils.h>
+#include <stdexcept>
+#include <boost/make_shared.hpp>
+#include <boost/format.hpp>
+#include <blitz/array.h>
 
 #include <bob.core/check.h>
 #include <bob.core/cast.h>
 #include <bob.core/array_copy.h>
 
-#include <stdexcept>
-#include <boost/make_shared.hpp>
-#include <boost/format.hpp>
-#include <blitz/array.h>
+#include <bob.io.base/array.h>
+#include <bob.io.base/array_utils.h>
+#include <bob.io.base/array_type.h>
 
 namespace bob { namespace io { namespace base { namespace array {
 
@@ -55,13 +56,13 @@ namespace bob { namespace io { namespace base { namespace array {
       /**
        * @brief Starts with an uninitialized, pre-allocated array.
        */
-      blitz_array(const BobIoTypeinfo& info);
+      blitz_array(const typeinfo& info);
 
       /**
        * @brief Borrows the given pointer - if you use this constructor, you
        * must make sure the pointed data outlives this object.
        */
-      blitz_array(void* data, const BobIoTypeinfo& info);
+      blitz_array(void* data, const typeinfo& info);
 
       /**
        * @brief Destroyes me
@@ -82,7 +83,7 @@ namespace bob { namespace io { namespace base { namespace array {
        * @brief Re-allocates this buffer taking into consideration new
        * requirements. The internal memory should be considered uninitialized.
        */
-      virtual void set (const BobIoTypeinfo& req);
+      virtual void set (const typeinfo& req);
 
       /**
        * @brief Refers to the data of another blitz array.
@@ -90,9 +91,9 @@ namespace bob { namespace io { namespace base { namespace array {
       void set(boost::shared_ptr<blitz_array> other);
 
       /**
-       * @brief type information
+       * @brief Element type
        */
-      virtual const BobIoTypeinfo& type() const { return m_type; }
+      virtual const typeinfo& type() const { return m_type; }
 
       /**
        * @brief Borrows a reference from the underlying memory. This means
@@ -151,20 +152,16 @@ namespace bob { namespace io { namespace base { namespace array {
       template <typename T, int N>
         void set(boost::shared_ptr<blitz::Array<T,N> > data) {
 
-          if (PyBlitzArrayCxx_CToTypenum<T>() == NPY_NOTYPE)
+          if (getElementType<T>() == t_unknown)
             throw std::runtime_error("unsupported element type on blitz::Array<>");
-          if (N > BOB_BLITZ_MAXDIMS)
+          if (N > BOB_MAX_DIM)
             throw std::runtime_error("unsupported number of dimensions on blitz::Array<>");
 
           if (!isCContiguous(*data.get()))
             throw std::runtime_error("cannot buffer'ize non-c contiguous array");
 
-          m_type.dtype = PyBlitzArrayCxx_CToTypenum<T>();
-          m_type.nd = data->ndim();
-          for (size_t k=0; k<m_type.nd; ++k) {
-            m_type.shape[k] = data->shape(k);
-            m_type.stride[k] = data->stride(k);
-          }
+          m_type.set(data);
+
           m_data = data;
           m_ptr = reinterpret_cast<void*>(data->data());
           m_is_blitz = true;
@@ -212,15 +209,15 @@ namespace bob { namespace io { namespace base { namespace array {
 
           if (!m_data) throw std::runtime_error("empty blitz array");
 
-          if (m_type.dtype != PyBlitzArrayCxx_CToTypenum<T>()) {
+          if (m_type.dtype != getElementType<T>()) {
             boost::format m("cannot efficiently retrieve blitz::Array<%s,%d> from buffer of type '%s'");
-            m % PyBlitzArray_TypenumAsString(PyBlitzArrayCxx_CToTypenum<T>()) % N % BobIoTypeinfo_Str(&m_type);
+            m % stringize<T>() % N % m_type.str();
             throw std::runtime_error(m.str());
           }
 
           if (m_type.nd != N) {
             boost::format m("cannot retrieve blitz::Array<%s,%d> from buffer of type '%s'");
-            m % PyBlitzArray_TypenumAsString(PyBlitzArrayCxx_CToTypenum<T>()) % N % BobIoTypeinfo_Str(&m_type);
+            m % stringize<T>() % N % m_type.str();
             throw std::runtime_error(m.str());
           }
 
@@ -252,7 +249,7 @@ namespace bob { namespace io { namespace base { namespace array {
 
     private: //representation
 
-      BobIoTypeinfo m_type; ///< type information
+      typeinfo m_type; ///< type information
       void* m_ptr; ///< pointer to the data
       bool m_is_blitz; ///< true if initiated with a blitz::Array<>
       boost::shared_ptr<void> m_data; ///< Pointer to the data owner

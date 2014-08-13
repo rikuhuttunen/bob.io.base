@@ -7,12 +7,11 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include <bob.core/logging.h>
+#include <boost/format.hpp>
+
+#include <bob/core/logging.h>
 
 #include <bob.io.base/HDF5Attribute.h>
-
-#include <boost/format.hpp>
 
 static std::runtime_error status_error(const char* f, herr_t s) {
   boost::format m("call to HDF5 C-function %s() returned error %d. HDF5 error statck follows:\n%s");
@@ -32,9 +31,8 @@ static void delete_h5dataspace (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Sclose(*p);
     if (err < 0) {
-      auto& error_stream = PyBobCoreLogging_Error();
-      error_stream << "H5Sclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      error_stream << bob::io::base::format_hdf5_error() << std::endl;
+      bob::core::error << "H5Sclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;
@@ -64,9 +62,8 @@ static void delete_h5type (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Tclose(*p);
     if (err < 0) {
-      auto& error_stream = PyBobCoreLogging_Error();
-      error_stream << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      error_stream << bob::io::base::format_hdf5_error() << std::endl;
+      bob::core::error << "H5Tclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;
@@ -102,9 +99,8 @@ static void delete_h5attribute (hid_t* p) {
   if (*p >= 0) {
     herr_t err = H5Aclose(*p);
     if (err < 0) {
-      auto& error_stream = PyBobCoreLogging_Error();
-      error_stream << "H5Aclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
-      error_stream << bob::io::base::format_hdf5_error() << std::endl;
+      bob::core::error << "H5Aclose() exited with an error (" << err << "). The stack trace follows:" << std::endl;
+      bob::core::error << bob::io::base::format_hdf5_error() << std::endl;
     }
   }
   delete p;

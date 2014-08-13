@@ -7,14 +7,12 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include <bob.io.base/api.h>
-#include <bob.io.base/File.h>
-#include <bob.io.base/HDF5File.h>
-
 #include <boost/make_shared.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+
+#include <bob.io.base/CodecRegistry.h>
+#include <bob.io.base/HDF5File.h>
 
 /**
  * Read and write arrays in HDF5 format
@@ -67,11 +65,11 @@ class HDF5ArrayFile: public bob::io::base::File {
       return m_filename.c_str();
     }
 
-    virtual const BobIoTypeinfo& type_all () const {
+    virtual const bob::io::base::array::typeinfo& type_all () const {
       return m_type_array;
     }
 
-    virtual const BobIoTypeinfo& type () const {
+    virtual const bob::io::base::array::typeinfo& type () const {
       return m_type_arrayset;
     }
 
@@ -91,7 +89,7 @@ class HDF5ArrayFile: public bob::io::base::File {
         throw std::runtime_error(f.str());
       }
 
-      if(!BobIoTypeinfo_IsCompatible(&buffer.type(), &m_type_array)) buffer.set(m_type_array);
+      if(!buffer.type().is_compatible(m_type_array)) buffer.set(m_type_array);
 
       m_file.read_buffer(m_path, 0, buffer.type(), buffer.ptr());
     }
@@ -104,7 +102,7 @@ class HDF5ArrayFile: public bob::io::base::File {
         throw std::runtime_error(f.str());
       }
 
-      if(!BobIoTypeinfo_IsCompatible(&buffer.type(), &m_type_arrayset)) buffer.set(m_type_arrayset);
+      if(!buffer.type().is_compatible(m_type_arrayset)) buffer.set(m_type_arrayset);
 
       m_file.read_buffer(m_path, index, buffer.type(), buffer.ptr());
     }
@@ -154,8 +152,8 @@ class HDF5ArrayFile: public bob::io::base::File {
 
     bob::io::base::HDF5File m_file;
     std::string  m_filename;
-    BobIoTypeinfo m_type_array;    ///< type for reading all data at once
-    BobIoTypeinfo m_type_arrayset; ///< type for reading data by sub-arrays
+    bob::io::base::array::typeinfo m_type_array;    ///< type for reading all data at once
+    bob::io::base::array::typeinfo m_type_arrayset; ///< type for reading data by sub-arrays
     size_t       m_size_arrayset; ///< number of arrays in arrayset mode
     std::string  m_path; ///< default path to use
     bool         m_newfile; ///< path check optimization
@@ -167,11 +165,32 @@ class HDF5ArrayFile: public bob::io::base::File {
 std::string HDF5ArrayFile::s_codecname = "bob.hdf5";
 
 /**
- * Registration method: use an unique name. Copy the definition to "plugin.h"
- * and then call it on "main.cpp" to register the codec.
+ * From this point onwards we have the registration procedure. If you are
+ * looking at this file for a coding example, just follow the procedure bellow,
+ * minus local modifications you may need to apply.
  */
-boost::shared_ptr<bob::io::base::File>
-  make_hdf5_file (const char* path, char mode) {
+
+/**
+ * This defines the factory method F that can create codecs of this type.
+ *
+ * Here are the meanings of the mode flag that should be respected by your
+ * factory implementation:
+ *
+ * 'r': opens for reading only - no modifications can occur; it is an
+ *      error to open a file that does not exist for read-only operations.
+ * 'w': opens for reading and writing, but truncates the file if it
+ *      exists; it is not an error to open files that do not exist with
+ *      this flag.
+ * 'a': opens for reading and writing - any type of modification can
+ *      occur. If the file does not exist, this flag is effectively like
+ *      'w'.
+ *
+ * Returns a newly allocated File object that can read and write data to the
+ * file using a specific backend.
+ *
+ * @note: This method can be static.
+ */
+static boost::shared_ptr<bob::io::base::File> make_file (const char* path, char mode) {
 
   bob::io::base::HDF5File::mode_t h5mode;
   if (mode == 'r') h5mode = bob::io::base::HDF5File::in;
@@ -182,3 +201,22 @@ boost::shared_ptr<bob::io::base::File>
   return boost::make_shared<HDF5ArrayFile>(path, h5mode);
 
 }
+
+/**
+ * Takes care of codec registration per se.
+ */
+static bool register_codec() {
+  static const char* description = "Hierarchical Data Format v5 (default)";
+
+  boost::shared_ptr<bob::io::base::CodecRegistry> instance =
+    bob::io::base::CodecRegistry::instance();
+
+  instance->registerExtension(".h5", description, &make_file);
+  instance->registerExtension(".hdf5", description, &make_file);
+  instance->registerExtension(".hdf", description, &make_file);
+
+  return true;
+
+}
+
+static bool codec_registered = register_codec();

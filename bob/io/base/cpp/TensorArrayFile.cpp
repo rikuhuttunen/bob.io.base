@@ -7,11 +7,8 @@
  * Copyright (C) Idiap Research Institute, Martigny, Switzerland
  */
 
-#define BOB_IO_BASE_MODULE
-#include <bob.io.base/api.h>
-#include <bob.io.base/File.h>
-
-#include "cpp/TensorFile.h"
+#include "TensorFile.h"
+#include <bob.io.base/CodecRegistry.h>
 
 class TensorArrayFile: public bob::io::base::File {
 
@@ -29,11 +26,11 @@ class TensorArrayFile: public bob::io::base::File {
       return m_filename.c_str();
     }
 
-    virtual const BobIoTypeinfo& type_all () const {
+    virtual const bob::io::base::array::typeinfo& type_all () const {
       return m_type;
     }
 
-    virtual const BobIoTypeinfo& type () const {
+    virtual const bob::io::base::array::typeinfo& type () const {
       return m_type;
     }
 
@@ -83,7 +80,7 @@ class TensorArrayFile: public bob::io::base::File {
   private: //representation
 
     bob::io::base::TensorFile m_file;
-    BobIoTypeinfo m_type;
+    bob::io::base::array::typeinfo m_type;
     std::string m_filename;
 
     static std::string s_codecname;
@@ -93,11 +90,32 @@ class TensorArrayFile: public bob::io::base::File {
 std::string TensorArrayFile::s_codecname = "bob.tensor";
 
 /**
- * Registration method: use an unique name. Copy the definition to "plugin.h"
- * and then call it on "main.cpp" to register the codec.
+ * From this point onwards we have the registration procedure. If you are
+ * looking at this file for a coding example, just follow the procedure bellow,
+ * minus local modifications you may need to apply.
  */
-boost::shared_ptr<bob::io::base::File>
-  make_tensor_file (const char* path, char mode) {
+
+/**
+ * This defines the factory method F that can create codecs of this type.
+ *
+ * Here are the meanings of the mode flag that should be respected by your
+ * factory implementation:
+ *
+ * 'r': opens for reading only - no modifications can occur; it is an
+ *      error to open a file that does not exist for read-only operations.
+ * 'w': opens for reading and writing, but truncates the file if it
+ *      exists; it is not an error to open files that do not exist with
+ *      this flag.
+ * 'a': opens for reading and writing - any type of modification can
+ *      occur. If the file does not exist, this flag is effectively like
+ *      'w'.
+ *
+ * Returns a newly allocated File object that can read and write data to the
+ * file using a specific backend.
+ *
+ * @note: This method can be static.
+ */
+static boost::shared_ptr<bob::io::base::File> make_file (const char* path, char mode) {
 
   bob::io::base::TensorFile::openmode _mode;
   if (mode == 'r') _mode = bob::io::base::TensorFile::in;
@@ -108,3 +126,19 @@ boost::shared_ptr<bob::io::base::File>
   return boost::make_shared<TensorArrayFile>(path, _mode);
 
 }
+
+/**
+ * Takes care of codec registration per se.
+ */
+static bool register_codec() {
+
+  boost::shared_ptr<bob::io::base::CodecRegistry> instance =
+    bob::io::base::CodecRegistry::instance();
+
+  instance->registerExtension(".tensor", "torch3vision v2.1 tensor files", &make_file);
+
+  return true;
+
+}
+
+static bool codec_registered = register_codec();
