@@ -157,7 +157,7 @@ namespace bob { namespace io { namespace base { namespace array {
           if (N > BOB_MAX_DIM)
             throw std::runtime_error("unsupported number of dimensions on blitz::Array<>");
 
-          if (!isCContiguous(*data.get()))
+          if (!bob::core::array::isCContiguous(*data.get()))
             throw std::runtime_error("cannot buffer'ize non-c contiguous array");
 
           m_type.set(data);
