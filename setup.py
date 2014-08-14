@@ -161,6 +161,8 @@ setup(
         extra_compile_args = extra_compile_args,
         version = version,
         bob_packages = ['bob.core'],
+        packages = ['boost'],
+        boost_modules = ['system'],
         ),
 
       Library("bob_io_base",
@@ -194,6 +196,7 @@ setup(
         version = version,
         bob_packages = ['bob.core', 'bob.blitz'],
         packages = ['boost'],
+        boost_modules = ['system'],
       ),
 
       Extension("bob.io.base._library",
@@ -211,6 +214,7 @@ setup(
         version = version,
         bob_packages = ['bob.core'],
         packages = ['boost'],
+        boost_modules = ['system'],
         ),
       ],
 
