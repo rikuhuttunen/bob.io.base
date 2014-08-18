@@ -8,10 +8,6 @@ dist.Distribution(dict(setup_requires=['bob.blitz', 'bob.core']))
 from bob.extension.utils import egrep, find_header, find_library
 from bob.blitz.extension import Extension, Library, build_ext
 
-import os
-package_dir = os.path.dirname(os.path.realpath(__file__))
-target_dir = os.path.join(package_dir, 'bob', 'io', 'base')
-
 version = '2.0.0a0'
 
 def libhdf5_version(header):
@@ -113,13 +109,9 @@ class hdf5:
 
 hdf5_pkg = hdf5()
 
-extra_compile_args = [
-    '-isystem', hdf5_pkg.include_directory,
-    ]
+system_include_dirs = [hdf5_pkg.include_directory]
 
-library_dirs = [
-    hdf5_pkg.library_directory,
-    ]
+library_dirs = [hdf5_pkg.library_directory]
 
 libraries = hdf5_pkg.libraries
 
@@ -150,22 +142,22 @@ setup(
     namespace_packages=[
       "bob",
       "bob.io",
-      ],
+    ],
 
     ext_modules = [
       Extension("bob.io.base.version",
         [
           "bob/io/base/version.cpp",
-          ],
+        ],
         define_macros = define_macros,
-        extra_compile_args = extra_compile_args,
+        system_include_dirs = system_include_dirs,
         version = version,
         bob_packages = ['bob.core'],
         packages = ['boost'],
         boost_modules = ['system', 'filesystem'],
         ),
 
-      Library("bob_io_base",
+      Library("bob.io.base.bob_io_base",
         [
           "bob/io/base/cpp/CodecRegistry.cpp",
           "bob/io/base/cpp/CSVFile.cpp",
@@ -187,11 +179,9 @@ setup(
           "bob/io/base/cpp/array_type.cpp",
           "bob/io/base/cpp/blitz_array.cpp",
         ],
-        package_directory = package_dir,
-        target_directory = target_dir,
         libraries = libraries,
         library_dirs = library_dirs,
-        include_dirs = [hdf5_pkg.include_directory],
+        system_include_dirs = system_include_dirs,
         define_macros = define_macros,
         version = version,
         bob_packages = ['bob.core', 'bob.blitz'],
@@ -206,17 +196,17 @@ setup(
           "bob/io/base/file.cpp",
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
-          ],
+        ],
         library_dirs = library_dirs,
-        libraries = libraries + ['bob_io_base'],
+        libraries = libraries,
         define_macros = define_macros,
-        extra_compile_args = extra_compile_args,
+        system_include_dirs = system_include_dirs,
         version = version,
         bob_packages = ['bob.core'],
         packages = ['boost'],
         boost_modules = ['system', 'filesystem'],
-        ),
-      ],
+      ),
+    ],
 
     cmdclass = {
       'build_ext': build_ext
@@ -230,6 +220,6 @@ setup(
       'Programming Language :: Python',
       'Programming Language :: Python :: 3',
       'Topic :: Software Development :: Libraries :: Python Modules',
-      ],
+    ],
 
-    )
+  )

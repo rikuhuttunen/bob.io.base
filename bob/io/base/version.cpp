@@ -114,7 +114,7 @@ static PyObject* bob_blitz_version() {
  * bob.core c/c++ api version
  */
 static PyObject* bob_core_version() {
-  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_BLITZ_API_VERSION));
+  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_CORE_API_VERSION));
 }
 
 static PyObject* build_version_dictionary() {
