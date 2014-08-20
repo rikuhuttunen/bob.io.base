@@ -1,3 +1,10 @@
+# import Libraries of other lib packages
+import bob.core
+
+# import our own Library
+import bob.extension
+bob.extension.load_bob_library('bob.io.base', __file__)
+
 from ._library import File, HDF5File, extensions
 from . import version
 from .version import module as __version__

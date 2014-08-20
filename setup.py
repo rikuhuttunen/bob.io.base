@@ -3,10 +3,15 @@
 # Andre Anjos <andre.anjos@idiap.ch>
 # Mon 16 Apr 08:18:08 2012 CEST
 
+bob_packages = ['bob.core']
+
 from setuptools import setup, find_packages, dist
-dist.Distribution(dict(setup_requires=['bob.blitz', 'bob.core']))
+dist.Distribution(dict(setup_requires=['bob.blitz'] + bob_packages))
 from bob.extension.utils import egrep, find_header, find_library
 from bob.blitz.extension import Extension, Library, build_ext
+
+packages = ['boost']
+boost_modules = ['system', 'filesystem']
 
 version = '2.0.0a0'
 
@@ -137,6 +142,7 @@ setup(
     install_requires=[
       'setuptools',
       'bob.blitz',
+      'bob.core'
     ],
 
     namespace_packages=[
@@ -152,10 +158,10 @@ setup(
         define_macros = define_macros,
         system_include_dirs = system_include_dirs,
         version = version,
-        bob_packages = ['bob.core'],
-        packages = ['boost'],
-        boost_modules = ['system', 'filesystem'],
-        ),
+        bob_packages = bob_packages,
+        packages = packages,
+        boost_modules = boost_modules,
+      ),
 
       Library("bob.io.base.bob_io_base",
         [
@@ -184,9 +190,9 @@ setup(
         system_include_dirs = system_include_dirs,
         define_macros = define_macros,
         version = version,
-        bob_packages = ['bob.core', 'bob.blitz'],
-        packages = ['boost'],
-        boost_modules = ['system', 'filesystem'],
+        bob_packages = bob_packages,
+        packages = packages,
+        boost_modules = boost_modules,
       ),
 
       Extension("bob.io.base._library",
@@ -202,9 +208,9 @@ setup(
         define_macros = define_macros,
         system_include_dirs = system_include_dirs,
         version = version,
-        bob_packages = ['bob.core'],
-        packages = ['boost'],
-        boost_modules = ['system', 'filesystem'],
+        bob_packages = bob_packages,
+        packages = packages,
+        boost_modules = boost_modules,
       ),
     ],
 
