@@ -35,7 +35,3 @@ Functions
 .. autofunction:: bob.io.base.create_directories_save
 
 
-C++ API Helpers
----------------
-
-.. autofunction:: bob.io.base.get_include

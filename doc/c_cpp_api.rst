@@ -41,10 +41,6 @@ the import function:
 
    }
 
-.. note::
-
-  The include directory can be discovered using
-  :py:func:`bob.io.base.get_include`.
 
 Generic Functions
 -----------------
