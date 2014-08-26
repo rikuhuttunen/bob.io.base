@@ -41,6 +41,7 @@ class hdf5:
       only. This will trigger our library search to disconsider shared
       libraries when searching.
     """
+    import os
 
     self.name = 'hdf5'
     header = 'hdf5.h'
