@@ -10,6 +10,8 @@ dist.Distribution(dict(setup_requires=['bob.blitz'] + bob_packages))
 from bob.extension.utils import egrep, find_header, find_library
 from bob.blitz.extension import Extension, Library, build_ext
 
+import os
+
 packages = ['boost']
 boost_modules = ['system', 'filesystem']
 
