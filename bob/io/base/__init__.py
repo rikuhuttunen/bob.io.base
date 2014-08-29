@@ -24,7 +24,7 @@ def __is_string__(s):
   return (version_info[0] < 3 and isinstance(s, (str, unicode))) or \
     isinstance(s, (bytes, str))
 
-def create_directories_save(directory, dryrun=False):
+def create_directories_safe(directory, dryrun=False):
   """Creates a directory if it does not exists, with concurrent access support.
   This function will also create any parent directories that might be required.
   If the dryrun option is selected, it does not actually create the directory,
@@ -138,12 +138,13 @@ def save(array, filename, create_directories = False):
   """
   # create directory if not existent yet
   if create_directories:
-    create_directories_save(os.path.dirname(filename))
+    create_directories_safe(os.path.dirname(filename))
 
   return File(filename, 'w').write(array)
 
 # Just to make it homogenous with the C++ API
 write = save
+read = load
 
 def append(array, filename):
   """Appends the contents of an array-like object to file.

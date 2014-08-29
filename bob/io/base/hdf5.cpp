@@ -2547,6 +2547,12 @@ static PyMethodDef PyBobIoHDF5File_Methods[] = {
     s_read_doc,
   },
   {
+    "get",
+    (PyCFunction)PyBobIoHDF5File_Read,
+    METH_VARARGS|METH_KEYWORDS,
+    s_read_doc,
+  },
+  {
     s_lread_str,
     (PyCFunction)PyBobIoHDF5File_ListRead,
     METH_VARARGS|METH_KEYWORDS,
@@ -2566,6 +2572,12 @@ static PyMethodDef PyBobIoHDF5File_Methods[] = {
   },
   {
     s_set_str,
+    (PyCFunction)PyBobIoHDF5File_Set,
+    METH_VARARGS|METH_KEYWORDS,
+    s_set_doc,
+  },
+  {
+    "write",
     (PyCFunction)PyBobIoHDF5File_Set,
     METH_VARARGS|METH_KEYWORDS,
     s_set_doc,
