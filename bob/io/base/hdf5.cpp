@@ -21,7 +21,8 @@
 PyDoc_STRVAR(s_hdf5file_str, BOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
 
 PyDoc_STRVAR(s_hdf5file_doc,
-"HDF5File(filename, [mode='r']) -> new bob::io::base::HDF5File\n\
+"* HDF5File(filename, [mode='r'])\n\
+* HDF5File(hdf5)\n\
 \n\
 Reads and writes data to HDF5 files.\n\
 \n\
@@ -35,6 +36,10 @@ mode\n\
   ``'a'`` for read/write/append, ``'w'`` for read/write/truncate\n\
   or ``'x'`` for (read/write/exclusive). This flag defaults to\n\
   ``'r'``.\n\
+\n\
+hdf5\n\
+  [:py:class:`bob.io.base.HDF5File`] An HDF5 file to copy-construct,\n\
+  (a shallow copy of the file will be created) \n\
 \n\
 HDF5 stands for Hierarchical Data Format version 5. It is a\n\
 flexible, binary file format that allows one to store and read\n\
@@ -100,9 +105,31 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
 
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"filename", "mode", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist1 = const_cast<char**>(const_kwlist);
+  static char* kwlist2[] = {const_cast<char*>("hdf5"), 0};
 
-  PyObject* filename = 0;
+  // get the number of command line arguments
+  Py_ssize_t nargs = (args?PyTuple_Size(args):0) + (kwds?PyDict_Size(kwds):0);
+
+  if (!nargs){
+    // at least one argument is required
+    PyErr_Format(PyExc_TypeError, "`%s' constructor requires at least one parameter", Py_TYPE(self)->tp_name);
+    return -1;
+  } // nargs == 0
+
+  PyObject* k = Py_BuildValue("s", kwlist2[0]);
+  auto k_ = make_safe(k);
+  if (
+    (kwds && PyDict_Contains(kwds, k)) ||
+    (args && PyBobIoHDF5File_Check(PyTuple_GetItem(args, 0)))
+  ){
+    PyBobIoHDF5FileObject* other;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist2, &PyBobIoHDF5File_Converter, &other))
+      return -1;
+    self->f = other->f;
+    return 0;
+  }
+
 
 #if PY_VERSION_HEX >= 0x03000000
 #  define MODE_CHAR "C"
@@ -112,7 +139,8 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   char mode = 'r';
 #endif
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|" MODE_CHAR, kwlist,
+  PyObject* filename = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|" MODE_CHAR, kwlist1,
         &PyBobIo_FilenameConverter, &filename, &mode))
     return -1;
 
