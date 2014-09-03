@@ -32,6 +32,6 @@ Functions
 
 .. autofunction:: bob.io.base.peek_all
 
-.. autofunction:: bob.io.base.create_directories_save
+.. autofunction:: bob.io.base.create_directories_safe
 
 
