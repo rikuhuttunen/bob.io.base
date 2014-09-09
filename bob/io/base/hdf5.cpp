@@ -769,7 +769,7 @@ static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject
 
   PyObject* pyrel = 0;
   PyObject* pyrec = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &pyrel, &pyrec)) return 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &pyrel, &pyrec)) return 0;
 
   bool relative = false;
   if (pyrel && PyObject_IsTrue(pyrel)) relative = true;
