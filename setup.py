@@ -6,9 +6,12 @@
 bob_packages = ['bob.core']
 
 from setuptools import setup, find_packages, dist
-dist.Distribution(dict(setup_requires=['bob.blitz'] + bob_packages))
-from bob.extension.utils import egrep, find_header, find_library
+dist.Distribution(dict(setup_requires=['bob.extension', 'bob.blitz'] + bob_packages))
+from bob.extension.utils import egrep, find_header, find_library,
 from bob.blitz.extension import Extension, Library, build_ext
+
+from bob.extension.utils import load_requirements
+build_requires = load_requirements()
 
 import os
 
@@ -95,7 +98,7 @@ class hdf5:
     candidates = find_library(module, version=self.version, prefixes=[prefix], only_static=only_static)
 
     if not candidates:
-      raise RuntimeError("cannot find required %s binary module `%s' - make sure libsvm is installed on `%s'" % (self.name, module, prefix))
+      raise RuntimeError("cannot find required %s binary module `%s' - make sure libhdf5 is installed on `%s'" % (self.name, module, prefix))
 
     # libraries
     self.libraries = []
@@ -142,11 +145,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
 
-    install_requires=[
-      'setuptools',
-      'bob.blitz',
-      'bob.core'
-    ],
+    setup_requires = build_requires,
+    install_requires = build_requires,
 
     namespace_packages=[
       "bob",
