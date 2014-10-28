@@ -133,7 +133,7 @@ setup(
 
     name='bob.io.base',
     version=version,
-    description='Base bindings for bob.io',
+    description='Basic IO for Bob',
     url='http://github.com/bioidiap/bob.io.base',
     license='BSD',
     author='Andre Anjos',
@@ -222,7 +222,8 @@ setup(
     },
 
     classifiers = [
-      'Development Status :: 3 - Alpha',
+      'Framework :: Bob',
+      'Development Status :: 4 - Beta',
       'Intended Audience :: Developers',
       'License :: OSI Approved :: BSD License',
       'Natural Language :: English',

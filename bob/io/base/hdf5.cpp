@@ -299,7 +299,7 @@ path. ``'..'`` and ``'.'`` are supported. This object should\n\
 be an :py:class:`str` object. If the value is relative, it is\n\
 added to the current path. If it is absolute, it causes the\n\
 prefix to be reset. Note all operations taking a relative path,\n\
-following a ``cd()``, will be considered relative to the value\n\
+following a :py:func:`cd`, will be considered relative to the value\n\
 defined by the ``cwd`` property of this object.\n\
 ");
 
@@ -386,7 +386,7 @@ path\n\
 Creates a new directory (i.e., a *group* in HDF5 parlance) inside\n\
 the file. A relative path is taken w.r.t. to the current\n\
 directory. If the directory already exists (check it with\n\
-:py:meth:`HDF5File.has_group()`, an exception will be raised.\n\
+:py:meth:`bob.io.base.HDF5File.has_group`, an exception will be raised.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
@@ -1946,18 +1946,18 @@ Parameters:\n\
 \n\
 name\n\
   [str] The name of the attribute to retrieve. If the attribute\n\
-  is not available, a :py:class:`RuntimeError` is raised.\n\
+  is not available, a ``RuntimeError`` is raised.\n\
 \n\
 path\n\
   [str, optional] The path leading to the resource (dataset or\n\
   group|directory) you would like to get an attribute from.\n\
-  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  If the path does not exist, a ``RuntimeError`` is\n\
   raised.\n\
 \n\
 This method returns a single value corresponding to what is\n\
 stored inside the attribute container for the given resource.\n\
 If you would like to retrieve all attributes at once, use\n\
-:py:meth:`HDF5File.get_attributes()` instead.\n\
+:py:meth:`bob.io.base.HDF5File.get_attributes` instead.\n\
 ");
 
 static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
@@ -2011,13 +2011,13 @@ Parameters:\n\
 path\n\
   [str, optional] The path leading to the resource (dataset or\n\
   group|directory) you would like to get all attributes from.\n\
-  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  If the path does not exist, a ``RuntimeError`` is\n\
   raised.\n\
 \n\
 Attributes are returned in a dictionary in which each key\n\
 corresponds to the attribute name and each value corresponds\n\
 to the value stored inside the HDF5 file. To retrieve only\n\
-a specific attribute, use :py:meth:`HDF5File.get_attribute()`.\n\
+a specific attribute, use :py:meth:`bob.io.base.HDF5File.get_attribute`.\n\
 ");
 
 template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
@@ -2334,14 +2334,14 @@ Parameters:\n\
 \n\
 name\n\
   [str] The name of the attribute to delete. A\n\
-  :py:class:`RuntimeError` is raised if the attribute does\n\
+  ``RuntimeError`` is raised if the attribute does\n\
   not exist.\n\
 \n\
 \n\
 path\n\
   [str, optional] The path leading to the resource (dataset or\n\
   group|directory) you would like to set an attribute at.\n\
-  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  If the path does not exist, a ``RuntimeError`` is\n\
   raised.\n\
 \n\
 ");
@@ -2430,13 +2430,13 @@ Parameters:\n\
 \n\
 attrs\n\
   [list] An iterable containing the names of the attributes to\n\
-  be removed. If not given or set to :py:class:`None`, then\n\
+  be removed. If not given or set to ``None``, then\n\
   remove all attributes at the named resource.\n\
 \n\
 path\n\
   [str, optional] The path leading to the resource (dataset or\n\
   group|directory) you would like to set attributes at.\n\
-  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  If the path does not exist, a ``RuntimeError`` is\n\
   raised.\n\
 \n\
 ");
@@ -2482,7 +2482,7 @@ name\n\
 path\n\
   [str, optional] The path leading to the resource (dataset or\n\
   group|directory) you would like to set an attribute at.\n\
-  If the path does not exist, a :py:class:`RuntimeError` is\n\
+  If the path does not exist, a ``RuntimeError`` is\n\
   raised.\n\
 \n\
 ");

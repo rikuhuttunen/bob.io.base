@@ -478,7 +478,7 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be written into the file. It can be a\n\
-  numpy, a bob.blitz.array or any other object which can be\n\
+  :py:class:`numpy.array`, a :py:class:`bob.blitz.array` or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
   :py:class:`bob.blitz.array`.\n\
@@ -531,7 +531,7 @@ Parameters:\n\
 \n\
 array\n\
   [array] The array to be added into the file. It can be a\n\
-  numpy, a bob.blitz.array or any other object which can be\n\
+  :py:class:`numpy.ndarray`, a :py:class`bob.blitz.array` or any other object which can be\n\
   converted to either of them, as long as the number of\n\
   dimensions and scalar type are supported by\n\
   :py:class:`bob.blitz.array`.\n\

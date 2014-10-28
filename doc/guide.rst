@@ -145,7 +145,7 @@ as it was defined.
   If you need to place lots of variables in a subfolder, it may be better to
   setup the prefix folder before starting the writing operations on the
   :py:class:`bob.io.base.HDF5File` object. You can do this using the method
-  :py:meth:`HDF5File.cd`.  Look up its help for more information and usage
+  :py:meth:`bob.io.base.HDF5File.cd`.  Look up its help for more information and usage
   instructions.
 
 Writing arrays is a little simpler as the :py:class:`numpy.ndarray` objects
@@ -175,8 +175,8 @@ The result of running ``h5dump`` on the file ``testfile3.hdf5`` should be:
   ...
 
 You don't need to limit yourself to single variables, you can also save lists
-of scalars and arrays using the function :py:meth:`bob.io.base.HDF5.append`
-instead of :py:meth:`bob.io.base.HDF5.set`.
+of scalars and arrays using the function :py:meth:`bob.io.base.HDF5File.append`
+instead of :py:meth:`bob.io.base.HDF5File.set`.
 
 Reading operations
 ------------------
@@ -264,7 +264,7 @@ What we have shown so far is the generic API to read and write data using HDF5.
 You will use it when you want to import or export data from |project| into
 other software frameworks, debug your data or just implement your own classes
 that can serialize and de-serialize from HDF5 file containers. In |project|,
-most of the time you will be working with :py:class:`numpy.ndarrays`\s. In
+most of the time you will be working with :py:class:`numpy.ndarray`\s. In
 special situations though, you may be asked to handle
 :py:class:`bob.io.base.File`\s. :py:class:`bob.io.base.File` objects create a
 transparent connection between C++ (`Blitz++`_) / Python (`NumPy`_) arrays and
@@ -323,7 +323,7 @@ through the :py:class:`bob.io.base.File` container:
          [  0.,   3.,   6.,   9.,  12.,  15.,  18.,  21.,  24.,  27.]])
 
 You can also directly save :py:class:`numpy.ndarray`\s without going through
-the :py:class:`bob.io.base.Array` container:
+the :py:class:`bob.io.base.File` container:
 
 .. doctest::
 

@@ -52,7 +52,7 @@ def create_directories_safe(directory, dryrun=False):
 
 def load(inputs):
   """Loads the contents of a file, an iterable of files, or an iterable of
-  :py:class:`bob.io.File`'s into a :py:class:`numpy.ndarray`.
+  :py:class:`bob.io.base.File`'s into a :py:class:`numpy.ndarray`.
 
   Parameters:
 
@@ -67,11 +67,11 @@ def load(inputs):
        would assume that each file contains a single 1D sample or a set of 1D
        samples, load them in memory and concatenate them into a single and
        returned 2D numpy ndarray.
-    3. An iterable of :py:class:`bob.io.File`. In this case, this would assume
-       that each :py:class:`bob.io.File` contains a single 1D sample or a set
+    3. An iterable of :py:class:`bob.io.base.File`. In this case, this would assume
+       that each :py:class:`bob.io.base.File` contains a single 1D sample or a set
        of 1D samples, load them in memory if required and concatenate them into
        a single and returned 2D numpy ndarray.
-    4. An iterable with mixed filenames and :py:class:`bob.io.File`. In this
+    4. An iterable with mixed filenames and :py:class:`bob.io.base.File`. In this
        case, this would returned a 2D :py:class:`numpy.ndarray`, as described
        by points 2 and 3 above.
   """
@@ -88,14 +88,14 @@ def load(inputs):
       elif isinstance(obj, File):
         retval.append(obj.read())
       else:
-        raise TypeError("Iterable contains an object which is not a filename nor a bob.io.File.")
+        raise TypeError("Iterable contains an object which is not a filename nor a bob.io.base.File.")
     return numpy.vstack(retval)
   else:
-    raise TypeError("Unexpected input object. This function is expecting a filename, or an iterable of filenames and/or bob.io.File's")
+    raise TypeError("Unexpected input object. This function is expecting a filename, or an iterable of filenames and/or bob.io.base.File's")
 
 def merge(filenames):
   """Converts an iterable of filenames into an iterable over read-only
-  bob.io.File's.
+  bob.io.base.File's.
 
   Parameters:
 
@@ -104,9 +104,9 @@ def merge(filenames):
     This might represent:
 
     1. A single filename. In this case, an iterable with a single
-       :py:class:`bob.io.File` is returned.
+       :py:class:`bob.io.base.File` is returned.
     2. An iterable of filenames to be converted into an iterable of
-       :py:class:`bob.io.File`'s.
+       :py:class:`bob.io.base.File`'s.
   """
 
   from collections import Iterable
@@ -121,9 +121,9 @@ def merge(filenames):
 def save(array, filename, create_directories = False):
   """Saves the contents of an array-like object to file.
 
-  Effectively, this is the same as creating a :py:class:`bob.io.File` object
+  Effectively, this is the same as creating a :py:class:`bob.io.base.File` object
   with the mode flag set to `w` (write with truncation) and calling
-  :py:meth:`bob.io.File.write` passing `array` as parameter.
+  :py:meth:`bob.io.base.File.write` passing `array` as parameter.
 
   Parameters:
 
@@ -149,9 +149,9 @@ read = load
 def append(array, filename):
   """Appends the contents of an array-like object to file.
 
-  Effectively, this is the same as creating a :py:class:`bob.io.File` object
+  Effectively, this is the same as creating a :py:class:`bob.io.base.File` object
   with the mode flag set to `a` (append) and calling
-  :py:meth:`bob.io.File.append` passing `array` as parameter.
+  :py:meth:`bob.io.base.File.append` passing `array` as parameter.
 
   Parameters:
 
@@ -166,9 +166,9 @@ def append(array, filename):
 def peek(filename):
   """Returns the type of array (frame or sample) saved in the given file.
 
-  Effectively, this is the same as creating a :py:class:`bob.io.File` object
+  Effectively, this is the same as creating a :py:class:`bob.io.base.File` object
   with the mode flag set to `r` (read-only) and returning
-  :py:attr:`bob.io.File.describe()`.
+  :py:func:`bob.io.base.File.describe`.
 
   Parameters:
 
@@ -180,9 +180,9 @@ def peek(filename):
 def peek_all(filename):
   """Returns the type of array (for full readouts) saved in the given file.
 
-  Effectively, this is the same as creating a :py:class:`bob.io.File` object
+  Effectively, this is the same as creating a :py:class:`bob.io.base.File` object
   with the mode flag set to `r` (read-only) and returning
-  :py:attr:`bob.io.File.describe(all=True)`.
+  ``bob.io.base.File.describe(all=True)``.
 
   Parameters:
 
