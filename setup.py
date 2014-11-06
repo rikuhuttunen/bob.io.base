@@ -13,18 +13,18 @@ from bob.blitz.extension import Extension, Library, build_ext
 from bob.extension.utils import load_requirements
 build_requires = load_requirements()
 
-import os
+# Define package version
+version = open("version.txt").read().rstrip()
 
 packages = ['boost']
 boost_modules = ['system', 'filesystem']
 
-version = '2.0.0a0'
-
+import os
 def libhdf5_version(header):
 
-  version = egrep(header, r"#\s*define\s+H5_VERSION\s+\"([\d\.]+)\"")
-  if not len(version): return None
-  return version[0].group(1)
+  vv = egrep(header, r"#\s*define\s+H5_VERSION\s+\"([\d\.]+)\"")
+  if not len(vv): return None
+  return vv[0].group(1)
 
 class hdf5:
 
@@ -74,15 +74,15 @@ class hdf5:
       for candidate in candidates:
         directory = os.path.dirname(candidate)
         version_header = os.path.join(directory, 'H5pubconf.h')
-        version = libhdf5_version(version_header)
-        available = LooseVersion(version)
+        vv = libhdf5_version(version_header)
+        available = LooseVersion(vv)
         if (operator == '<' and available < required) or \
            (operator == '<=' and available <= required) or \
            (operator == '>' and available > required) or \
            (operator == '>=' and available >= required) or \
            (operator == '==' and available == required):
           self.include_directory = os.path.dirname(candidate)
-          self.version = version
+          self.version = vv
           found = True
           break
 
