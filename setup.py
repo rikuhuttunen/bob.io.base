@@ -103,10 +103,10 @@ class hdf5:
         raise RuntimeError("could not find the required (%s) version of %s on the file system (looked at: %s)" % (requirement, self.name, ', '.join(candidates)))
 
       # normalize
-      self.include_directories = [os.path.normpath(self.include_directory)]
+      self.include_directories = [os.path.normpath(i) for i in self.include_directories]
 
       # find library
-      prefix = os.path.dirname(os.path.dirname(self.include_directory))
+      prefix = os.path.dirname(os.path.dirname(self.include_directories[0]))
       module = 'hdf5'
       candidates = find_library(module, version=self.version, prefixes=[prefix], only_static=only_static)
 
