@@ -7,6 +7,8 @@ bob_packages = ['bob.core']
 
 from setuptools import setup, find_packages, dist
 dist.Distribution(dict(setup_requires=['bob.extension', 'bob.blitz'] + bob_packages))
+from bob.extension.utils import egrep, find_header, find_library
+from bob.extension.pkgconfig import pkgconfig
 from bob.blitz.extension import Extension, Library, build_ext
 
 from bob.extension.utils import load_requirements
@@ -15,8 +17,130 @@ build_requires = load_requirements()
 # Define package version
 version = open("version.txt").read().rstrip()
 
-packages = ['boost', 'hdf5']
+packages = ['boost']
 boost_modules = ['system', 'filesystem']
+
+import os
+def libhdf5_version(header):
+
+  vv = egrep(header, r"#\s*define\s+H5_VERSION\s+\"([\d\.]+)\"")
+  if not len(vv): return None
+  return vv[0].group(1)
+
+class hdf5:
+
+  def __init__ (self, requirement='', only_static=False):
+    """
+    Searches for libhdf5 in stock locations. Allows user to override.
+
+    If the user sets the environment variable BOB_PREFIX_PATH, that prefixes
+    the standard path locations.
+
+    Parameters:
+
+    requirement, str
+      A string, indicating a version requirement for this library. For example,
+      ``'>= 8.2'``.
+
+    only_static, boolean
+      A flag, that indicates if we intend to link against the static library
+      only. This will trigger our library search to disconsider shared
+      libraries when searching.
+    """
+    import os
+
+    self.name = 'hdf5'
+    
+    # try to use pkg_config first
+    try: 
+      pkg = pkgconfig('hdf5')
+      self.include_directories = pkg.include_directories()
+      version_header = os.path.join(self.include_directories[0], 'H5pubconf.h')
+      self.version = libhdf5_version(version_header)
+      self.libraries = pkg.libraries()
+      self.library_directories = pkg.library_directories()
+    except RuntimeError:
+      
+      # locate pkg-config on our own
+      header = 'hdf5.h'
+
+      candidates = find_header(header)
+
+      if not candidates:
+        raise RuntimeError("could not find %s's `%s' - have you installed %s on this machine?" % (self.name, header, self.name))
+
+      found = False
+
+      if not requirement:
+        self.include_directories = [os.path.dirname(candidates[0])]
+        directory = os.path.dirname(candidates[0])
+        version_header = os.path.join(directory, 'H5pubconf.h')
+        self.version = libhdf5_version(version_header)
+        found = True
+
+      else:
+
+        # requirement is 'operator' 'version'
+        operator, required = [k.strip() for k in requirement.split(' ', 1)]
+
+        # now check for user requirements
+        for candidate in candidates:
+          directory = os.path.dirname(candidate)
+          version_header = os.path.join(directory, 'H5pubconf.h')
+          vv = libhdf5_version(version_header)
+          available = LooseVersion(vv)
+          if (operator == '<' and available < required) or \
+             (operator == '<=' and available <= required) or \
+             (operator == '>' and available > required) or \
+             (operator == '>=' and available >= required) or \
+             (operator == '==' and available == required):
+            self.include_directories = [os.path.dirname(candidate)]
+            self.version = vv
+            found = True
+            break
+
+      if not found:
+        raise RuntimeError("could not find the required (%s) version of %s on the file system (looked at: %s)" % (requirement, self.name, ', '.join(candidates)))
+
+      # normalize
+      self.include_directories = [os.path.normpath(self.include_directory)]
+
+      # find library
+      prefix = os.path.dirname(os.path.dirname(self.include_directory))
+      module = 'hdf5'
+      candidates = find_library(module, version=self.version, prefixes=[prefix], only_static=only_static)
+
+      if not candidates:
+        raise RuntimeError("cannot find required %s binary module `%s' - make sure libhdf5 is installed on `%s'" % (self.name, module, prefix))
+
+      # libraries
+      self.libraries = []
+      name, ext = os.path.splitext(os.path.basename(candidates[0]))
+      if ext in ['.so', '.a', '.dylib', '.dll']:
+        self.libraries.append(name[3:]) #strip 'lib' from the name
+      else: #link against the whole thing
+        self.libraries.append(':' + os.path.basename(candidates[0]))
+
+      # library path
+      self.library_directories = [os.path.dirname(candidates[0])]
+
+  def macros(self):
+    return [
+        ('HAVE_%s' % self.name.upper(), '1'),
+        ('%s_VERSION' % self.name.upper(), '"%s"' % self.version),
+        ]
+
+
+hdf5_pkg = hdf5()
+
+system_include_dirs = hdf5_pkg.include_directories
+
+library_dirs = hdf5_pkg.library_directories
+
+libraries = hdf5_pkg.libraries
+
+define_macros = hdf5_pkg.macros()
+
 
 setup(
 
@@ -47,6 +171,8 @@ setup(
         [
           "bob/io/base/version.cpp",
         ],
+        define_macros = define_macros,
+        system_include_dirs = system_include_dirs,
         version = version,
         bob_packages = bob_packages,
         packages = packages,
@@ -75,6 +201,10 @@ setup(
           "bob/io/base/cpp/array_type.cpp",
           "bob/io/base/cpp/blitz_array.cpp",
         ],
+        libraries = libraries,
+        library_dirs = library_dirs,
+        system_include_dirs = system_include_dirs,
+        define_macros = define_macros,
         version = version,
         bob_packages = bob_packages,
         packages = packages,
@@ -89,6 +219,10 @@ setup(
           "bob/io/base/hdf5.cpp",
           "bob/io/base/main.cpp",
         ],
+        library_dirs = library_dirs,
+        libraries = libraries,
+        define_macros = define_macros,
+        system_include_dirs = system_include_dirs,
         version = version,
         bob_packages = bob_packages,
         packages = packages,
