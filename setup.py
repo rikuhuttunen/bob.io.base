@@ -8,7 +8,7 @@ bob_packages = ['bob.core']
 from setuptools import setup, find_packages, dist
 dist.Distribution(dict(setup_requires=['bob.extension', 'bob.blitz'] + bob_packages))
 from bob.extension.utils import egrep, find_header, find_library
-from bob.extension.pkgconfig import pkgconfig
+from bob.extension import pkgconfig
 from bob.blitz.extension import Extension, Library, build_ext
 
 from bob.extension.utils import load_requirements
