@@ -121,11 +121,12 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   auto k_ = make_safe(k);
   if (
     (kwds && PyDict_Contains(kwds, k)) ||
-    (args && PyBobIoHDF5File_Check(PyTuple_GetItem(args, 0)))
+    (args && PyBobIoHDF5File_Check(PyTuple_GET_ITEM(args, 0)))
   ){
     PyBobIoHDF5FileObject* other;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist2, &PyBobIoHDF5File_Converter, &other))
       return -1;
+    auto other_ = make_safe(other);
     self->f = other->f;
     return 0;
   }
