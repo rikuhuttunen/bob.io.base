@@ -34,6 +34,7 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
   for (auto it=table.begin(); it!=table.end(); ++it) {
     PyObject* pyvalue = make_object(it->second.c_str());
     if (!pyvalue) return 0;
+    auto p_ = make_safe(pyvalue);
     if (PyDict_SetItemString(retval, it->first.c_str(), pyvalue) != 0) {
       return 0;
     }
