@@ -39,8 +39,7 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
     }
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -184,8 +183,7 @@ static PyObject* create_module (void) {
     return 0;
   }
 
-  Py_INCREF(m);
-  return m;
+  return Py_BuildValue("O", m);
 
 }
 

@@ -272,8 +272,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -330,8 +329,7 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
 
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -412,8 +410,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -646,7 +643,6 @@ static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject
 }
 
 static PyObject* PyBobIoFileIterator_Iter (PyBobIoFileIteratorObject* self) {
-  Py_INCREF(self);
   return reinterpret_cast<PyObject*>(self);
 }
 
@@ -696,10 +692,9 @@ PyTypeObject PyBobIoFileIterator_Type = {
 static PyObject* PyBobIoFile_Iter (PyBobIoFileObject* self) {
   PyBobIoFileIteratorObject* retval = (PyBobIoFileIteratorObject*)PyBobIoFileIterator_New(&PyBobIoFileIterator_Type, 0, 0);
   if (!retval) return 0;
-  Py_INCREF(self);
   retval->pyfile = self;
   retval->curpos = 0;
-  return reinterpret_cast<PyObject*>(retval);
+  return Py_BuildValue("N", retval);
 }
 
 PyTypeObject PyBobIoFile_Type = {

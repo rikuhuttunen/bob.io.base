@@ -537,8 +537,7 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::base::HDF5Type& t) {
     PyTuple_SET_ITEM(shape, i, value);
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -552,9 +551,8 @@ static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::base::HDF5Descrip
     return 0;
   }
   PyObject* expand = d.expandable? Py_True : Py_False;
-  Py_INCREF(expand);
 
-  return Py_BuildValue("NNN", type, size, expand); //steals references
+  return Py_BuildValue("NNO", type, size, expand); //steals references, except for True/False
 
 }
 
@@ -592,8 +590,7 @@ static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject 
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 }
 
 PyDoc_STRVAR(s_describe_str, "describe");
@@ -738,8 +735,7 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 }
 
 PyDoc_STRVAR(s_keys_str, "keys");
@@ -918,8 +914,7 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 }
 
 static PyObject* PyBobIoHDF5File_Read(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
@@ -988,8 +983,7 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
     PyTuple_SET_ITEM(retval, k, item);
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 
@@ -1895,8 +1889,7 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
     return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 }
 
 static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
@@ -1984,9 +1977,7 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
       boost::format m("unsupported HDF5 data type detected for attribute `%s' at path `%s' of file `%s' - returning None");
       m % k->first % k->second.str() % filename;
       PyErr_Warn(PyExc_UserWarning, m.str().c_str());
-      item = Py_None;
-      Py_INCREF(item);
-      Py_INCREF(Py_None);
+      item = Py_BuildValue("");
     }
     else item = PyBobIoHDF5File_ReadAttribute(self, path, k->first.c_str(), k->second);
 
@@ -1996,8 +1987,7 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
     if (PyDict_SetItemString(retval, k->first.c_str(), item) != 0) return 0;
   }
 
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 
 }
 

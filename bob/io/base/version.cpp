@@ -25,21 +25,18 @@
 #include <bob.blitz/cleanup.h>
 #include <bob.core/config.h>
 
-static int dict_set(PyObject* d, const char* key, const char* value) {
-  PyObject* v = Py_BuildValue("s", value);
-  if (!v) return 0;
-  auto v_ = make_safe(v);
-  int retval = PyDict_SetItemString(d, key, v);
-  if (retval == 0) return 1; //all good
-  return 0; //a problem occurred
-}
-
 static int dict_steal(PyObject* d, const char* key, PyObject* value) {
   if (!value) return 0;
   auto value_ = make_safe(value);
   int retval = PyDict_SetItemString(d, key, value);
   if (retval == 0) return 1; //all good
   return 0; //a problem occurred
+}
+
+
+static int dict_set(PyObject* d, const char* key, const char* value) {
+  PyObject* v = Py_BuildValue("s", value);
+  return dict_steal(d, key, v);
 }
 
 /***********************************************************
@@ -132,9 +129,7 @@ static PyObject* build_version_dictionary() {
   if (!dict_steal(retval, "bob.blitz", bob_blitz_version())) return 0;
   if (!dict_steal(retval, "bob.core", bob_core_version())) return 0;
 
-  Py_INCREF(retval);
-  Py_INCREF(retval);
-  return retval;
+  return Py_BuildValue("O", retval);
 }
 
 static PyMethodDef module_methods[] = {
@@ -180,8 +175,7 @@ static PyObject* create_module (void) {
     return 0;
   }
 
-  Py_INCREF(m);
-  return m;
+  return Py_BuildValue("O", m);
 
 }
 
