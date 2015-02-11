@@ -12,6 +12,16 @@
 #include <bob.io.base/reorder.h>
 #include <bob.io.base/array_type.h>
 
+// see: http://stackoverflow.com/questions/13061979/shared-ptr-to-an-array-should-it-be-used
+template< typename T >
+struct array_deleter
+{
+  void operator ()( T const * p)
+  {
+    delete[] p;
+  }
+};
+
 bob::io::base::TensorFile::TensorFile(const std::string& filename,
     bob::io::base::TensorFile::openmode flag):
   m_header_init(false),
@@ -25,7 +35,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
     if(m_stream)
     {
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[m_header.m_type.buffer_size()], array_deleter<char>());
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
 
@@ -40,7 +50,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
       m_stream.open(filename.c_str(), std::ios::out | std::ios::in |
           std::ios::binary);
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[m_header.m_type.buffer_size()], array_deleter<char>());
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
       m_stream.seekp(0, std::ios::end);
@@ -53,7 +63,7 @@ bob::io::base::TensorFile::TensorFile(const std::string& filename,
     m_stream.open(filename.c_str(), std::ios::in | std::ios::binary);
     if(m_stream) {
       m_header.read(m_stream);
-      m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+      m_buffer.reset(new char[m_header.m_type.buffer_size()], array_deleter<char>());
       m_header_init = true;
       m_n_arrays_written = m_header.m_n_samples;
 
@@ -95,7 +105,7 @@ void bob::io::base::TensorFile::initHeader(const bob::io::base::array::typeinfo&
   m_header.write(m_stream);
 
   // Temporary buffer to help with data transposition...
-  m_buffer.reset(new char[m_header.m_type.buffer_size()]);
+  m_buffer.reset(new char[m_header.m_type.buffer_size()], array_deleter<char>());
 
   m_header_init = true;
 }

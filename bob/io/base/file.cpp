@@ -447,6 +447,8 @@ static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyOb
   PyBlitzArrayObject* bz = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
 
+  auto bz_ = make_safe(bz);
+
   try {
     bobskin skin(bz);
     self->f->write(skin);
@@ -498,6 +500,7 @@ static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyO
 
   PyBlitzArrayObject* bz = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
+  auto bz_ = make_safe(bz);
   Py_ssize_t pos = -1;
 
   try {
