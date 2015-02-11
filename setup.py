@@ -50,18 +50,10 @@ class hdf5:
     import os
 
     self.name = 'hdf5'
-    
-    # try to use pkg_config first
-    try: 
-      pkg = pkgconfig('hdf5')
-      self.include_directories = pkg.include_directories()
-      version_header = os.path.join(self.include_directories[0], 'H5pubconf.h')
-      self.version = libhdf5_version(version_header)
-      self.libraries = pkg.libraries()
-      self.library_directories = pkg.library_directories()
-    except RuntimeError:
-      
-      # locate pkg-config on our own
+
+    # try to locate pkg-config on our own first
+    try:
+
       header = 'hdf5.h'
 
       candidates = find_header(header)
@@ -123,6 +115,16 @@ class hdf5:
 
       # library path
       self.library_directories = [os.path.dirname(candidates[0])]
+
+    except RuntimeError:
+      # now, we try to use pkg-config, which seems to be only available on Debian
+      pkg = pkgconfig('hdf5')
+      self.include_directories = pkg.include_directories()
+      version_header = os.path.join(self.include_directories[0], 'H5pubconf.h')
+      self.version = libhdf5_version(version_header)
+      self.libraries = pkg.libraries()
+      self.library_directories = pkg.library_directories()
+
 
   def macros(self):
     return [
