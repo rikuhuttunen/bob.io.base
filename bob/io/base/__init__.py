@@ -219,10 +219,7 @@ def get_include_directories():
   """Returns a list of include directories for dependent libraries, such as HDF5."""
   from bob.extension import pkgconfig
   # try to use pkg_config first
-  try: 
-    pkg = pkgconfig('hdf5')
-    return pkg.include_directories()
-  except RuntimeError:
+  try:
     from bob.extension.utils import find_header
     # locate pkg-config on our own
     header = 'hdf5.h'
@@ -231,8 +228,11 @@ def get_include_directories():
       raise RuntimeError("could not find %s's `%s' - have you installed %s on this machine?" % ('hdf5', header, 'hdf5'))
 
     return [os.path.dirname(candidates[0])]
+  except RuntimeError:
+    pkg = pkgconfig('hdf5')
+    return pkg.include_directories()
 
-  
+
 
 # gets sphinx autodoc done right - don't remove it
 __all__ = [_ for _ in dir() if not _.startswith('_')]
