@@ -13,6 +13,10 @@
 #endif
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
+#include <bob.extension/documentation.h>
+
+extern bool init_File(PyObject* module);
+extern bool init_HDF5File(PyObject* module);
 
 /**
  * Creates an str object, from a C or C++ string. Returns a **new
@@ -22,8 +26,15 @@ static PyObject* make_object(const char* s) {
   return Py_BuildValue("s", s);
 }
 
+static auto s_extensions = bob::extension::FunctionDoc(
+  "extensions",
+  "Returns a dictionary containing all extensions and descriptions currently stored on the global codec registry",
+  "The extensions are returned as a dictionary from the filename extension to a description of the data format."
+)
+.add_prototype("", "extensions")
+.add_return("extensions", "{str : str}", "A dictionary of supported extensions");
 static PyObject* PyBobIo_Extensions(PyObject*) {
-
+BOB_TRY
   typedef std::map<std::string, std::string> map_type;
   const map_type& table = bob::io::base::CodecRegistry::getExtensions();
 
@@ -41,23 +52,15 @@ static PyObject* PyBobIo_Extensions(PyObject*) {
   }
 
   return Py_BuildValue("O", retval);
-
+BOB_CATCH_FUNCTION("extensions", 0);
 }
-
-PyDoc_STRVAR(s_extensions_str, "extensions");
-PyDoc_STRVAR(s_extensions_doc,
-"extensions() -> dict\n\
-\n\
-Returns a dictionary containing all extensions and descriptions\n\
-currently stored on the global codec registry\n\
-");
 
 static PyMethodDef module_methods[] = {
     {
-      s_extensions_str,
+      s_extensions.name(),
       (PyCFunction)PyBobIo_Extensions,
       METH_NOARGS,
-      s_extensions_doc,
+      s_extensions.doc(),
     },
     {0}  /* Sentinel */
 };
@@ -79,15 +82,6 @@ static PyModuleDef module_definition = {
 
 static PyObject* create_module (void) {
 
-  PyBobIoFile_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFile_Type) < 0) return 0;
-
-  PyBobIoFileIterator_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0) return 0;
-
-  PyBobIoHDF5File_Type.tp_new = PyType_GenericNew;
-  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0) return 0;
-
 # if PY_VERSION_HEX >= 0x03000000
   PyObject* m = PyModule_Create(&module_definition);
 # else
@@ -100,15 +94,8 @@ static PyObject* create_module (void) {
   if (PyModule_AddIntConstant(m, "__api_version__", BOB_IO_BASE_API_VERSION) < 0) return 0;
   if (PyModule_AddStringConstant(m, "__version__", BOB_EXT_MODULE_VERSION) < 0) return 0;
 
-  /* register the types to python */
-  Py_INCREF(&PyBobIoFile_Type);
-  if (PyModule_AddObject(m, "File", (PyObject *)&PyBobIoFile_Type) < 0) return 0;
-
-  Py_INCREF(&PyBobIoFileIterator_Type);
-  if (PyModule_AddObject(m, "File.iter", (PyObject *)&PyBobIoFileIterator_Type) < 0) return 0;
-
-  Py_INCREF(&PyBobIoHDF5File_Type);
-  if (PyModule_AddObject(m, "HDF5File", (PyObject *)&PyBobIoHDF5File_Type) < 0) return 0;
+  if (!init_File(m)) return 0;
+  if (!init_HDF5File(m)) return 0;
 
   static void* PyBobIo_API[PyBobIo_API_pointers];
 

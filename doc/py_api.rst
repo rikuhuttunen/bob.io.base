@@ -6,32 +6,34 @@
  Python API
 ============
 
-This section includes information for using the pure Python API of
-``bob.io.base``.
+This section includes information for using the pure Python API of ``bob.io.base``.
 
 
 Classes
 -------
 
-.. autoclass:: bob.io.base.File
-
-.. autoclass:: bob.io.base.HDF5File
+.. autosummary::
+   bob.io.base.File
+   bob.io.base.HDF5File
 
 Functions
 ---------
 
-.. autofunction:: bob.io.base.load
+.. autosummary::
+   bob.io.base.load
+   bob.io.base.merge
+   bob.io.base.save
+   bob.io.base.append
+   bob.io.base.peek
+   bob.io.base.peek_all
+   bob.io.base.create_directories_safe
 
-.. autofunction:: bob.io.base.merge
-
-.. autofunction:: bob.io.base.save
-
-.. autofunction:: bob.io.base.append
-
-.. autofunction:: bob.io.base.peek
-
-.. autofunction:: bob.io.base.peek_all
-
-.. autofunction:: bob.io.base.create_directories_safe
+   bob.io.base.extensions
+   bob.io.base.get_config
 
 
+Details
+-------
+
+.. automodule::
+   bob.io.base

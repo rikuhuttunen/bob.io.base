@@ -87,7 +87,7 @@ def test_can_create():
     # Data that is thrown in the file is immediately accessible, so you can
     # interleave read and write operations without any problems.
     # There is a single variable in the file, which is a bob arrayset:
-    nose.tools.eq_(outfile.paths(), ('/testdata',))
+    nose.tools.eq_(outfile.paths(), ['/testdata'])
 
     # And all the data is *exactly* the same recorded, bit by bit
     back = outfile.lread('testdata') # this is how to read the whole data back
@@ -102,7 +102,7 @@ def test_can_create():
     readonly = HDF5File(tmpname, 'r')
 
     # There is a single variable in the file, which is a bob arrayset:
-    nose.tools.eq_(readonly.paths(), ('/testdata',))
+    nose.tools.eq_(readonly.paths(), ['/testdata'])
 
     # You can get an overview of what is in the HDF5 dataset using the
     # describe() method
@@ -115,6 +115,7 @@ def test_can_create():
 
     # Test that writing will really fail
     nose.tools.assert_raises(RuntimeError, readonly.append, "testdata", arrays[0])
+
 
     # And all the data is *exactly* the same recorded, bit by bit
     back = readonly.lread('testdata') # how to read the whole data back
@@ -220,14 +221,14 @@ def test_dataset_management():
     outfile.rename('NewDirectory1/Dir2/MyDataset', 'Test2/Bla')
 
     # So, now the original dataset name does not exist anymore
-    nose.tools.eq_(outfile.paths(), ('/Test2/Bla',))
+    nose.tools.eq_(outfile.paths(), ['/Test2/Bla'])
 
     # We can also unlink the dataset from the file. Please note this will not
     # erase the data in the file, just make it inaccessible
     outfile.unlink('Test2/Bla')
 
     # Finally, nothing is there anymore
-    nose.tools.eq_(outfile.paths(), tuple())
+    nose.tools.eq_(outfile.paths(), [])
 
   finally:
     os.unlink(tmpname)
@@ -279,7 +280,7 @@ def test_matlab_import():
 
   # This test verifies we can import HDF5 datasets generated in Matlab
   mfile = HDF5File(test_utils.datafile('matlab_1d.hdf5', __name__))
-  nose.tools.eq_(mfile.paths(), ('/array',))
+  nose.tools.eq_(mfile.paths(), ['/array'])
 
 def test_ioload_unlimited():
 

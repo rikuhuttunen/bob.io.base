@@ -11,41 +11,44 @@
 #include <numpy/arrayobject.h>
 #include <bob.blitz/capi.h>
 #include <bob.blitz/cleanup.h>
+#include <bob.extension/documentation.h>
 #include <stdexcept>
 
 #include <bob.io.base/CodecRegistry.h>
 #include <bob.io.base/utils.h>
 
-#define FILETYPE_NAME "File"
-PyDoc_STRVAR(s_file_str, BOB_EXT_MODULE_PREFIX "." FILETYPE_NAME);
+/* Creates an exception message including the name of the given file, if possible */
+inline const std::string exception_message(PyBobIoFileObject* self, const std::string& name){
+  std::ostringstream str;
+  str << name << " (";
+  try{
+    str << "'" << self->f->filename() << "'";
+  } catch (...){
+    str << "<unkown>";
+  }
+  str << ")";
+  return  str.str();
+}
 
-PyDoc_STRVAR(s_file_doc,
-"File(filename, [mode='r', [pretend_extension='']]) -> new bob::io::base::File\n\
-\n\
-Use this object to read and write data into files.\n\
-\n\
-Constructor parameters:\n\
-\n\
-filename\n\
-  [str] The file path to the file you want to open\n\
-\n\
-mode\n\
-  [str] A single character (one of ``'r'``, ``'w'``, ``'a'``),\n\
-  indicating if you'd like to read, write or append into the file.\n\
-  If you choose ``'w'`` and the file already exists, it will be\n\
-  truncated.By default, the opening mode is read-only (``'r'``).\n\
-\n\
-pretend_extension\n\
-  [str, optional] Normally we read the file matching the extension\n\
-  to one of the available codecs installed with the present release\n\
-  of Bob. If you set this parameter though, we will read the file\n\
-  as it had a given extension. The value should start with a ``'.'``.\n\
-  For example ``'.hdf5'``, to make the file be treated like an HDF5\n\
-  file.\n\
-\n\
-"
+static auto s_file = bob::extension::ClassDoc(
+  "File",
+  "Use this object to read and write data into files"
+)
+.add_constructor(
+  bob::extension::FunctionDoc(
+    "File",
+    "Opens a file for reading or writing",
+    "Normally, we read the file matching the extension to one of the available codecs installed with the present release of Bob. "
+    "If you set the ``pretend_extension`` parameter though, we will read the file as it had a given extension. "
+    "The value should start with a ``'.'``. "
+    "For example ``'.hdf5'``, to make the file be treated like an HDF5 file.",
+    true
+  )
+  .add_prototype("filename, [mode], [pretend_extension]", "")
+  .add_parameter("filename", "str", "The file path to the file you want to open")
+  .add_parameter("mode", "str, one of ('r', 'w', 'a')", "[Default: ``'r'``] A single character indicating if you'd like to ``'r'``ead, ``'w'``rite or ``'a'``ppend into the file; if you choose ``'w'`` and the file already exists, it will be  truncated")
+  .add_parameter("pretend_extension", "str", "[optional] An extension to use; see :py:func:`bob.io.base.extensions` for a list of (currently) supported extensions")
 );
-
 /* How to create a new PyBobIoFileObject */
 static PyObject* PyBobIoFile_New(PyTypeObject* type, PyObject*, PyObject*) {
 
@@ -84,11 +87,11 @@ int PyBobIo_FilenameConverter (PyObject* o, PyObject** b) {
 }
 
 /* The __init__(self) method */
-static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-
+static int PyBobIoFile_init(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+  const char* c_filename = 0;
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"filename", "mode", "pretend_extension", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_file.kwlist();
 
   PyObject* filename = 0;
   char* pretend_extension = 0;
@@ -114,81 +117,65 @@ static int PyBobIoFile_Init(PyBobIoFileObject* self, PyObject *args, PyObject* k
   }
 
 #if PY_VERSION_HEX >= 0x03000000
-  const char* c_filename = PyBytes_AS_STRING(filename);
+  c_filename = PyBytes_AS_STRING(filename);
 #else
-  const char* c_filename = PyString_AS_STRING(filename);
+  c_filename = PyString_AS_STRING(filename);
 #endif
 
-  try {
-    if (pretend_extension) {
-      self->f = bob::io::base::open(c_filename, mode, pretend_extension);
-    }
-    else {
-      self->f = bob::io::base::open(c_filename, mode);
-    }
+  if (pretend_extension) {
+    self->f = bob::io::base::open(c_filename, mode, pretend_extension);
   }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return -1;
-  }
-  catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", c_filename, mode);
-    return -1;
+  else {
+    self->f = bob::io::base::open(c_filename, mode);
   }
 
   return 0; ///< SUCCESS
+BOB_CATCH_MEMBER(c_filename, -1);
 }
 
-static PyObject* PyBobIoFile_Repr(PyBobIoFileObject* self) {
-  return
-# if PY_VERSION_HEX >= 0x03000000
-  PyUnicode_FromFormat
-# else
-  PyString_FromFormat
-# endif
-  ("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name,
-   self->f->filename(), self->f->name());
+static PyObject* PyBobIoFile_repr(PyBobIoFileObject* self) {
+  return PyString_FromFormat("%s(filename='%s', codec='%s')", Py_TYPE(self)->tp_name, self->f->filename(), self->f->name());
 }
 
+static auto s_filename = bob::extension::VariableDoc(
+  "filename",
+  "str",
+  "The path to the file being read/written"
+);
 static PyObject* PyBobIoFile_Filename(PyBobIoFileObject* self) {
   return Py_BuildValue("s", self->f->filename());
 }
 
+static auto s_codec_name = bob::extension::VariableDoc(
+  "codec_name",
+  "str",
+  "Name of the File class implementation",
+  "This variable is available for compatibility reasons with the previous versions of this library."
+);
 static PyObject* PyBobIoFile_CodecName(PyBobIoFileObject* self) {
   return Py_BuildValue("s", self->f->name());
 }
 
-PyDoc_STRVAR(s_filename_str, "filename");
-PyDoc_STRVAR(s_filename_doc,
-"The path to the file being read/written"
-);
-
-PyDoc_STRVAR(s_codec_name_str, "codec_name");
-PyDoc_STRVAR(s_codec_name_doc,
-"Name of the File class implementation -- available for\n\
-compatibility reasons with the previous versions of this\n\
-library."
-);
 
 static PyGetSetDef PyBobIoFile_getseters[] = {
     {
-      s_filename_str,
+      s_filename.name(),
       (getter)PyBobIoFile_Filename,
       0,
-      s_filename_doc,
+      s_filename.doc(),
       0,
     },
     {
-      s_codec_name_str,
+      s_codec_name.name(),
       (getter)PyBobIoFile_CodecName,
       0,
-      s_codec_name_doc,
+      s_codec_name.doc(),
       0,
     },
     {0}  /* Sentinel */
 };
 
-static Py_ssize_t PyBobIoFile_Len (PyBobIoFileObject* self) {
+static Py_ssize_t PyBobIoFile_len (PyBobIoFileObject* self) {
   Py_ssize_t retval = self->f->size();
   return retval;
 }
@@ -238,7 +225,7 @@ int PyBobIo_AsTypenum (bob::io::base::array::ElementType type) {
 
 }
 
-static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
+static PyObject* PyBobIoFile_getIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
   if (i < 0) i += self->f->size(); ///< adjust for negative indexing
 
@@ -276,7 +263,7 @@ static PyObject* PyBobIoFile_GetIndex (PyBobIoFileObject* self, Py_ssize_t i) {
 
 }
 
-static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* slice) {
+static PyObject* PyBobIoFile_getSlice (PyBobIoFileObject* self, PySliceObject* slice) {
 
   Py_ssize_t start, stop, step, slicelength;
 #if PY_VERSION_HEX < 0x03000000
@@ -314,52 +301,51 @@ static PyObject* PyBobIoFile_GetSlice (PyBobIoFileObject* self, PySliceObject* s
     if (!item) return 0;
     auto item_ = make_safe(item);
 
-    try {
-      bobskin skin((PyArrayObject*)item, info.dtype);
-      self->f->read(skin, i);
-    }
-    catch (std::exception& e) {
-      if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-      return 0;
-    }
-    catch (...) {
-      if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading object #%" PY_FORMAT_SIZE_T "d from file `%s'", i, self->f->filename());
-      return 0;
-    }
-
+    bobskin skin((PyArrayObject*)item, info.dtype);
+    self->f->read(skin, i);
   }
 
   return Py_BuildValue("O", retval);
-
 }
 
-static PyObject* PyBobIoFile_GetItem (PyBobIoFileObject* self, PyObject* item) {
-   if (PyIndex_Check(item)) {
-     Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
-     if (i == -1 && PyErr_Occurred()) return 0;
-     return PyBobIoFile_GetIndex(self, i);
-   }
-   if (PySlice_Check(item)) {
-     return PyBobIoFile_GetSlice(self, (PySliceObject*)item);
-   }
-   else {
-     PyErr_Format(PyExc_TypeError, "File indices must be integers, not %s",
-         Py_TYPE(item)->tp_name);
-     return 0;
-   }
+static PyObject* PyBobIoFile_getItem (PyBobIoFileObject* self, PyObject* item) {
+  if (PyIndex_Check(item)) {
+   Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+   if (i == -1 && PyErr_Occurred()) return 0;
+   return PyBobIoFile_getIndex(self, i);
+  }
+  if (PySlice_Check(item)) {
+   return PyBobIoFile_getSlice(self, (PySliceObject*)item);
+  }
+  else {
+   PyErr_Format(PyExc_TypeError, "File indices must be integers, not %s", Py_TYPE(item)->tp_name);
+   return 0;
+  }
 }
 
 static PyMappingMethods PyBobIoFile_Mapping = {
-    (lenfunc)PyBobIoFile_Len, //mp_lenght
-    (binaryfunc)PyBobIoFile_GetItem, //mp_subscript
+    (lenfunc)PyBobIoFile_len, //mp_length
+    (binaryfunc)PyBobIoFile_getItem, //mp_subscript
     0 /* (objobjargproc)PyBobIoFile_SetItem //mp_ass_subscript */
 };
 
-static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
 
+static auto s_read = bob::extension::FunctionDoc(
+  "read",
+  "Reads a specific object in the file, or the whole file",
+  "This method reads data from the file. "
+  "If you specified an ``index``, it reads just the object indicated by the index, as you would do using the ``[]`` operator. "
+  "If the ``index`` is not specified, reads the whole contents of the file into a :py:class:`numpy.ndarray`.",
+  true
+)
+.add_prototype("[index]", "data")
+.add_parameter("index", "int", "[optional] The index to the object one wishes to retrieve from the file; negative indexing is supported; if not given, implies retrieval of the whole file contents.")
+.add_return("data", ":py:class:`numpy.ndarray`", "The contents of the file, as array")
+;
+static PyObject* PyBobIoFile_read(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"index", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_read.kwlist();
 
   Py_ssize_t i = PY_SSIZE_T_MIN;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|n", kwlist, &i)) return 0;
@@ -375,7 +361,7 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
       return 0;
     }
 
-    return PyBobIoFile_GetIndex(self, i);
+    return PyBobIoFile_getIndex(self, i);
 
   }
 
@@ -393,156 +379,71 @@ static PyObject* PyBobIoFile_Read(PyBobIoFileObject* self, PyObject *args, PyObj
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
-  try {
-    bobskin skin((PyArrayObject*)retval, info.dtype);
-    self->f->read_all(skin);
-  }
-  catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while reading all contents of file `%s': %s", self->f->filename(), e.what());
-    return 0;
-  }
-  catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while reading all contents of file `%s'", self->f->filename());
-    return 0;
-  }
+  bobskin skin((PyArrayObject*)retval, info.dtype);
+  self->f->read_all(skin);
 
   return Py_BuildValue("O", retval);
-
+BOB_CATCH_MEMBER(exception_message(self, s_read.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_read_str, "read");
-PyDoc_STRVAR(s_read_doc,
-"read([index]) -> numpy.ndarray\n\
-\n\
-Reads a specific object in the file, or the whole file.\n\
-\n\
-Parameters:\n\
-\n\
-index\n\
-  [int|long, optional] The index to the object one wishes\n\
-  to retrieve from the file. Negative indexing is supported.\n\
-  If not given, impliess retrieval of the whole file contents.\n\
-\n\
-This method reads data from the file. If you specified an\n\
-index, it reads just the object indicated by the index, as\n\
-you would do using the ``[]`` operator. If an index is\n\
-not specified, reads the whole contents of the file into a\n\
-:py:class:`numpy.ndarray`.\n\
-"
-);
 
-static PyObject* PyBobIoFile_Write(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_write = bob::extension::FunctionDoc(
+  "write",
+  "Writes the contents of an object to the file",
+  "This method writes data to the file. "
+  "It acts like the given array is the only piece of data that will ever be written to such a file. "
+  "No more data appending may happen after a call to this method.",
+  true
+)
+.add_prototype("data")
+.add_parameter("data", "array_like", "[optional]  The array to be written into the file; it can be a :py:class:`numpy.array`, a :py:class:`bob.blitz.array` or any other object which can be converted to either of them")
+;
+static PyObject* PyBobIoFile_write(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"array", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_write.kwlist();
 
   PyBlitzArrayObject* bz = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
 
   auto bz_ = make_safe(bz);
 
-  try {
-    bobskin skin(bz);
-    self->f->write(skin);
-  }
-  catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while writing to file `%s': %s", self->f->filename(), e.what());
-    return 0;
-  }
-  catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while writing to file `%s'", self->f->filename());
-    return 0;
-  }
+  bobskin skin(bz);
+  self->f->write(skin);
 
   Py_RETURN_NONE;
-
+BOB_CATCH_MEMBER(exception_message(self, s_write.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_write_str, "write");
-PyDoc_STRVAR(s_write_doc,
-"write(array) -> None\n\
-\n\
-Writes the contents of an object to the file.\n\
-\n\
-Parameters:\n\
-\n\
-array\n\
-  [array] The array to be written into the file. It can be a\n\
-  :py:class:`numpy.array`, a :py:class:`bob.blitz.array` or any other object which can be\n\
-  converted to either of them, as long as the number of\n\
-  dimensions and scalar type are supported by\n\
-  :py:class:`bob.blitz.array`.\n\
-\n\
-This method writes data to the file. It acts like the\n\
-given array is the only piece of data that will ever be written\n\
-to such a file. No more data appending may happen after a call to\n\
-this method.\n\
-"
-);
 
-static PyObject* PyBobIoFile_Append(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_append = bob::extension::FunctionDoc(
+  "append",
+  "Adds the contents of an object to the file",
+  "This method appends data to the file. "
+  "If the file does not exist, creates a new file, else, makes sure that the inserted array respects the previously set file structure.",
+  true
+)
+.add_prototype("data", "position")
+.add_parameter("data", "array_like", "[optional]  The array to be written into the file; it can be a :py:class:`numpy.array`, a :py:class:`bob.blitz.array` or any other object which can be converted to either of them")
+.add_return("position", "int", "The current position of the newly written data")
+;
+static PyObject* PyBobIoFile_append(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"array", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_append.kwlist();
 
   PyBlitzArrayObject* bz = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBlitzArray_Converter, &bz)) return 0;
   auto bz_ = make_safe(bz);
   Py_ssize_t pos = -1;
 
-  try {
-    bobskin skin(bz);
-    pos = self->f->append(skin);
-  }
-  catch (std::runtime_error& e) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught std::runtime_error while appending to file `%s': %s", self->f->filename(), e.what());
-    return 0;
-  }
-  catch (std::exception& e) {
-    if (!PyErr_Occurred()) PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    if (!PyErr_Occurred()) PyErr_Format(PyExc_RuntimeError, "caught unknown while appending to file `%s'", self->f->filename());
-    return 0;
-  }
+  bobskin skin(bz);
+  pos = self->f->append(skin);
 
   return Py_BuildValue("n", pos);
-
+BOB_CATCH_MEMBER(exception_message(self, s_append.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_append_str, "append");
-PyDoc_STRVAR(s_append_doc,
-"append(array) -> int\n\
-\n\
-Adds the contents of an object to the file.\n\
-\n\
-Parameters:\n\
-\n\
-array\n\
-  [array] The array to be added into the file. It can be a\n\
-  :py:class:`numpy.ndarray`, a :py:class`bob.blitz.array` or any other object which can be\n\
-  converted to either of them, as long as the number of\n\
-  dimensions and scalar type are supported by\n\
-  :py:class:`bob.blitz.array`.\n\
-\n\
-This method appends data to the file. If the file does not\n\
-exist, creates a new file, else, makes sure that the inserted\n\
-array respects the previously set file structure.\n\
-\n\
-Returns the current position of the newly written array.\n\
-"
-);
 
 PyObject* PyBobIo_TypeInfoAsTuple (const bob::io::base::array::typeinfo& ti) {
 
@@ -564,11 +465,21 @@ PyObject* PyBobIo_TypeInfoAsTuple (const bob::io::base::array::typeinfo& ti) {
   }
 
   return retval;
-
 }
 
-static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_describe = bob::extension::FunctionDoc(
+  "describe",
+  "Returns a description (dtype, shape, stride) of data at the file",
+  0,
+  true
+)
+.add_prototype("[all]", "dtype, shape, stride")
+.add_parameter("all", "bool", "[Default: ``False``]  If set to ``True``, returns the shape and strides for reading the whole file contents in one shot.")
+.add_return("dtype", ":py:class:`numpy.dtype`", "The data type of the object")
+.add_return("shape", "tuple", "The shape of the object")
+;
+static PyObject* PyBobIoFile_describe(PyBobIoFileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"all", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -582,46 +493,34 @@ static PyObject* PyBobIoFile_Describe(PyBobIoFileObject* self, PyObject *args, P
 
   /* Now return type description and tuples with shape and strides */
   return PyBobIo_TypeInfoAsTuple(*info);
+BOB_CATCH_MEMBER(exception_message(self, s_describe.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_describe_str, "describe");
-PyDoc_STRVAR(s_describe_doc,
-"describe([all]) -> tuple\n\
-\n\
-Returns a description (dtype, shape, stride) of data at the file.\n\
-\n\
-Parameters:\n\
-\n\
-all\n\
-  [bool] If set, return the shape and strides for reading\n\
-  the whole file contents in one go.\n\
-\n\
-");
 
-static PyMethodDef PyBobIoFile_Methods[] = {
+static PyMethodDef PyBobIoFile_methods[] = {
     {
-      s_read_str,
-      (PyCFunction)PyBobIoFile_Read,
+      s_read.name(),
+      (PyCFunction)PyBobIoFile_read,
       METH_VARARGS|METH_KEYWORDS,
-      s_read_doc,
+      s_read.doc(),
     },
     {
-      s_write_str,
-      (PyCFunction)PyBobIoFile_Write,
+      s_write.name(),
+      (PyCFunction)PyBobIoFile_write,
       METH_VARARGS|METH_KEYWORDS,
-      s_write_doc,
+      s_write.doc(),
     },
     {
-      s_append_str,
-      (PyCFunction)PyBobIoFile_Append,
+      s_append.name(),
+      (PyCFunction)PyBobIoFile_append,
       METH_VARARGS|METH_KEYWORDS,
-      s_append_doc,
+      s_append.doc(),
     },
     {
-      s_describe_str,
-      (PyCFunction)PyBobIoFile_Describe,
+      s_describe.name(),
+      (PyCFunction)PyBobIoFile_describe,
       METH_VARARGS|METH_KEYWORDS,
-      s_describe_doc,
+      s_describe.doc(),
     },
     {0}  /* Sentinel */
 };
@@ -630,8 +529,7 @@ static PyMethodDef PyBobIoFile_Methods[] = {
  * Definition of Iterator to File *
  **********************************/
 
-#define FILEITERTYPE_NAME "File.iter"
-PyDoc_STRVAR(s_fileiterator_str, BOB_EXT_MODULE_PREFIX "." FILEITERTYPE_NAME);
+PyDoc_STRVAR(s_fileiterator_str, BOB_EXT_MODULE_PREFIX ".File.iter");
 
 /* How to create a new PyBobIoFileIteratorObject */
 static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject*) {
@@ -642,54 +540,20 @@ static PyObject* PyBobIoFileIterator_New(PyTypeObject* type, PyObject*, PyObject
   return reinterpret_cast<PyObject*>(self);
 }
 
-static PyObject* PyBobIoFileIterator_Iter (PyBobIoFileIteratorObject* self) {
+static PyObject* PyBobIoFileIterator_iter (PyBobIoFileIteratorObject* self) {
   return reinterpret_cast<PyObject*>(self);
 }
 
-static PyObject* PyBobIoFileIterator_Next (PyBobIoFileIteratorObject* self) {
+static PyObject* PyBobIoFileIterator_next (PyBobIoFileIteratorObject* self) {
   if ((size_t)self->curpos >= self->pyfile->f->size()) {
     Py_XDECREF((PyObject*)self->pyfile);
     self->pyfile = 0;
     return 0;
   }
-  return PyBobIoFile_GetIndex(self->pyfile, self->curpos++);
+  return PyBobIoFile_getIndex(self->pyfile, self->curpos++);
 }
 
-#if PY_VERSION_HEX >= 0x03000000
-#  define Py_TPFLAGS_HAVE_ITER 0
-#endif
-
-PyTypeObject PyBobIoFileIterator_Type = {
-    PyVarObject_HEAD_INIT(0, 0)
-    s_fileiterator_str,                         /* tp_name */
-    sizeof(PyBobIoFileIteratorObject),          /* tp_basicsize */
-    0,                                          /* tp_itemsize */
-    0,                                          /* tp_dealloc */
-    0,                                          /* tp_print */
-    0,                                          /* tp_getattr */
-    0,                                          /* tp_setattr */
-    0,                                          /* tp_compare */
-    0,                                          /* tp_repr */
-    0,                                          /* tp_as_number */
-    0,                                          /* tp_as_sequence */
-    0,                                          /* tp_as_mapping */
-    0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
-    0,                                          /* tp_getattro */
-    0,                                          /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER,  /* tp_flags */
-    0,                                          /* tp_doc */
-    0,		                                      /* tp_traverse */
-    0,		                                      /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,		                                      /* tp_weaklistoffset */
-    (getiterfunc)PyBobIoFileIterator_Iter,      /* tp_iter */
-    (iternextfunc)PyBobIoFileIterator_Next      /* tp_iternext */
-};
-
-static PyObject* PyBobIoFile_Iter (PyBobIoFileObject* self) {
+static PyObject* PyBobIoFile_iter (PyBobIoFileObject* self) {
   PyBobIoFileIteratorObject* retval = (PyBobIoFileIteratorObject*)PyBobIoFileIterator_New(&PyBobIoFileIterator_Type, 0, 0);
   if (!retval) return 0;
   retval->pyfile = self;
@@ -697,43 +561,60 @@ static PyObject* PyBobIoFile_Iter (PyBobIoFileObject* self) {
   return Py_BuildValue("N", retval);
 }
 
-PyTypeObject PyBobIoFile_Type = {
-    PyVarObject_HEAD_INIT(0, 0)
-    s_file_str,                                 /*tp_name*/
-    sizeof(PyBobIoFileObject),                  /*tp_basicsize*/
-    0,                                          /*tp_itemsize*/
-    (destructor)PyBobIoFile_Delete,             /*tp_dealloc*/
-    0,                                          /*tp_print*/
-    0,                                          /*tp_getattr*/
-    0,                                          /*tp_setattr*/
-    0,                                          /*tp_compare*/
-    (reprfunc)PyBobIoFile_Repr,                 /*tp_repr*/
-    0,                                          /*tp_as_number*/
-    0,                                          /*tp_as_sequence*/
-    &PyBobIoFile_Mapping,                       /*tp_as_mapping*/
-    0,                                          /*tp_hash */
-    0,                                          /*tp_call*/
-    (reprfunc)PyBobIoFile_Repr,                 /*tp_str*/
-    0,                                          /*tp_getattro*/
-    0,                                          /*tp_setattro*/
-    0,                                          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /*tp_flags*/
-    s_file_doc,                                 /* tp_doc */
-    0,		                                      /* tp_traverse */
-    0,		                                      /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,		                                      /* tp_weaklistoffset */
-    (getiterfunc)PyBobIoFile_Iter,              /* tp_iter */
-    0,		                                      /* tp_iternext */
-    PyBobIoFile_Methods,                        /* tp_methods */
-    0,                                          /* tp_members */
-    PyBobIoFile_getseters,                      /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)PyBobIoFile_Init,                 /* tp_init */
-    0,                                          /* tp_alloc */
-    PyBobIoFile_New,                            /* tp_new */
+#if PY_VERSION_HEX >= 0x03000000
+#  define Py_TPFLAGS_HAVE_ITER 0
+#endif
+
+PyTypeObject PyBobIoFileIterator_Type = {
+  PyVarObject_HEAD_INIT(0, 0)
+  0
 };
+
+
+PyTypeObject PyBobIoFile_Type = {
+  PyVarObject_HEAD_INIT(0, 0)
+  0
+};
+
+bool init_File(PyObject* module){
+
+  // initialize the iterator
+  PyBobIoFileIterator_Type.tp_name = s_fileiterator_str;
+  PyBobIoFileIterator_Type.tp_basicsize = sizeof(PyBobIoFileIteratorObject);
+  PyBobIoFileIterator_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER;
+  PyBobIoFileIterator_Type.tp_iter = (getiterfunc)PyBobIoFileIterator_iter;
+  PyBobIoFileIterator_Type.tp_iternext = (iternextfunc)PyBobIoFileIterator_next;
+
+  // initialize the File
+  PyBobIoFile_Type.tp_name = s_file.name();
+  PyBobIoFile_Type.tp_basicsize = sizeof(PyBobIoFileObject);
+  PyBobIoFile_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
+  PyBobIoFile_Type.tp_doc = s_file.doc();
+
+  // set the functions
+  PyBobIoFile_Type.tp_new = PyBobIoFile_New;
+  PyBobIoFile_Type.tp_init = reinterpret_cast<initproc>(PyBobIoFile_init);
+  PyBobIoFile_Type.tp_dealloc = reinterpret_cast<destructor>(PyBobIoFile_Delete);
+  PyBobIoFile_Type.tp_methods = PyBobIoFile_methods;
+  PyBobIoFile_Type.tp_getset = PyBobIoFile_getseters;
+  PyBobIoFile_Type.tp_iter = (getiterfunc)PyBobIoFile_iter;
+
+  PyBobIoFile_Type.tp_str = reinterpret_cast<reprfunc>(PyBobIoFile_repr);
+  PyBobIoFile_Type.tp_repr = reinterpret_cast<reprfunc>(PyBobIoFile_repr);
+  PyBobIoFile_Type.tp_as_mapping = &PyBobIoFile_Mapping;
+
+
+  // check that everything is fine
+  if (PyType_Ready(&PyBobIoFile_Type) < 0)
+    return false;
+  if (PyType_Ready(&PyBobIoFileIterator_Type) < 0)
+    return false;
+
+  // add the type to the module
+  Py_INCREF(&PyBobIoFile_Type);
+  bool success = PyModule_AddObject(module, s_file.name(), (PyObject*)&PyBobIoFile_Type) >= 0;
+  if (!success) return false;
+  Py_INCREF(&PyBobIoFileIterator_Type);
+  success = PyModule_AddObject(module, s_fileiterator_str, (PyObject*)&PyBobIoFileIterator_Type) >= 0;
+  return success;
+}

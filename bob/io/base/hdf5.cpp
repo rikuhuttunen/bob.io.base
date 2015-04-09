@@ -16,41 +16,42 @@
 #include <stdexcept>
 #include <cstring>
 
+/* Creates an exception message including the name of the given file, if possible */
+inline const std::string exception_message(PyBobIoHDF5FileObject* self, const std::string& name){
+  std::ostringstream str;
+  str << name << " (";
+  try{
+    str << "'" << self->f->filename() << "'";
+  } catch (...){
+    str << "<unkown>";
+  }
+  str << ")";
+  return  str.str();
+}
 
-#define HDF5FILE_NAME "HDF5File"
-PyDoc_STRVAR(s_hdf5file_str, BOB_EXT_MODULE_PREFIX "." HDF5FILE_NAME);
+static auto s_hdf5file = bob::extension::ClassDoc(
+  "HDF5File",
+  "Reads and writes data to HDF5 files.",
+  "HDF5 stands for Hierarchical Data Format version 5. "
+  "It is a flexible, binary file format that allows one to store and read data efficiently into or from files. "
+  "It is a cross-platform, cross-architecture format.\n\n"
+  "Objects of this class allows users to read and write data from and to files in HDF5 format. "
+  "For an introduction to HDF5, visit the `HDF5 Website <http://www.hdfgroup.org/HDF5>`_."
+)
+.add_constructor(
+  bob::extension::FunctionDoc(
+    "HDF5File",
+    "Opens an HFF5 file for reading, writing or appending.",
+    "For the ``open`` mode, use ``'r'`` for read-only ``'a'`` for read/write/append, ``'w'`` for read/write/truncate or ``'x'`` for (read/write/exclusive). "
+    "When another :py:class:`HDF5File` object is given, a shallow copy is created, pointing to the same file."
+  )
+  .add_prototype("filename, [mode]","")
+  .add_prototype("hdf5", "")
+  .add_parameter("filename", "str", "The file path to the file you want to open for reading or writing")
+  .add_parameter("mode", "one of ('r', 'w', 'a', 'x')", "[Default: ``'r'``]  The opening mode")
+  .add_parameter("hdf5", ":py:class:`HDF5File`", "An HDF5 file to copy-construct")
+);
 
-PyDoc_STRVAR(s_hdf5file_doc,
-"* HDF5File(filename, [mode='r'])\n\
-* HDF5File(hdf5)\n\
-\n\
-Reads and writes data to HDF5 files.\n\
-\n\
-Constructor parameters:\n\
-\n\
-filename\n\
-  [str] The file path to the file you want to read from/write to\n\
-\n\
-mode\n\
-  [str, optional] The opening mode: Use ``'r'`` for read-only,\n\
-  ``'a'`` for read/write/append, ``'w'`` for read/write/truncate\n\
-  or ``'x'`` for (read/write/exclusive). This flag defaults to\n\
-  ``'r'``.\n\
-\n\
-hdf5\n\
-  [:py:class:`bob.io.base.HDF5File`] An HDF5 file to copy-construct,\n\
-  (a shallow copy of the file will be created) \n\
-\n\
-HDF5 stands for Hierarchical Data Format version 5. It is a\n\
-flexible, binary file format that allows one to store and read\n\
-data efficiently into files. It is a cross-platform,\n\
-cross-architecture format.\n\
-\n\
-Objects of this class allows users to read and write data from\n\
-and to files in HDF5 format. For an introduction to HDF5, visit\n\
-the `HDF5 Website <http://www.hdfgroup.org/HDF5>`_.\n\
-\n\
-");
 
 int PyBobIoHDF5File_Check(PyObject* o) {
   if (!o) return 0;
@@ -79,7 +80,6 @@ static void PyBobIoHDF5File_Delete (PyBobIoHDF5FileObject* o) {
 
   o->f.reset();
   Py_TYPE(o)->tp_free((PyObject*)o);
-
 }
 
 static bob::io::base::HDF5File::mode_t mode_from_char (char mode) {
@@ -100,13 +100,11 @@ static bob::io::base::HDF5File::mode_t mode_from_char (char mode) {
 }
 
 /* The __init__(self) method */
-static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
-    PyObject *args, PyObject* kwds) {
-
+static int PyBobIoHDF5File_init(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"filename", "mode", 0};
-  static char** kwlist1 = const_cast<char**>(const_kwlist);
-  static char* kwlist2[] = {const_cast<char*>("hdf5"), 0};
+  static char** kwlist1 = s_hdf5file.kwlist(0);
+  static char** kwlist2 = s_hdf5file.kwlist(1);
 
   // get the number of command line arguments
   Py_ssize_t nargs = (args?PyTuple_Size(args):0) + (kwds?PyDict_Size(kwds):0);
@@ -130,7 +128,6 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
     self->f = other->f;
     return 0;
   }
-
 
 #if PY_VERSION_HEX >= 0x03000000
 #  define MODE_CHAR "C"
@@ -162,276 +159,166 @@ static int PyBobIoHDF5File_Init(PyBobIoHDF5FileObject* self,
   const char* c_filename = PyString_AS_STRING(filename);
 #endif
 
-  try {
-    self->f.reset(new bob::io::base::HDF5File(c_filename, mode_mode));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return -1;
-  }
-  catch (...) {
-    PyErr_Format(PyExc_RuntimeError, "cannot open file `%s' with mode `%c': unknown exception caught", c_filename, mode);
-    return -1;
-  }
-
+  self->f.reset(new bob::io::base::HDF5File(c_filename, mode_mode));
   return 0; ///< SUCCESS
+BOB_CATCH_MEMBER("hdf5 constructor", -1)
 }
 
-static PyObject* PyBobIoHDF5File_Repr(PyBobIoHDF5FileObject* self) {
-  return
-# if PY_VERSION_HEX >= 0x03000000
-  PyUnicode_FromFormat
-# else
-  PyString_FromFormat
-# endif
-  ("%s(filename='%s')", Py_TYPE(self)->tp_name, self->f->filename().c_str());
+
+static PyObject* PyBobIoHDF5File_repr(PyBobIoHDF5FileObject* self) {
+  return PyString_FromFormat("%s(filename='%s')", Py_TYPE(self)->tp_name, self->f->filename().c_str());
 }
 
-static PyObject* PyBobIoHDF5File_Flush(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-  /* Parses input arguments in a single shot */
-  static char* kwlist[] = {0};
-
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) return 0;
-
-  try {
-    self->f->flush();
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while flushing HDF5 file `%s'", filename);
-    return 0;
-  }
-  Py_RETURN_NONE;
-}
 
 static auto s_flush = bob::extension::FunctionDoc(
   "flush",
   "Flushes the content of the HDF5 file to disk",
-  "When the HDF5File is open for writing, this function synchronizes the contents on the disk with the one from the file."
+  "When the HDF5File is open for writing, this function synchronizes the contents on the disk with the one from the file. "
   "When the file is open for reading, nothing happens.",
   true
 )
   .add_prototype("")
 ;
-
-
-static PyObject* PyBobIoHDF5File_Close(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+static PyObject* PyBobIoHDF5File_flush(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static char * kwlist[] = {0};
+  static char** kwlist = s_flush.kwlist();
 
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) return 0;
 
-  try {
-    self->f->close();
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while closing HDF5 file `%s'", filename);
-    return 0;
-  }
-
+  self->f->flush();
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_flush.name()).c_str(), 0)
 }
+
 
 static auto s_close = bob::extension::FunctionDoc(
   "close",
   "Closes this file",
-  "This function closes the HDF5File after flushing all its contents to disk."
+  "This function closes the HDF5File after flushing all its contents to disk. "
   "After the HDF5File is closed, any operation on it will result in an exception.",
   true
 )
-  .add_prototype("")
+.add_prototype("")
+;
+static PyObject* PyBobIoHDF5File_close(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
+  /* Parses input arguments in a single shot */
+  static char** kwlist = s_close.kwlist();
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) return 0;
+
+  self->f->close();
+
+  Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_close.name()).c_str(), 0);
+}
+
+
+static auto s_cd = bob::extension::FunctionDoc(
+  "cd",
+  "Changes the current prefix path",
+  "When this object is created the prefix path is empty, which means all following paths to data objects should be given using the full path. "
+  "If you set the ``path`` to a different value, it will be used as a prefix to any subsequent operation until you reset it. "
+  "If ``path`` starts with ``'/'``, it is treated as an absolute path. "
+  "If the value is relative, it is added to the current path; ``'..'`` and ``'.'`` are supported. "
+  "If it is absolute, it causes the prefix to be reset.\n\n"
+  "..note:: All operations taking a relative path, following a :py:func:`cd`, will be considered relative to the value defined by the :py:attr:`cwd` property of this object.",
+  true
+)
+.add_prototype("path")
+.add_parameter("path", "str", "The path to change directories to")
 ;
 
-
-static PyObject* PyBobIoHDF5File_ChangeDirectory(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static PyObject* PyBobIoHDF5File_changeDirectory(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_cd.kwlist();
 
   const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
-  try {
-    self->f->cd(path);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while changing directory to `%s' in HDF5 file `%s'", path, filename);
-    return 0;
-  }
+  self->f->cd(path);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_cd.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_cd_str, "cd");
-PyDoc_STRVAR(s_cd_doc,
-"x.cd(path) -> None\n\
-\n\
-Changes the current prefix path.\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str] The path to change directories to\n\
-\n\
-When this object is started, the prefix path is empty, which\n\
-means all following paths to data objects should be given using\n\
-the full path. If you set this to a different value, it will be\n\
-used as a prefix to any subsequent operation until you reset\n\
-it. If path starts with ``'/'``, it is treated as an absolute\n\
-path. ``'..'`` and ``'.'`` are supported. This object should\n\
-be an :py:class:`str` object. If the value is relative, it is\n\
-added to the current path. If it is absolute, it causes the\n\
-prefix to be reset. Note all operations taking a relative path,\n\
-following a :py:func:`cd`, will be considered relative to the value\n\
-defined by the ``cwd`` property of this object.\n\
-");
 
-static PyObject* PyBobIoHDF5File_HasGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_has_group = bob::extension::FunctionDoc(
+  "has_group",
+  "Checks if a path (group) exists inside a file",
+  "This method does not work for datasets, only for directories. "
+  "If the given path is relative, it is take w.r.t. to the current working directory.",
+  true
+)
+.add_prototype("path")
+.add_parameter("path", "str", "The path to check")
+;
+static PyObject* PyBobIoHDF5File_hasGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_has_group.kwlist();
 
   const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
-  try {
-    if (self->f->hasGroup(path)) Py_RETURN_TRUE;
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for group `%s' in HDF5 file `%s'", path, filename);
-    return 0;
-  }
-
+  if (self->f->hasGroup(path)) Py_RETURN_TRUE;
   Py_RETURN_FALSE;
+BOB_CATCH_MEMBER(exception_message(self, s_has_group.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_has_group_str, "has_group");
-PyDoc_STRVAR(s_has_group_doc,
-"x.has_group(path) -> bool\n\
-\n\
-Checks if a path (group) exists inside a file\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str] The path to check\n\
-\n\
-Checks if a path (i.e. a *group* in HDF5 parlance) exists inside\n\
-a file. This method does not work for datasets, only for\n\
-directories. If the given path is relative, it is take w.r.t.\n\
-to the current working directory.\n\
-");
 
-static PyObject* PyBobIoHDF5File_CreateGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_create_group = bob::extension::FunctionDoc(
+  "create_group",
+  "Creates a new path (group) inside the file",
+  "A relative path is taken w.r.t. to the current directory. "
+  "If the directory already exists (check it with :py:meth:`has_group`), an exception will be raised.",
+  true
+)
+.add_prototype("path")
+.add_parameter("path", "str", "The path to create.")
+;
+static PyObject* PyBobIoHDF5File_createGroup(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_create_group.kwlist();
 
   const char* path = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &path)) return 0;
 
-  try {
-    self->f->createGroup(path);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while creating group `%s' in HDF5 file `%s'", path, filename);
-    return 0;
-  }
+  self->f->createGroup(path);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_create_group.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_create_group_str, "create_group");
-PyDoc_STRVAR(s_create_group_doc,
-"x.create_group(path) -> None\n\
-\n\
-Creates a new path (group) inside the file.\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str] The path to check\n\
-\n\
-Creates a new directory (i.e., a *group* in HDF5 parlance) inside\n\
-the file. A relative path is taken w.r.t. to the current\n\
-directory. If the directory already exists (check it with\n\
-:py:meth:`bob.io.base.HDF5File.has_group`, an exception will be raised.\n\
-");
 
-static PyObject* PyBobIoHDF5File_HasDataset(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_has_dataset = bob::extension::FunctionDoc(
+  "has_dataset",
+  "Checks if a dataset exists inside a file",
+  "Checks if a dataset exists inside a file, on the specified path. "
+  "If the given path is relative, it is take w.r.t. to the current working directory.\n\n"
+  ".. note:: The functions :py:meth:`has_dataset` and :py:meth:`has_key` are synonyms.",
+  true
+)
+.add_prototype("key")
+.add_parameter("key", "str", "The dataset path to check")
+;
+auto s_has_key = s_has_dataset.clone("has_key");
+static PyObject* PyBobIoHDF5File_hasDataset(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"key", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_has_dataset.kwlist();
 
   const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
-  try {
-    if (self->f->contains(key)) Py_RETURN_TRUE;
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while checking for dataset `%s' in HDF5 file `%s'", key, filename);
-    return 0;
-  }
+  if (self->f->contains(key)) Py_RETURN_TRUE;
 
   Py_RETURN_FALSE;
+BOB_CATCH_MEMBER(exception_message(self, s_has_dataset.name()).c_str(), 0)
 }
-
-PyDoc_STRVAR(s_has_key_str, "has_key");
-PyDoc_STRVAR(s_has_dataset_str, "has_dataset");
-PyDoc_STRVAR(s_has_dataset_doc,
-"x.has_dataset(key) -> bool\n\
-\n\
-Checks if a dataset exists inside a file\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The dataset path to check\n\
-\n\
-Checks if a dataset exists inside a file, on the specified path.\n\
-If the given path is relative, it is take w.r.t. to the current\n\
-working directory.\n\
-");
 
 static bob::io::base::hdf5type PyBobIo_H5FromTypenum (int type_num) {
 
@@ -523,11 +410,13 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::base::HDF5Type& t) {
 
   PyObject* dtype = reinterpret_cast<PyObject*>(PyArray_DescrFromType(type_num));
   if (!dtype) return 0;
+  auto dtype_ = make_safe(dtype);
 
   PyObject* shape = PyTuple_New(ndim);
   if (!shape) return 0;
+  auto shape_ = make_safe(shape);
 
-  PyObject* retval = Py_BuildValue("NN", dtype, shape); //steals references
+  PyObject* retval = Py_BuildValue("OO", dtype, shape);
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
@@ -542,168 +431,120 @@ static PyObject* PyBobIo_HDF5TypeAsTuple (const bob::io::base::HDF5Type& t) {
 }
 
 static PyObject* PyBobIo_HDF5DescriptorAsTuple (const bob::io::base::HDF5Descriptor& d) {
-
-  PyObject* type = PyBobIo_HDF5TypeAsTuple(d.type);
-  if (!type) return 0;
-  PyObject* size = Py_BuildValue("n", d.size);
-  if (!size) {
-    Py_DECREF(type);
-    return 0;
-  }
-  PyObject* expand = d.expandable? Py_True : Py_False;
-
-  return Py_BuildValue("NNO", type, size, expand); //steals references, except for True/False
-
+  return Py_BuildValue("NnO",
+    PyBobIo_HDF5TypeAsTuple(d.type),
+    d.size,
+    d.expandable? Py_True : Py_False
+  ); //steals references, except for True/False
 }
 
-static PyObject* PyBobIoHDF5File_Describe(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
 
+static auto s_describe = bob::extension::FunctionDoc(
+  "describe",
+  "Describes a dataset type/shape, if it exists inside a file",
+  "If a given ``key`` to an HDF5 dataset exists inside the file, returns a type description of objects recorded in such a dataset, otherwise, raises an exception. "
+  "The returned value type is a tuple of tuples (HDF5Type, number-of-objects, expandable) describing the capabilities if the file is read using these formats. \n\n"
+  ".. todo:: Check and correct the returned values",
+  true
+)
+.add_prototype("key", "shape, size, expandable")
+.add_parameter("key", "str", "The dataset path to describe")
+.add_return("shape", "tuple", "The shape of the returned array")
+.add_return("expandable", "bool", "Defines if this object can be resized.")
+;
+static PyObject* PyBobIoHDF5File_describe(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"key", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_describe.kwlist();
 
   const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
-  PyObject* retval = 0;
-  boost::shared_ptr<PyObject> retval_;
+  const std::vector<bob::io::base::HDF5Descriptor>& dv = self->f->describe(key);
+  PyObject* retval = PyList_New(dv.size());
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
 
-  try {
-    const std::vector<bob::io::base::HDF5Descriptor>& dv = self->f->describe(key);
-    retval = PyTuple_New(dv.size());
-    retval_ = make_safe(retval);
-
-    for (size_t k=0; k<dv.size(); ++k) {
-      PyObject* entry = PyBobIo_HDF5DescriptorAsTuple(dv[k]);
-      if (!entry) return 0;
-      PyTuple_SET_ITEM(retval, k, entry);
-    }
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while getting description for dataset `%s' in HDF5 file `%s'", key, filename);
-    return 0;
+  for (size_t k=0; k<dv.size(); ++k) {
+    PyObject* entry = PyBobIo_HDF5DescriptorAsTuple(dv[k]);
+    if (!entry) return 0;
+    PyList_SET_ITEM(retval, k, entry);
   }
 
   return Py_BuildValue("O", retval);
+BOB_CATCH_MEMBER(exception_message(self, s_describe.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_describe_str, "describe");
-PyDoc_STRVAR(s_describe_doc,
-"x.describe(path) -> tuple\n\
-\n\
-Describes a dataset type/shape, if it exists inside a file\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The dataset path to describe\n\
-\n\
-If a given path to an HDF5 dataset exists inside the file,\n\
-return a type description of objects recorded in such a dataset,\n\
-otherwise, raises an exception. The returned value type is a\n\
-tuple of tuples (HDF5Type, number-of-objects, expandable)\n\
-describing the capabilities if the file is read using theses\n\
-formats.\n\
-");
 
-static PyObject* PyBobIoHDF5File_Unlink(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_unlink = bob::extension::FunctionDoc(
+  "unlink",
+  "Unlinks datasets inside the file making them invisible",
+  "If a given path to an HDF5 dataset exists inside the file, unlinks it."
+  "Please note this will note remove the data from the file, just make it inaccessible. "
+  "If you wish to cleanup, save the reacheable objects from this file to another :py:class:`HDF5File` object using :py:meth:`copy`, for example.",
+  true
+)
+.add_prototype("key")
+.add_parameter("key", "str", "The dataset path to unlink")
+;
+static PyObject* PyBobIoHDF5File_unlink(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"key", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_unlink.kwlist();
 
   const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
-  try {
-    self->f->unlink(key);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while unlinking dataset `%s' in HDF5 file `%s'", key, filename);
-    return 0;
-  }
+  self->f->unlink(key);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_unlink.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_unlink_str, "unlink");
-PyDoc_STRVAR(s_unlink_doc,
-"x.unlink(key) -> None\n\
-\n\
-Unlinks datasets inside the file making them invisible.\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The dataset path to describe\n\
-\n\
-If a given path to an HDF5 dataset exists inside the file,\n\
-unlinks it. Please note this will note remove the data from\n\
-the file, just make it inaccessible. If you wish to cleanup,\n\
-save the reacheable objects from this file to another HDF5File\n\
-object using copy(), for example.\n\
-");
 
-static PyObject* PyBobIoHDF5File_Rename(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_rename = bob::extension::FunctionDoc(
+  "rename",
+  "Renames datasets in a file",
+  0,
+  true
+)
+.add_prototype("from, to")
+.add_parameter("from", "str", "The path to the data to be renamed")
+.add_parameter("to", "str", "The new name of the dataset")
+;
+static PyObject* PyBobIoHDF5File_rename(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"from", "to", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_rename.kwlist();
 
   const char* from = 0;
   const char* to = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "ss", kwlist, &from, &to)) return 0;
 
-  try {
-    self->f->rename(from, to);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while renaming dataset `%s' to `%s' in HDF5 file `%s'", from, to, filename);
-    return 0;
-  }
+  self->f->rename(from, to);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_rename.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_rename_str, "rename");
-PyDoc_STRVAR(s_rename_doc,
-"x.rename(from, to) -> None\n\
-\n\
-Renames datasets in a file\n\
-\n\
-Parameters:\n\
-\n\
-from\n\
-  [str] The path to the data being renamed\n\
-\n\
-to\n\
-  [str] The new name of the dataset\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_paths = bob::extension::FunctionDoc(
+  "paths",
+  "Lists datasets available inside this file",
+  "Returns all paths to datasets available inside this file, stored under the current working directory. "
+  "If ``relative`` is set to ``True``, the returned paths are relative to the current working directory, otherwise they are absolute.\n\n"
+  ".. note:: The functions :py:meth:`keys` and :py:meth:`paths` are synonyms.",
+  true
+)
+.add_prototype("[relative]", "paths")
+.add_parameter("relative", "bool", "[Default: ``False``] If set to ``True``, the returned paths are relative to the current working directory, otherwise they are absolute")
+.add_return("paths", "[str]", "A list of paths inside this file")
+;
+auto s_keys = s_paths.clone("keys");
+static PyObject* PyBobIoHDF5File_paths(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"relative", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_paths.kwlist();
 
   PyObject* pyrel = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &pyrel)) return 0;
@@ -711,58 +552,35 @@ static PyObject* PyBobIoHDF5File_Paths(PyBobIoHDF5FileObject* self, PyObject *ar
   bool relative = false;
   if (pyrel && PyObject_IsTrue(pyrel)) relative = true;
 
-  PyObject* retval = 0;
-  boost::shared_ptr<PyObject> retval_;
-
-  try {
-    std::vector<std::string> values;
-    self->f->paths(values, relative);
-    retval = PyTuple_New(values.size());
-    if (!retval) return 0;
-    retval_ = make_safe(retval);
-    for (size_t i=0; i<values.size(); ++i) {
-      PyTuple_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
-    }
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading dataset names from HDF5 file `%s'", filename);
-    return 0;
+  std::vector<std::string> values;
+  self->f->paths(values, relative);
+  PyObject* retval = PyList_New(values.size());
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
+  for (size_t i=0; i<values.size(); ++i) {
+    PyList_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
   }
 
   return Py_BuildValue("O", retval);
+BOB_CATCH_MEMBER(exception_message(self, s_paths.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_keys_str, "keys");
-PyDoc_STRVAR(s_paths_str, "paths");
-PyDoc_STRVAR(s_paths_doc,
-"x.paths([relative=False]) -> tuple\n\
-\n\
-Lists datasets available inside this file\n\
-\n\
-Parameters:\n\
-\n\
-relative\n\
-  [bool, optional] if set to ``True``, the returned paths are\n\
-  relative to the current working directory, otherwise they are\n\
-  absolute.\n\
-\n\
-Returns all paths to datasets available inside this file, stored\n\
-under the current working directory. If relative is set to ``True``,\n\
-the returned paths are relative to the current working directory,\n\
-otherwise they are absolute.\n\
-");
 
-static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_sub_groups = bob::extension::FunctionDoc(
+  "sub_groups",
+  "Lists groups (directories) in the current file",
+  0,
+  true
+)
+.add_prototype("[relative], [recursive]", "groups")
+.add_parameter("relative", "bool", "[Default: ``False``] If set to ``True``, the returned sub-groups are relative to the current working directory, otherwise they are absolute")
+.add_parameter("recursive", "bool", "[Default: ``True``] If set to ``False``, the returned sub-groups   are only the ones in the current directory, otherwise recurses down the directory structure")
+.add_return("groups", "[str]", "The list of directories (groups) inside this file")
+;
+static PyObject* PyBobIoHDF5File_subGroups(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"relative", "recursive", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_sub_groups.kwlist();
 
   PyObject* pyrel = 0;
   PyObject* pyrec = 0;
@@ -771,121 +589,65 @@ static PyObject* PyBobIoHDF5File_SubGroups(PyBobIoHDF5FileObject* self, PyObject
   bool relative = (pyrel && PyObject_IsTrue(pyrel));
   bool recursive = (!pyrec || PyObject_IsTrue(pyrec));
 
-  PyObject* retval = 0;
-
-  try {
-    std::vector<std::string> values;
-    self->f->sub_groups(values, relative, recursive);
-    retval = PyTuple_New(values.size());
-    for (size_t i=0; i<values.size(); ++i) {
-      PyTuple_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
-    }
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while reading group names from HDF5 file `%s'", filename);
-    return 0;
+  std::vector<std::string> values;
+  self->f->sub_groups(values, relative, recursive);
+  PyObject* retval = PyList_New(values.size());
+  if (!retval) return 0;
+  auto retval_ = make_safe(retval);
+  for (size_t i=0; i<values.size(); ++i) {
+    PyList_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
   }
 
   return retval;
+BOB_CATCH_MEMBER(exception_message(self, s_sub_groups.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_sub_groups_str, "sub_groups");
-PyDoc_STRVAR(s_sub_groups_doc,
-"x.sub_groups([relative=False, [recursive=True]]) -> tuple\n\
-\n\
-Lists groups (directories) in the current file.\n\
-\n\
-Parameters:\n\
-\n\
-relative\n\
-  [bool, optional] if set to ``True``, the returned sub-groups are\n\
-  relative to the current working directory, otherwise they are\n\
-  absolute.\n\
-\n\
-recursive\n\
-  [bool, optional] if set to ``False``, the returned sub-groups\n\
-  are only the ones in the current directory. Otherwise, recurse\n\
-  down the directory structure.\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
-    const char* p, int descriptor, int pos) {
+static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self, const char* p, int descriptor, int pos) {
 
-  const std::vector<bob::io::base::HDF5Descriptor>* D = 0;
-  try {
-    D = &self->f->describe(p);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", p, filename);
-    return 0;
-  }
+  const std::vector<bob::io::base::HDF5Descriptor> D = self->f->describe(p);
 
   //last descriptor always contains the full readout.
-  const bob::io::base::HDF5Type& type = (*D)[descriptor].type;
+  const bob::io::base::HDF5Type& type = D[descriptor].type;
   const bob::io::base::HDF5Shape& shape = type.shape();
 
   if (shape.n() == 1 && shape[0] == 1) { //read as scalar
-    try {
-      switch(type.type()) {
-        case bob::io::base::s:
-          return Py_BuildValue("s", self->f->read<std::string>(p, pos).c_str());
-        case bob::io::base::b:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<bool>(p, pos));
-        case bob::io::base::i8:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<int8_t>(p, pos));
-        case bob::io::base::i16:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<int16_t>(p, pos));
-        case bob::io::base::i32:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<int32_t>(p, pos));
-        case bob::io::base::i64:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<int64_t>(p, pos));
-        case bob::io::base::u8:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<uint8_t>(p, pos));
-        case bob::io::base::u16:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<uint16_t>(p, pos));
-        case bob::io::base::u32:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<uint32_t>(p, pos));
-        case bob::io::base::u64:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<uint64_t>(p, pos));
-        case bob::io::base::f32:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<float>(p, pos));
-        case bob::io::base::f64:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<double>(p, pos));
-        case bob::io::base::f128:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<long double>(p, pos));
-        case bob::io::base::c64:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<float> >(p, pos));
-        case bob::io::base::c128:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<double> >(p, pos));
-        case bob::io::base::c256:
-          return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<long double> >(p, pos));
-        default:
-          PyErr_Format(PyExc_TypeError, "unsupported HDF5 type: %s", type.str().c_str());
-          return 0;
-      }
-    }
-    catch (std::exception& e) {
-      PyErr_SetString(PyExc_RuntimeError, e.what());
-      return 0;
-    }
-    catch (...) {
-      const char* filename = "<unknown>";
-      try{ filename = self->f->filename().c_str(); } catch(...){}
-      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading %s scalar from dataset `%s' at position %d from HDF5 file `%s'", bob::io::base::stringize(type.type()), p, pos, filename);
-      return 0;
+    switch(type.type()) {
+      case bob::io::base::s:
+        return Py_BuildValue("s", self->f->read<std::string>(p, pos).c_str());
+      case bob::io::base::b:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<bool>(p, pos));
+      case bob::io::base::i8:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<int8_t>(p, pos));
+      case bob::io::base::i16:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<int16_t>(p, pos));
+      case bob::io::base::i32:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<int32_t>(p, pos));
+      case bob::io::base::i64:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<int64_t>(p, pos));
+      case bob::io::base::u8:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<uint8_t>(p, pos));
+      case bob::io::base::u16:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<uint16_t>(p, pos));
+      case bob::io::base::u32:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<uint32_t>(p, pos));
+      case bob::io::base::u64:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<uint64_t>(p, pos));
+      case bob::io::base::f32:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<float>(p, pos));
+      case bob::io::base::f64:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<double>(p, pos));
+      case bob::io::base::f128:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<long double>(p, pos));
+      case bob::io::base::c64:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<float> >(p, pos));
+      case bob::io::base::c128:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<double> >(p, pos));
+      case bob::io::base::c256:
+        return PyBlitzArrayCxx_FromCScalar(self->f->read<std::complex<long double> >(p, pos));
+      default:
+        PyErr_Format(PyExc_TypeError, "unsupported HDF5 type: %s", type.str().c_str());
+        return 0;
     }
   }
 
@@ -900,56 +662,53 @@ static PyObject* PyBobIoHDF5File_Xread(PyBobIoHDF5FileObject* self,
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
-  try {
-    self->f->read_buffer(p, pos, type, PyArray_DATA((PyArrayObject*)retval));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading dataset `%s' at position %d with descriptor `%s' from HDF5 file `%s'", p, pos, type.str().c_str(), filename);
-    return 0;
-  }
+  self->f->read_buffer(p, pos, type, PyArray_DATA((PyArrayObject*)retval));
 
   return Py_BuildValue("O", retval);
 }
 
-static PyObject* PyBobIoHDF5File_Read(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+
+static auto s_read = bob::extension::FunctionDoc(
+  "read",
+  "Reads whole datasets from the file",
+  "This function reads full data sets from this file. "
+  "The data type is dependent on the stored data, but is generally a :py:class:`numpy.ndarray`.\n\n"
+  ".. note:: The functions :py:func:`read` and :py:func:`get` are synonyms."
+)
+.add_prototype("key", "data")
+.add_parameter("key", "str", "The path to the dataset to read data from; can be an absolute value (starting with a leading ``'/'``) or relative to the current working directory :py:attr:`cwd`")
+.add_return("data", ":py:class:`numpy.ndarray` or other", "The data read from this file at the given key")
+;
+auto s_get = s_read.clone("get");
+static PyObject* PyBobIoHDF5File_read(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
 
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"key", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_read.kwlist();
 
   const char* key = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) return 0;
 
   return PyBobIoHDF5File_Xread(self, key, 1, 0);
-
+BOB_CATCH_MEMBER(exception_message(self, s_read.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_read_str, "read");
-PyDoc_STRVAR(s_read_doc,
-"x.read(key, [pos=-1]) -> numpy.ndarray\n\
-\n\
-Reads whole datasets from the file.\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The path to the dataset to read data from. Can be\n\
-  an absolute value (starting with a leading ``'/'``) or\n\
-  relative to the current working directory (``cwd``).\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_lread = bob::extension::FunctionDoc(
+  "lread",
+  "Reads some contents of the dataset",
+  "This method reads contents from a dataset, treating the N-dimensional dataset like a container for multiple objects with N-1 dimensions. "
+  "It returns a single :py:class:`numpy.ndarray` in case ``pos`` is set to a value >= 0, or a list of arrays otherwise."
+)
+.add_prototype("key, [pos]", "data")
+.add_parameter("key", "str", "The path to the dataset to read data from, can be an absolute value (starting with a leading ``'/'``) or relative to the current working directory :py:attr:`cwd`")
+.add_parameter("pos", "int", "If given and >= 0 returns the data object with the given index, otherwise returns a list by reading all objects in sequence")
+.add_return("data", ":py:class:`numpy.ndarray` or [:py:class:`numpy.ndarray`]", "The data read from this file")
+;
+static PyObject* PyBobIoHDF5File_listRead(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"key", "pos", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_lread.kwlist();
 
   const char* key = 0;
   Py_ssize_t pos = -1;
@@ -958,58 +717,22 @@ static PyObject* PyBobIoHDF5File_ListRead(PyBobIoHDF5FileObject* self, PyObject 
   if (pos >= 0) return PyBobIoHDF5File_Xread(self, key, 0, pos);
 
   //otherwise returns as a list
-  const std::vector<bob::io::base::HDF5Descriptor>* D = 0;
-  try {
-    D = &self->f->describe(key);
-  }
-  catch (std::exception& e) {
-    PyErr_Format(PyExc_RuntimeError, "%s", e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while trying to describe dataset `%s' from HDF5 file `%s'", key, filename);
-    return 0;
-  }
+  const std::vector<bob::io::base::HDF5Descriptor>& D = self->f->describe(key);
 
-  PyObject* retval = PyTuple_New((*D)[0].size);
+  PyObject* retval = PyList_New(D[0].size);
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
-  for (uint64_t k=0; k<(*D)[0].size; ++k) {
+  for (uint64_t k=0; k<D[0].size; ++k) {
     PyObject* item = PyBobIoHDF5File_Xread(self, key, 0, k);
     if (!item) return 0;
-    PyTuple_SET_ITEM(retval, k, item);
+    PyList_SET_ITEM(retval, k, item);
   }
 
   return Py_BuildValue("O", retval);
-
+BOB_CATCH_MEMBER(exception_message(self, s_lread.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_lread_str, "lread");
-PyDoc_STRVAR(s_lread_doc,
-"x.lread(key, [pos=-1]) -> list|numpy.ndarray\n\
-\n\
-Reads some contents of the dataset.\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The path to the dataset to read data from. Can be\n\
-  an absolute value (starting with a leading ``'/'``) or\n\
-  relative to the current working directory (``cwd``).\n\
-\n\
-pos\n\
-  [int, optional] Returns a single object if ``pos`` >= 0,\n\
-  otherwise a list by reading all objects in sequence.\n\
-\n\
-This method reads contents from a dataset, treating the\n\
-N-dimensional dataset like a container for multiple objects\n\
-with N-1 dimensions. It returns a single\n\
-:py:class:`numpy.ndarray` in case ``pos`` is set to a\n\
-value >= 0, or a list of arrays otherwise.\n\
-");
 
 /**
  * Sets at 't', the type of the object 'o' according to our support types.
@@ -1058,14 +781,14 @@ static boost::shared_ptr<char> PyBobIo_GetString(PyObject* o) {
 
 }
 
-static int PyBobIoHDF5File_SetStringType(bob::io::base::HDF5Type& t, PyObject* o) {
+static int PyBobIoHDF5File_setStringType(bob::io::base::HDF5Type& t, PyObject* o) {
   auto value = PyBobIo_GetString(o);
   if (!value) return -1;
   t = bob::io::base::HDF5Type(value.get());
   return 0;
 }
 
-template <typename T> int PyBobIoHDF5File_SetType(bob::io::base::HDF5Type& t) {
+template <typename T> int PyBobIoHDF5File_setType(bob::io::base::HDF5Type& t) {
   T v;
   t = bob::io::base::HDF5Type(v);
   return 0;
@@ -1074,7 +797,7 @@ template <typename T> int PyBobIoHDF5File_SetType(bob::io::base::HDF5Type& t) {
 /**
  * A function to check for python scalars that works with numpy-1.6.x
  */
-static bool PyBobIoHDF5File_IsPythonScalar(PyObject* obj) {
+static bool PyBobIoHDF5File_isPythonScalar(PyObject* obj) {
   return (
     PyBool_Check(obj) ||
 #if PY_VERSION_HEX < 0x03000000
@@ -1094,7 +817,7 @@ static bool PyBobIoHDF5File_IsPythonScalar(PyObject* obj) {
 
 /**
  * Returns the type of object `op' is - a scalar (return value = 0), a
- * bob.blitzarray (return value = 1), a numpy.ndarray (return value = 2), an
+ * bob.blitz.array (return value = 1), a numpy.ndarray (return value = 2), an
  * object which is convertible to a numpy.ndarray (return value = 3) or returns
  * -1 if the object cannot be converted. No error is set on the python stack.
  *
@@ -1103,87 +826,87 @@ static bool PyBobIoHDF5File_IsPythonScalar(PyObject* obj) {
  * `*converted' is set to 0 (NULL), then we don't try a conversion, returning
  * -1.
  */
-static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::base::HDF5Type& t,
+static int PyBobIoHDF5File_getObjectType(PyObject* o, bob::io::base::HDF5Type& t,
     PyObject** converted=0) {
 
-  if (PyArray_IsScalar(o, Generic) || PyBobIoHDF5File_IsPythonScalar(o)) {
+  if (PyArray_IsScalar(o, Generic) || PyBobIoHDF5File_isPythonScalar(o)) {
 
     if (PyArray_IsScalar(o, String))
-      return PyBobIoHDF5File_SetStringType(t, o);
+      return PyBobIoHDF5File_setStringType(t, o);
 
     else if (PyBool_Check(o))
-      return PyBobIoHDF5File_SetType<bool>(t);
+      return PyBobIoHDF5File_setType<bool>(t);
 
 #if PY_VERSION_HEX < 0x03000000
     else if (PyString_Check(o))
-      return PyBobIoHDF5File_SetStringType(t, o);
+      return PyBobIoHDF5File_setStringType(t, o);
 
 #else
     else if (PyBytes_Check(o))
-      return PyBobIoHDF5File_SetStringType(t, o);
+      return PyBobIoHDF5File_setStringType(t, o);
 
 #endif
     else if (PyUnicode_Check(o))
-      return PyBobIoHDF5File_SetStringType(t, o);
+      return PyBobIoHDF5File_setStringType(t, o);
 
 #if PY_VERSION_HEX < 0x03000000
     else if (PyInt_Check(o))
-      return PyBobIoHDF5File_SetType<int32_t>(t);
+      return PyBobIoHDF5File_setType<int32_t>(t);
 
 #endif
     else if (PyLong_Check(o))
-      return PyBobIoHDF5File_SetType<int64_t>(t);
+      return PyBobIoHDF5File_setType<int64_t>(t);
 
     else if (PyFloat_Check(o))
-      return PyBobIoHDF5File_SetType<double>(t);
+      return PyBobIoHDF5File_setType<double>(t);
 
     else if (PyComplex_Check(o))
-      return PyBobIoHDF5File_SetType<std::complex<double> >(t);
+      return PyBobIoHDF5File_setType<std::complex<double> >(t);
 
     else if (PyArray_IsScalar(o, Bool))
-      return PyBobIoHDF5File_SetType<bool>(t);
+      return PyBobIoHDF5File_setType<bool>(t);
 
     else if (PyArray_IsScalar(o, Int8))
-      return PyBobIoHDF5File_SetType<int8_t>(t);
+      return PyBobIoHDF5File_setType<int8_t>(t);
 
     else if (PyArray_IsScalar(o, UInt8))
-      return PyBobIoHDF5File_SetType<uint8_t>(t);
+      return PyBobIoHDF5File_setType<uint8_t>(t);
 
     else if (PyArray_IsScalar(o, Int16))
-      return PyBobIoHDF5File_SetType<int16_t>(t);
+      return PyBobIoHDF5File_setType<int16_t>(t);
 
     else if (PyArray_IsScalar(o, UInt16))
-      return PyBobIoHDF5File_SetType<uint16_t>(t);
+      return PyBobIoHDF5File_setType<uint16_t>(t);
 
     else if (PyArray_IsScalar(o, Int32))
-      return PyBobIoHDF5File_SetType<int32_t>(t);
+      return PyBobIoHDF5File_setType<int32_t>(t);
 
     else if (PyArray_IsScalar(o, UInt32))
-      return PyBobIoHDF5File_SetType<uint32_t>(t);
+      return PyBobIoHDF5File_setType<uint32_t>(t);
 
     else if (PyArray_IsScalar(o, Int64))
-      return PyBobIoHDF5File_SetType<int64_t>(t);
+      return PyBobIoHDF5File_setType<int64_t>(t);
 
     else if (PyArray_IsScalar(o, UInt64))
-      return PyBobIoHDF5File_SetType<uint64_t>(t);
+      return PyBobIoHDF5File_setType<uint64_t>(t);
 
     else if (PyArray_IsScalar(o, Float))
-      return PyBobIoHDF5File_SetType<float>(t);
+      return PyBobIoHDF5File_setType<float>(t);
 
     else if (PyArray_IsScalar(o, Double))
-      return PyBobIoHDF5File_SetType<double>(t);
+      return PyBobIoHDF5File_setType<double>(t);
 
     else if (PyArray_IsScalar(o, LongDouble))
-      return PyBobIoHDF5File_SetType<long double>(t);
+      return PyBobIoHDF5File_setType<long double>(t);
 
     else if (PyArray_IsScalar(o, CFloat))
-      return PyBobIoHDF5File_SetType<std::complex<float> >(t);
+      return PyBobIoHDF5File_setType<std::complex<float> >(t);
 
     else if (PyArray_IsScalar(o, CDouble))
-      return PyBobIoHDF5File_SetType<std::complex<double> >(t);
+      return PyBobIoHDF5File_setType<std::complex<double> >(t);
 
     else if (PyArray_IsScalar(o, CLongDouble))
-      return PyBobIoHDF5File_SetType<std::complex<long double> >(t);
+      return PyBobIoHDF5File_setType<std::complex<long double> >(t);
 
     //if you get to this, point, it is an unsupported scalar
     return -1;
@@ -1241,7 +964,7 @@ static int PyBobIoHDF5File_GetObjectType(PyObject* o, bob::io::base::HDF5Type& t
 }
 
 template <typename T>
-static PyObject* PyBobIoHDF5File_ReplaceScalar(PyBobIoHDF5FileObject* self,
+static PyObject* PyBobIoHDF5File_replaceScalar(PyBobIoHDF5FileObject* self,
     const char* path, Py_ssize_t pos, PyObject* o) {
 
   T value = PyBlitzArrayCxx_AsCScalar<T>(o);
@@ -1252,11 +975,22 @@ static PyObject* PyBobIoHDF5File_ReplaceScalar(PyBobIoHDF5FileObject* self,
 
 }
 
-static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
 
+static auto s_replace = bob::extension::FunctionDoc(
+  "replace",
+  "Modifies the value of a scalar/array in a dataset.",
+  0,
+  true
+)
+.add_prototype("path, pos, data")
+.add_parameter("path", "str", "The path to the dataset to read data from; can be an absolute value (starting with a leading ``'/'``) or relative to the current working directory :py:attr:`cwd`")
+.add_parameter("pos", "int", "Position, within the dataset, of the object to be replaced; the object position on the dataset must exist, or an exception is raised")
+.add_parameter("data", ":py:class:`numpy.ndarray` or scalar", "Object to replace the value with; this value must be compatible with the typing information on the dataset, or an exception will be raised")
+;
+static PyObject* PyBobIoHDF5File_replace(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", "pos", "data", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_replace.kwlist();
 
   const char* path = 0;
   Py_ssize_t pos = -1;
@@ -1265,7 +999,7 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
 
   bob::io::base::HDF5Type type;
   PyObject* converted = 0;
-  int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  int is_array = PyBobIoHDF5File_getObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
@@ -1275,121 +1009,83 @@ static PyObject* PyBobIoHDF5File_Replace(PyBobIoHDF5FileObject* self, PyObject* 
     return 0;
   }
 
-  try {
+  if (!is_array) { //write as a scalar
 
-    if (!is_array) { //write as a scalar
-
-      switch(type.type()) {
-        case bob::io::base::s:
-          {
-            auto value = PyBobIo_GetString(data);
-            if (!value) return 0;
-            self->f->replace<std::string>(path, pos, value.get());
-            Py_RETURN_NONE;
-          }
-        case bob::io::base::b:
-          return PyBobIoHDF5File_ReplaceScalar<bool>(self, path, pos, data);
-        case bob::io::base::i8:
-          return PyBobIoHDF5File_ReplaceScalar<int8_t>(self, path, pos, data);
-        case bob::io::base::i16:
-          return PyBobIoHDF5File_ReplaceScalar<int16_t>(self, path, pos, data);
-        case bob::io::base::i32:
-          return PyBobIoHDF5File_ReplaceScalar<int32_t>(self, path, pos, data);
-        case bob::io::base::i64:
-          return PyBobIoHDF5File_ReplaceScalar<int64_t>(self, path, pos, data);
-        case bob::io::base::u8:
-          return PyBobIoHDF5File_ReplaceScalar<uint8_t>(self, path, pos, data);
-        case bob::io::base::u16:
-          return PyBobIoHDF5File_ReplaceScalar<uint16_t>(self, path, pos, data);
-        case bob::io::base::u32:
-          return PyBobIoHDF5File_ReplaceScalar<uint32_t>(self, path, pos, data);
-        case bob::io::base::u64:
-          return PyBobIoHDF5File_ReplaceScalar<uint64_t>(self, path, pos, data);
-        case bob::io::base::f32:
-          return PyBobIoHDF5File_ReplaceScalar<float>(self, path, pos, data);
-        case bob::io::base::f64:
-          return PyBobIoHDF5File_ReplaceScalar<double>(self, path, pos, data);
-        case bob::io::base::f128:
-          return PyBobIoHDF5File_ReplaceScalar<long double>(self, path, pos, data);
-        case bob::io::base::c64:
-          return PyBobIoHDF5File_ReplaceScalar<std::complex<float> >(self, path, pos, data);
-        case bob::io::base::c128:
-          return PyBobIoHDF5File_ReplaceScalar<std::complex<double> >(self, path, pos, data);
-        case bob::io::base::c256:
-          return PyBobIoHDF5File_ReplaceScalar<std::complex<long double> >(self, path, pos, data);
-        default:
-          break;
-      }
-
-    }
-
-    else { //write as array
-
-      switch (is_array) {
-        case 1: //bob.blitz.array
-          self->f->write_buffer(path, pos, type, ((PyBlitzArrayObject*)data)->data);
-          break;
-
-        case 2: //numpy.ndarray
-          self->f->write_buffer(path, pos, type, PyArray_DATA((PyArrayObject*)data));
-          break;
-
-        case 3: //converted numpy.ndarray
-          self->f->write_buffer(path, pos, type, PyArray_DATA((PyArrayObject*)converted));
-          break;
-
-        default:
-          const char* filename = "<unknown>";
-          try{ filename = self->f->filename().c_str(); } catch(...){}
-          PyErr_Format(PyExc_NotImplementedError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", pos, path, filename, is_array);
-          return 0;
-      }
-
+    switch(type.type()) {
+      case bob::io::base::s:
+        {
+          auto value = PyBobIo_GetString(data);
+          if (!value) return 0;
+          self->f->replace<std::string>(path, pos, value.get());
+          Py_RETURN_NONE;
+        }
+      case bob::io::base::b:
+        return PyBobIoHDF5File_replaceScalar<bool>(self, path, pos, data);
+      case bob::io::base::i8:
+        return PyBobIoHDF5File_replaceScalar<int8_t>(self, path, pos, data);
+      case bob::io::base::i16:
+        return PyBobIoHDF5File_replaceScalar<int16_t>(self, path, pos, data);
+      case bob::io::base::i32:
+        return PyBobIoHDF5File_replaceScalar<int32_t>(self, path, pos, data);
+      case bob::io::base::i64:
+        return PyBobIoHDF5File_replaceScalar<int64_t>(self, path, pos, data);
+      case bob::io::base::u8:
+        return PyBobIoHDF5File_replaceScalar<uint8_t>(self, path, pos, data);
+      case bob::io::base::u16:
+        return PyBobIoHDF5File_replaceScalar<uint16_t>(self, path, pos, data);
+      case bob::io::base::u32:
+        return PyBobIoHDF5File_replaceScalar<uint32_t>(self, path, pos, data);
+      case bob::io::base::u64:
+        return PyBobIoHDF5File_replaceScalar<uint64_t>(self, path, pos, data);
+      case bob::io::base::f32:
+        return PyBobIoHDF5File_replaceScalar<float>(self, path, pos, data);
+      case bob::io::base::f64:
+        return PyBobIoHDF5File_replaceScalar<double>(self, path, pos, data);
+      case bob::io::base::f128:
+        return PyBobIoHDF5File_replaceScalar<long double>(self, path, pos, data);
+      case bob::io::base::c64:
+        return PyBobIoHDF5File_replaceScalar<std::complex<float> >(self, path, pos, data);
+      case bob::io::base::c128:
+        return PyBobIoHDF5File_replaceScalar<std::complex<double> >(self, path, pos, data);
+      case bob::io::base::c256:
+        return PyBobIoHDF5File_replaceScalar<std::complex<long double> >(self, path, pos, data);
+      default:
+        break;
     }
 
   }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot replace object in position %" PY_FORMAT_SIZE_T "d at HDF5 file `%s': unknown exception caught", pos, filename);
-    return 0;
+
+  else { //write as array
+
+    switch (is_array) {
+      case 1: //bob.blitz.array
+        self->f->write_buffer(path, pos, type, ((PyBlitzArrayObject*)data)->data);
+        break;
+
+      case 2: //numpy.ndarray
+        self->f->write_buffer(path, pos, type, PyArray_DATA((PyArrayObject*)data));
+        break;
+
+      case 3: //converted numpy.ndarray
+        self->f->write_buffer(path, pos, type, PyArray_DATA((PyArrayObject*)converted));
+        break;
+
+      default:
+        const char* filename = "<unknown>";
+        try{ filename = self->f->filename().c_str(); } catch(...){}
+        PyErr_Format(PyExc_NotImplementedError, "error replacing position %" PY_FORMAT_SIZE_T "d of dataset `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", pos, path, filename, is_array);
+        return 0;
+    }
+
   }
 
   Py_RETURN_NONE;
-
+BOB_CATCH_MEMBER(exception_message(self, s_replace.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_replace_str, "replace");
-PyDoc_STRVAR(s_replace_doc,
-"x.replace(path, pos, data) -> None\n\
-\n\
-Modifies the value of a scalar/array in a dataset.\n\
-\n\
-Parameters:\n\
-\n\
-key\n\
-  [str] The path to the dataset to read data from. Can be\n\
-  an absolute value (starting with a leading ``'/'``) or\n\
-  relative to the current working directory (``cwd``).\n\
-\n\
-pos\n\
-  [int] Position, within the dataset, of the object to be\n\
-  replaced. The object position on the dataset must exist,\n\
-  or an exception is raised.\n\
-\n\
-data\n\
-  [scalar|numpy.ndarray] Object to replace the value with.\n\
-  This value must be compatible with the typing information\n\
-  on the dataset, or an exception will be raised.\n\
-\n\
-");
 
 template <typename T>
-static int PyBobIoHDF5File_AppendScalar(PyBobIoHDF5FileObject* self,
+static int PyBobIoHDF5File_appendScalar(PyBobIoHDF5FileObject* self,
     const char* path, PyObject* o) {
 
   T value = PyBlitzArrayCxx_AsCScalar<T>(o);
@@ -1400,11 +1096,11 @@ static int PyBobIoHDF5File_AppendScalar(PyBobIoHDF5FileObject* self,
 
 }
 
-static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* path, PyObject* data, Py_ssize_t compression) {
+static int PyBobIoHDF5File_innerAppend(PyBobIoHDF5FileObject* self, const char* path, PyObject* data, Py_ssize_t compression) {
 
   bob::io::base::HDF5Type type;
   PyObject* converted = 0;
-  int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  int is_array = PyBobIoHDF5File_getObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
@@ -1427,35 +1123,35 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
             return 1;
           }
         case bob::io::base::b:
-          return PyBobIoHDF5File_AppendScalar<bool>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<bool>(self, path, data);
         case bob::io::base::i8:
-          return PyBobIoHDF5File_AppendScalar<int8_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<int8_t>(self, path, data);
         case bob::io::base::i16:
-          return PyBobIoHDF5File_AppendScalar<int16_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<int16_t>(self, path, data);
         case bob::io::base::i32:
-          return PyBobIoHDF5File_AppendScalar<int32_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<int32_t>(self, path, data);
         case bob::io::base::i64:
-          return PyBobIoHDF5File_AppendScalar<int64_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<int64_t>(self, path, data);
         case bob::io::base::u8:
-          return PyBobIoHDF5File_AppendScalar<uint8_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<uint8_t>(self, path, data);
         case bob::io::base::u16:
-          return PyBobIoHDF5File_AppendScalar<uint16_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<uint16_t>(self, path, data);
         case bob::io::base::u32:
-          return PyBobIoHDF5File_AppendScalar<uint32_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<uint32_t>(self, path, data);
         case bob::io::base::u64:
-          return PyBobIoHDF5File_AppendScalar<uint64_t>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<uint64_t>(self, path, data);
         case bob::io::base::f32:
-          return PyBobIoHDF5File_AppendScalar<float>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<float>(self, path, data);
         case bob::io::base::f64:
-          return PyBobIoHDF5File_AppendScalar<double>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<double>(self, path, data);
         case bob::io::base::f128:
-          return PyBobIoHDF5File_AppendScalar<long double>(self, path, data);
+          return PyBobIoHDF5File_appendScalar<long double>(self, path, data);
         case bob::io::base::c64:
-          return PyBobIoHDF5File_AppendScalar<std::complex<float> >(self, path, data);
+          return PyBobIoHDF5File_appendScalar<std::complex<float> >(self, path, data);
         case bob::io::base::c128:
-          return PyBobIoHDF5File_AppendScalar<std::complex<double> >(self, path, data);
+          return PyBobIoHDF5File_appendScalar<std::complex<double> >(self, path, data);
         case bob::io::base::c256:
-          return PyBobIoHDF5File_AppendScalar<std::complex<long double> >(self, path, data);
+          return PyBobIoHDF5File_appendScalar<std::complex<long double> >(self, path, data);
         default:
           break;
       }
@@ -1506,11 +1202,27 @@ static int PyBobIoHDF5File_InnerAppend(PyBobIoHDF5FileObject* self, const char* 
 
 }
 
-static PyObject* PyBobIoHDF5File_Append(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
 
+static auto s_append = bob::extension::FunctionDoc(
+  "append",
+  "Appends a scalar or an array to a dataset",
+  "The object must be compatible with the typing information on the dataset, or an exception will be raised. "
+  "You can also, optionally, set this to an iterable of scalars or arrays. "
+  "This will cause this method to iterate over the elements and add each individually.\n\n"
+  "The ``compression`` parameter is effective when appending arrays. "
+  "Set this to a number betwen 0 (default) and 9 (maximum) to compress the contents of this dataset. "
+  "This setting is only effective if the dataset does not yet exist, otherwise, the previous setting is respected.",
+  true
+)
+.add_prototype("path, data, [compression]")
+.add_parameter("path", "str", "The path to the dataset to append data at; can be an absolute value (starting with a leading ``'/'``) or relative to the current working directory :py:attr:`cwd`")
+.add_parameter("data", ":py:class:`numpy.ndarray` or scalar", "Object to append to the dataset")
+.add_parameter("compression", "int", "A compression value between 0 and 9")
+;
+static PyObject* PyBobIoHDF5File_append(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", "data", "compression", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_append.kwlist();
 
   char* path = 0;
   PyObject* data = 0;
@@ -1529,50 +1241,21 @@ static PyObject* PyBobIoHDF5File_Append(PyBobIoHDF5FileObject* self, PyObject *a
     auto iter_ = make_safe(iter);
     while (PyObject* item = PyIter_Next(iter)) {
       auto item_ = make_safe(item);
-      int ok = PyBobIoHDF5File_InnerAppend(self, path, item, compression);
+      int ok = PyBobIoHDF5File_innerAppend(self, path, item, compression);
       if (!ok) return 0;
     }
     Py_RETURN_NONE;
   }
 
-  int ok = PyBobIoHDF5File_InnerAppend(self, path, data, compression);
+  int ok = PyBobIoHDF5File_innerAppend(self, path, data, compression);
   if (!ok) return 0;
   Py_RETURN_NONE;
-
+BOB_CATCH_MEMBER(exception_message(self, s_append.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_append_str, "append");
-PyDoc_STRVAR(s_append_doc,
-"x.append(path, data, [compression=0]) -> None\n\
-\n\
-Appends a scalar or an array to a dataset\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str] The path to the dataset to read data from. Can be\n\
-  an absolute value (starting with a leading ``'/'``) or\n\
-  relative to the current working directory (``cwd``).\n\
-\n\
-data\n\
-  [scalar|numpy.ndarray] Object to append to the dataset.\n\
-  This value must be compatible with the typing information\n\
-  on the dataset, or an exception will be raised.\n\
-  You can also, optionally, set this to an iterable of\n\
-  scalars or arrays. This will cause this method to iterate\n\
-  over the elements and add each individually.\n\
-\n\
-compression\n\
-  This parameter is effective when appending arrays. Set this\n\
-  to a number betwen 0 (default) and 9 (maximum) to compress\n\
-  the contents of this dataset. This setting is only effective\n\
-  if the dataset does not yet exist, otherwise, the previous\n\
-  setting is respected.\n\
-\n\
-");
 
 template <typename T>
-static PyObject* PyBobIoHDF5File_SetScalar(PyBobIoHDF5FileObject* self,
+static PyObject* PyBobIoHDF5File_setScalar(PyBobIoHDF5FileObject* self,
     const char* path, PyObject* o) {
 
   T value = PyBlitzArrayCxx_AsCScalar<T>(o);
@@ -1583,8 +1266,29 @@ static PyObject* PyBobIoHDF5File_SetScalar(PyBobIoHDF5FileObject* self,
 
 }
 
-static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
 
+static auto s_set = bob::extension::FunctionDoc(
+  "set",
+  "Sets the scalar or array at position 0 to the given value",
+  "This method is equivalent to checking if the scalar or array at position 0 exists and then replacing it. "
+  "If the path does not exist, we append the new scalar or array.\n\n"
+  "The ``data`` must be compatible with the typing information on the dataset, or an exception will be raised. "
+  "You can also, optionally, set this to an iterable of scalars or arrays. "
+  "This will cause this method to iterate over the elements and add each individually.\n\n"
+  "The ``compression`` parameter is effective when writing arrays. "
+  "Set this to a number betwen 0 (default) and 9 (maximum) to compress the contents of this dataset. "
+  "This setting is only effective if the dataset does not yet exist, otherwise, the previous setting is respected.\n\n"
+  ".. note:: The functions :py:meth:`set` and :py:meth:`write` are synonyms.",
+  true
+)
+.add_prototype("path, data, [compression]")
+.add_parameter("path", "str", "The path to the dataset to write data to; can be an absolute value (starting with a leading ``'/'``) or relative to the current working directory :py:attr:`cwd`")
+.add_parameter("data", ":py:class:`numpy.ndarray` or scalar", "Object to write to the dataset")
+.add_parameter("compression", "int", "A compression value between 0 and 9")
+;
+auto s_write = s_set.clone("write");
+static PyObject* PyBobIoHDF5File_set(PyBobIoHDF5FileObject* self, PyObject* args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
   static const char* const_kwlist[] = {"path", "data", "compression", 0};
   static char** kwlist = const_cast<char**>(const_kwlist);
@@ -1601,7 +1305,7 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
 
   bob::io::base::HDF5Type type;
   PyObject* converted = 0;
-  int is_array = PyBobIoHDF5File_GetObjectType(data, type, &converted);
+  int is_array = PyBobIoHDF5File_getObjectType(data, type, &converted);
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
@@ -1611,213 +1315,127 @@ static PyObject* PyBobIoHDF5File_Set(PyBobIoHDF5FileObject* self, PyObject* args
     return 0;
   }
 
-  try {
+  if (!is_array) { //write as a scalar
 
-    if (!is_array) { //write as a scalar
-
-      switch(type.type()) {
-        case bob::io::base::s:
-          {
-            auto value = PyBobIo_GetString(data);
-            if (!value) return 0;
-            self->f->set<std::string>(path, value.get());
-            Py_RETURN_NONE;
-          }
-          break;
-        case bob::io::base::b:
-          return PyBobIoHDF5File_SetScalar<bool>(self, path, data);
-        case bob::io::base::i8:
-          return PyBobIoHDF5File_SetScalar<int8_t>(self, path, data);
-        case bob::io::base::i16:
-          return PyBobIoHDF5File_SetScalar<int16_t>(self, path, data);
-        case bob::io::base::i32:
-          return PyBobIoHDF5File_SetScalar<int32_t>(self, path, data);
-        case bob::io::base::i64:
-          return PyBobIoHDF5File_SetScalar<int64_t>(self, path, data);
-        case bob::io::base::u8:
-          return PyBobIoHDF5File_SetScalar<uint8_t>(self, path, data);
-        case bob::io::base::u16:
-          return PyBobIoHDF5File_SetScalar<uint16_t>(self, path, data);
-        case bob::io::base::u32:
-          return PyBobIoHDF5File_SetScalar<uint32_t>(self, path, data);
-        case bob::io::base::u64:
-          return PyBobIoHDF5File_SetScalar<uint64_t>(self, path, data);
-        case bob::io::base::f32:
-          return PyBobIoHDF5File_SetScalar<float>(self, path, data);
-        case bob::io::base::f64:
-          return PyBobIoHDF5File_SetScalar<double>(self, path, data);
-        case bob::io::base::f128:
-          return PyBobIoHDF5File_SetScalar<long double>(self, path, data);
-        case bob::io::base::c64:
-          return PyBobIoHDF5File_SetScalar<std::complex<float> >(self, path, data);
-        case bob::io::base::c128:
-          return PyBobIoHDF5File_SetScalar<std::complex<double> >(self, path, data);
-        case bob::io::base::c256:
-          return PyBobIoHDF5File_SetScalar<std::complex<long double> >(self, path, data);
-        default:
-          break;
-      }
-
-    }
-
-    else { //write as array
-
-      switch (is_array) {
-        case 1: //bob.blitz.array
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
-          self->f->write_buffer(path, 0, type, ((PyBlitzArrayObject*)data)->data);
-          break;
-
-        case 2: //numpy.ndarray
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
-          self->f->write_buffer(path, 0, type, PyArray_DATA((PyArrayObject*)data));
-          break;
-
-        case 3: //converted numpy.ndarray
-          if (!self->f->contains(path)) self->f->create(path, type, false, compression);
-          self->f->write_buffer(path, 0, type, PyArray_DATA((PyArrayObject*)converted));
-          break;
-
-        default:
-          const char* filename = "<unknown>";
-          try{ filename = self->f->filename().c_str(); } catch(...){}
-          PyErr_Format(PyExc_NotImplementedError, "error setting object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, filename, is_array);
-          return 0;
-      }
-
+    switch(type.type()) {
+      case bob::io::base::s:
+        {
+          auto value = PyBobIo_GetString(data);
+          if (!value) return 0;
+          self->f->set<std::string>(path, value.get());
+          Py_RETURN_NONE;
+        }
+        break;
+      case bob::io::base::b:
+        return PyBobIoHDF5File_setScalar<bool>(self, path, data);
+      case bob::io::base::i8:
+        return PyBobIoHDF5File_setScalar<int8_t>(self, path, data);
+      case bob::io::base::i16:
+        return PyBobIoHDF5File_setScalar<int16_t>(self, path, data);
+      case bob::io::base::i32:
+        return PyBobIoHDF5File_setScalar<int32_t>(self, path, data);
+      case bob::io::base::i64:
+        return PyBobIoHDF5File_setScalar<int64_t>(self, path, data);
+      case bob::io::base::u8:
+        return PyBobIoHDF5File_setScalar<uint8_t>(self, path, data);
+      case bob::io::base::u16:
+        return PyBobIoHDF5File_setScalar<uint16_t>(self, path, data);
+      case bob::io::base::u32:
+        return PyBobIoHDF5File_setScalar<uint32_t>(self, path, data);
+      case bob::io::base::u64:
+        return PyBobIoHDF5File_setScalar<uint64_t>(self, path, data);
+      case bob::io::base::f32:
+        return PyBobIoHDF5File_setScalar<float>(self, path, data);
+      case bob::io::base::f64:
+        return PyBobIoHDF5File_setScalar<double>(self, path, data);
+      case bob::io::base::f128:
+        return PyBobIoHDF5File_setScalar<long double>(self, path, data);
+      case bob::io::base::c64:
+        return PyBobIoHDF5File_setScalar<std::complex<float> >(self, path, data);
+      case bob::io::base::c128:
+        return PyBobIoHDF5File_setScalar<std::complex<double> >(self, path, data);
+      case bob::io::base::c256:
+        return PyBobIoHDF5File_setScalar<std::complex<long double> >(self, path, data);
+      default:
+        break;
     }
 
   }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot set object `%s' at HDF5 file `%s': unknown exception caught", path, filename);
-    return 0;
+
+  else { //write as array
+
+    switch (is_array) {
+      case 1: //bob.blitz.array
+        if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+        self->f->write_buffer(path, 0, type, ((PyBlitzArrayObject*)data)->data);
+        break;
+
+      case 2: //numpy.ndarray
+        if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+        self->f->write_buffer(path, 0, type, PyArray_DATA((PyArrayObject*)data));
+        break;
+
+      case 3: //converted numpy.ndarray
+        if (!self->f->contains(path)) self->f->create(path, type, false, compression);
+        self->f->write_buffer(path, 0, type, PyArray_DATA((PyArrayObject*)converted));
+        break;
+
+      default:
+        const char* filename = "<unknown>";
+        try{ filename = self->f->filename().c_str(); } catch(...){}
+        PyErr_Format(PyExc_NotImplementedError, "error setting object `%s' at HDF5 file `%s': HDF5 replace function is uncovered for array type %d (DEBUG ME)", path, filename, is_array);
+        return 0;
+    }
+
   }
 
   Py_RETURN_NONE;
-
+BOB_CATCH_MEMBER(exception_message(self, s_set.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_set_str, "set");
-PyDoc_STRVAR(s_set_doc,
-"x.set(path, data, [compression=0]) -> None\n\
-\n\
-Sets the scalar or array at position 0 to the given value.\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str] The path to the dataset to read data from. Can be\n\
-  an absolute value (starting with a leading ``'/'``) or\n\
-  relative to the current working directory (``cwd``).\n\
-\n\
-data\n\
-  [scalar|numpy.ndarray] Object to append to the dataset.\n\
-  This value must be compatible with the typing information\n\
-  on the dataset, or an exception will be raised.\n\
-  You can also, optionally, set this to an iterable of\n\
-  scalars or arrays. This will cause this method to iterate\n\
-  over the elements and add each individually.\n\
-\n\
-compression\n\
-  This parameter is effective when appending arrays. Set this\n\
-  to a number betwen 0 (default) and 9 (maximum) to compress\n\
-  the contents of this dataset. This setting is only effective\n\
-  if the dataset does not yet exist, otherwise, the previous\n\
-  setting is respected.\n\
-\n\
-This method is equivalent to checking if the scalar or array at\n\
-position 0 exists and then replacing it. If the path does not\n\
-exist, we append the new scalar or array.\n\
-");
 
-static PyObject* PyBobIoHDF5File_Copy(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_copy = bob::extension::FunctionDoc(
+  "copy",
+  "Copies all accessible content to another HDF5 file",
+  "Unlinked contents of this file will not be copied. "
+  "This can be used as a method to trim unwanted content in a file.",
+  true
+)
+.add_prototype("hdf5")
+.add_parameter("hdf5", ":py:class:`HDF5File`", "The HDF5 file (already opened for writing), to copy the contents to")
+;
+static PyObject* PyBobIoHDF5File_copy(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"file", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_copy.kwlist();
 
   PyBobIoHDF5FileObject* other = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&", kwlist, &PyBobIoHDF5File_Converter, &other)) return 0;
 
-  try {
-    self->f->copy(*other->f);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "unknown exception caught while copying contents of file `%s' to file `%s'", self->f->filename().c_str(), filename);
-    return 0;
-  }
+  self->f->copy(*other->f);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_copy.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_copy_str, "copy");
-PyDoc_STRVAR(s_copy_doc,
-"x.copy(file) -> None\n\
-\n\
-Copies all accessible content to another HDF5 file\n\
-\n\
-Parameters:\n\
-\n\
-file\n\
-  [HDF5File] The file (already opened), to copy the contents to.\n\
-  Unlinked contents of this file will not be copied. This can be\n\
-  used as a method to trim unwanted content in a file.\n\
-\n\
-");
 
-template <typename T> static PyObject* PyBobIoHDF5File_ReadScalarAttribute
+template <typename T> static PyObject* PyBobIoHDF5File_readScalarAttribute
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
  const bob::io::base::HDF5Type& type) {
   T value;
-  try {
-    self->f->read_attribute(path, name, type, static_cast<void*>(&value));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
-    return 0;
-  }
+  self->f->read_attribute(path, name, type, static_cast<void*>(&value));
   return PyBlitzArrayCxx_FromCScalar(value);
 }
 
-template <> PyObject* PyBobIoHDF5File_ReadScalarAttribute<const char*>
+template <> PyObject* PyBobIoHDF5File_readScalarAttribute<const char*>
 (PyBobIoHDF5FileObject* self, const char* path, const char* name,
  const bob::io::base::HDF5Type& type) {
   std::string retval;
-  try {
-    self->f->getAttribute(path, name, retval);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading string attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
-    return 0;
-  }
+  self->f->getAttribute(path, name, retval);
   return Py_BuildValue("s", retval.c_str());
 }
 
-static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
+static PyObject* PyBobIoHDF5File_readAttribute(PyBobIoHDF5FileObject* self,
     const char* path, const char* name, const bob::io::base::HDF5Type& type) {
 
   //no error detection: this should be done before reaching this method
@@ -1828,37 +1446,37 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
     //read as scalar
     switch(type.type()) {
       case bob::io::base::s:
-        return PyBobIoHDF5File_ReadScalarAttribute<const char*>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<const char*>(self, path, name, type);
       case bob::io::base::b:
-        return PyBobIoHDF5File_ReadScalarAttribute<bool>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<bool>(self, path, name, type);
       case bob::io::base::i8:
-        return PyBobIoHDF5File_ReadScalarAttribute<int8_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<int8_t>(self, path, name, type);
       case bob::io::base::i16:
-        return PyBobIoHDF5File_ReadScalarAttribute<int16_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<int16_t>(self, path, name, type);
       case bob::io::base::i32:
-        return PyBobIoHDF5File_ReadScalarAttribute<int32_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<int32_t>(self, path, name, type);
       case bob::io::base::i64:
-        return PyBobIoHDF5File_ReadScalarAttribute<int64_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<int64_t>(self, path, name, type);
       case bob::io::base::u8:
-        return PyBobIoHDF5File_ReadScalarAttribute<uint8_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<uint8_t>(self, path, name, type);
       case bob::io::base::u16:
-        return PyBobIoHDF5File_ReadScalarAttribute<uint16_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<uint16_t>(self, path, name, type);
       case bob::io::base::u32:
-        return PyBobIoHDF5File_ReadScalarAttribute<uint32_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<uint32_t>(self, path, name, type);
       case bob::io::base::u64:
-        return PyBobIoHDF5File_ReadScalarAttribute<uint64_t>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<uint64_t>(self, path, name, type);
       case bob::io::base::f32:
-        return PyBobIoHDF5File_ReadScalarAttribute<float>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<float>(self, path, name, type);
       case bob::io::base::f64:
-        return PyBobIoHDF5File_ReadScalarAttribute<double>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<double>(self, path, name, type);
       case bob::io::base::f128:
-        return PyBobIoHDF5File_ReadScalarAttribute<long double>(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<long double>(self, path, name, type);
       case bob::io::base::c64:
-        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<float> >(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<std::complex<float> >(self, path, name, type);
       case bob::io::base::c128:
-        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<double> >(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<std::complex<double> >(self, path, name, type);
       case bob::io::base::c256:
-        return PyBobIoHDF5File_ReadScalarAttribute<std::complex<long double> >(self, path, name, type);
+        return PyBobIoHDF5File_readScalarAttribute<std::complex<long double> >(self, path, name, type);
       default:
         break;
     }
@@ -1875,28 +1493,28 @@ static PyObject* PyBobIoHDF5File_ReadAttribute(PyBobIoHDF5FileObject* self,
   if (!retval) return 0;
   auto retval_ = make_safe(retval);
 
-  try {
-    self->f->read_attribute(path, name, type, PyArray_DATA((PyArrayObject*)retval));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while reading array attribute `%s' at resource `%s' with descriptor `%s' from HDF5 file `%s'", name, path, type.str().c_str(), filename);
-    return 0;
-  }
+  self->f->read_attribute(path, name, type, PyArray_DATA((PyArrayObject*)retval));
 
   return Py_BuildValue("O", retval);
 }
 
-static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
 
+static auto s_get_attribute = bob::extension::FunctionDoc(
+  "get_attribute",
+  "Retrieve a given attribute from the named resource",
+  "This method returns a single value corresponding to what is stored inside the attribute container for the given resource. "
+  "If you would like to retrieve all attributes at once, use :py:meth:`get_attributes` instead.",
+  true
+)
+.add_prototype("name, [path]", "attribute")
+.add_parameter("name", "str", "The name of the attribute to retrieve; if the attribute is not available, a ``RuntimeError`` is raised")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to get an attribute from; if the path does not exist, a ``RuntimeError`` is raised")
+.add_return("attribute", ":py:class:`numpy.ndarray` or scalar", "The read attribute")
+;
+static PyObject* PyBobIoHDF5File_getAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"name", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_get_attribute.kwlist();
 
   const char* name = 0;
   const char* path = ".";
@@ -1904,19 +1522,7 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
 
   bob::io::base::HDF5Type type;
 
-  try {
-    self->f->getAttributeType(path, name, type);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while getting type for attribute `%s' at resource `%s' from HDF5 file `%s'", name, path, filename);
-    return 0;
-  }
+  self->f->getAttributeType(path, name, type);
 
   if (type.type() == bob::io::base::unsupported) {
     const char* filename = "<unknown>";
@@ -1927,38 +1533,26 @@ static PyObject* PyBobIoHDF5File_GetAttribute(PyBobIoHDF5FileObject* self, PyObj
     Py_RETURN_NONE;
   }
 
-  return PyBobIoHDF5File_ReadAttribute(self, path, name, type);
+  return PyBobIoHDF5File_readAttribute(self, path, name, type);
+BOB_CATCH_MEMBER(exception_message(self, s_get_attribute.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_get_attribute_str, "get_attribute");
-PyDoc_STRVAR(s_get_attribute_doc,
-"x.get_attribute(name, [path='.']) -> scalar|numpy.ndarray\n\
-\n\
-Retrieve a given attribute from the named resource.\n\
-\n\
-Parameters:\n\
-\n\
-name\n\
-  [str] The name of the attribute to retrieve. If the attribute\n\
-  is not available, a ``RuntimeError`` is raised.\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to get an attribute from.\n\
-  If the path does not exist, a ``RuntimeError`` is\n\
-  raised.\n\
-\n\
-This method returns a single value corresponding to what is\n\
-stored inside the attribute container for the given resource.\n\
-If you would like to retrieve all attributes at once, use\n\
-:py:meth:`bob.io.base.HDF5File.get_attributes` instead.\n\
-");
 
-static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_get_attributes = bob::extension::FunctionDoc(
+  "get_attributes",
+  "Reads all attributes of the given path",
+  "Attributes are returned in a dictionary in which each key corresponds to the attribute name and each value corresponds to the value stored inside the HDF5 file. "
+  "To retrieve only a specific attribute, use :py:meth:`get_attribute`.",
+  true
+)
+.add_prototype("[path]", "attributes")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to get all attributes from; if the path does not exist, a ``RuntimeError`` is raised.")
+.add_return("attributes", "{str:value}", "The attributes organized in dictionary, where ``value`` might be a :py:class:`numpy.ndarray` or a scalar")
+;
+static PyObject* PyBobIoHDF5File_getAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_get_attributes.kwlist();
 
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|s", kwlist, &path)) return 0;
@@ -1979,7 +1573,7 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
       PyErr_Warn(PyExc_UserWarning, m.str().c_str());
       item = Py_BuildValue("");
     }
-    else item = PyBobIoHDF5File_ReadAttribute(self, path, k->first.c_str(), k->second);
+    else item = PyBobIoHDF5File_readAttribute(self, path, k->first.c_str(), k->second);
 
     if (!item) return 0;
     auto item_ = make_safe(item);
@@ -1988,80 +1582,27 @@ static PyObject* PyBobIoHDF5File_GetAttributes(PyBobIoHDF5FileObject* self, PyOb
   }
 
   return Py_BuildValue("O", retval);
-
+BOB_CATCH_MEMBER(exception_message(self, s_get_attributes.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_get_attributes_str, "get_attributes");
-PyDoc_STRVAR(s_get_attributes_doc,
-"x.get_attributes([path='.']) -> dict\n\
-\n\
-All attributes of the given path organized in dictionary\n\
-\n\
-Parameters:\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to get all attributes from.\n\
-  If the path does not exist, a ``RuntimeError`` is\n\
-  raised.\n\
-\n\
-Attributes are returned in a dictionary in which each key\n\
-corresponds to the attribute name and each value corresponds\n\
-to the value stored inside the HDF5 file. To retrieve only\n\
-a specific attribute, use :py:meth:`bob.io.base.HDF5File.get_attribute`.\n\
-");
 
-template <typename T> PyObject* PyBobIoHDF5File_WriteScalarAttribute
-(PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::base::HDF5Type& type, PyObject* o) {
-
+template <typename T> PyObject* PyBobIoHDF5File_writeScalarAttribute(PyBobIoHDF5FileObject* self, const char* path, const char* name, const bob::io::base::HDF5Type& type, PyObject* o) {
   T value = PyBlitzArrayCxx_AsCScalar<T>(o);
   if (PyErr_Occurred()) return 0;
 
-  try {
-    self->f->write_attribute(path, name, type, static_cast<void*>(&value));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
-    return 0;
-  }
+  self->f->write_attribute(path, name, type, static_cast<void*>(&value));
 
   Py_RETURN_NONE;
-
 }
 
-template <> PyObject* PyBobIoHDF5File_WriteScalarAttribute<const char*>
-(PyBobIoHDF5FileObject* self, const char* path, const char* name,
- const bob::io::base::HDF5Type& type, PyObject* o) {
-
+template <> PyObject* PyBobIoHDF5File_writeScalarAttribute<const char*>(PyBobIoHDF5FileObject* self, const char* path, const char* name, const bob::io::base::HDF5Type& type, PyObject* o) {
   auto value = PyBobIo_GetString(o);
   if (!value) return 0;
-
-  try {
-    self->f->write_attribute(path, name, type, static_cast<const void*>(value.get()));
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing string attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
-    return 0;
-  }
-
+  self->f->write_attribute(path, name, type, static_cast<const void*>(value.get()));
   Py_RETURN_NONE;
-
 }
 
-static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
+static PyObject* PyBobIoHDF5File_writeAttribute(PyBobIoHDF5FileObject* self,
     const char* path, const char* name, const bob::io::base::HDF5Type& type,
     PyObject* o, int is_array, PyObject* converted) {
 
@@ -2070,37 +1611,37 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
   if (!is_array) { //write as a scalar
     switch(type.type()) {
       case bob::io::base::s:
-        return PyBobIoHDF5File_WriteScalarAttribute<const char*>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<const char*>(self, path, name, type, o);
       case bob::io::base::b:
-        return PyBobIoHDF5File_WriteScalarAttribute<bool>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<bool>(self, path, name, type, o);
       case bob::io::base::i8:
-        return PyBobIoHDF5File_WriteScalarAttribute<int8_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<int8_t>(self, path, name, type, o);
       case bob::io::base::i16:
-        return PyBobIoHDF5File_WriteScalarAttribute<int16_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<int16_t>(self, path, name, type, o);
       case bob::io::base::i32:
-        return PyBobIoHDF5File_WriteScalarAttribute<int32_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<int32_t>(self, path, name, type, o);
       case bob::io::base::i64:
-        return PyBobIoHDF5File_WriteScalarAttribute<int64_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<int64_t>(self, path, name, type, o);
       case bob::io::base::u8:
-        return PyBobIoHDF5File_WriteScalarAttribute<uint8_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<uint8_t>(self, path, name, type, o);
       case bob::io::base::u16:
-        return PyBobIoHDF5File_WriteScalarAttribute<uint16_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<uint16_t>(self, path, name, type, o);
       case bob::io::base::u32:
-        return PyBobIoHDF5File_WriteScalarAttribute<uint32_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<uint32_t>(self, path, name, type, o);
       case bob::io::base::u64:
-        return PyBobIoHDF5File_WriteScalarAttribute<uint64_t>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<uint64_t>(self, path, name, type, o);
       case bob::io::base::f32:
-        return PyBobIoHDF5File_WriteScalarAttribute<float>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<float>(self, path, name, type, o);
       case bob::io::base::f64:
-        return PyBobIoHDF5File_WriteScalarAttribute<double>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<double>(self, path, name, type, o);
       case bob::io::base::f128:
-        return PyBobIoHDF5File_WriteScalarAttribute<long double>(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<long double>(self, path, name, type, o);
       case bob::io::base::c64:
-        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<float> >(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<std::complex<float> >(self, path, name, type, o);
       case bob::io::base::c128:
-        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<double> >(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<std::complex<double> >(self, path, name, type, o);
       case bob::io::base::c256:
-        return PyBobIoHDF5File_WriteScalarAttribute<std::complex<long double> >(self, path, name, type, o);
+        return PyBobIoHDF5File_writeScalarAttribute<std::complex<long double> >(self, path, name, type, o);
       default:
         break;
     }
@@ -2108,51 +1649,50 @@ static PyObject* PyBobIoHDF5File_WriteAttribute(PyBobIoHDF5FileObject* self,
 
   else { //write as an numpy array
 
-    try {
-      switch (is_array) {
+    switch (is_array) {
 
-        case 1: //bob.blitz.array
-          self->f->write_attribute(path, name, type, ((PyBlitzArrayObject*)o)->data);
-          break;
+      case 1: //bob.blitz.array
+        self->f->write_attribute(path, name, type, ((PyBlitzArrayObject*)o)->data);
+        break;
 
-        case 2: //numpy.ndarray
-          self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)o));
-          break;
+      case 2: //numpy.ndarray
+        self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)o));
+        break;
 
-        case 3: //converted numpy.ndarray
-          self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)converted));
-          break;
+      case 3: //converted numpy.ndarray
+        self->f->write_attribute(path, name, type, PyArray_DATA((PyArrayObject*)converted));
+        break;
 
-        default:{
-          const char* filename = "<unknown>";
-          try{ filename = self->f->filename().c_str(); } catch(...){}
-          PyErr_Format(PyExc_NotImplementedError, "error setting attribute `%s' at resource `%s' of HDF5 file `%s': HDF5 attribute setting function is uncovered for array type %d (DEBUG ME)", name, path, filename, is_array);
-          return 0;
-        }
+      default:{
+        const char* filename = "<unknown>";
+        try{ filename = self->f->filename().c_str(); } catch(...){}
+        PyErr_Format(PyExc_NotImplementedError, "error setting attribute `%s' at resource `%s' of HDF5 file `%s': HDF5 attribute setting function is uncovered for array type %d (DEBUG ME)", name, path, filename, is_array);
+        return 0;
       }
     }
-    catch (std::exception& e) {
-      PyErr_SetString(PyExc_RuntimeError, e.what());
-      return 0;
-    }
-    catch (...) {
-      const char* filename = "<unknown>";
-      try{ filename = self->f->filename().c_str(); } catch(...){}
-      PyErr_Format(PyExc_RuntimeError, "caught unknown exception while writing array attribute `%s' at resource `%s' with descriptor `%s' at HDF5 file `%s'", name, path, type.str().c_str(), filename);
-      return 0;
-    }
-
   }
-
   Py_RETURN_NONE;
-
 }
 
-static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_set_attribute = bob::extension::FunctionDoc(
+  "set_attribute",
+  "Sets a given attribute at the named resource",
+  "Only simple  scalars (booleans, integers, floats and complex numbers) and arrays of those are supported at the time being. "
+  "You can use :py:mod:`numpy` scalars to set values with arbitrary precision (e.g. :py:class:`numpy.uint8`).\n\n"
+  ".. warning:: Attributes in HDF5 files are supposed to be small containers or simple scalars that provide extra information about the data stored on the main resource (dataset or group|directory). "
+  "Attributes cannot be retrieved in chunks, contrary to data in datasets. "
+  "Currently, **no limitations** for the size of values stored on attributes is imposed.",
+  true
+)
+.add_prototype("name, value, [path]")
+.add_parameter("name", "str", "The name of the attribute to set")
+.add_parameter("value", ":py:class:`numpy.ndarray` or scalar", "A simple scalar to set for the given attribute on the named resources ``path``")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to set an attribute at")
+;
+static PyObject* PyBobIoHDF5File_setAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"name", "value", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_set_attribute.kwlist();
 
   const char* name = 0;
   PyObject* value = 0;
@@ -2161,7 +1701,7 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
 
   bob::io::base::HDF5Type type;
   PyObject* converted = 0;
-  int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+  int is_array = PyBobIoHDF5File_getObjectType(value, type, &converted);
   auto converted_ = make_xsafe(converted);
 
   if (is_array < 0) { ///< error condition, signal
@@ -2171,58 +1711,36 @@ static PyObject* PyBobIoHDF5File_SetAttribute(PyBobIoHDF5FileObject* self, PyObj
     return 0;
   }
 
-  return PyBobIoHDF5File_WriteAttribute(self, path, name, type, value, is_array, converted);
-
+  return PyBobIoHDF5File_writeAttribute(self, path, name, type, value, is_array, converted);
+BOB_CATCH_MEMBER(exception_message(self, s_set_attribute.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_set_attribute_str, "set_attribute");
-PyDoc_STRVAR(s_set_attribute_doc,
-"x.set_attribute(name, value, [path='.']) -> None\n\
-\n\
-Sets a given attribute at the named resource.\n\
-\n\
-Parameters:\n\
-\n\
-name\n\
-  [str] The name of the attribute to set.\n\
-\n\
-value\n\
-  [scalar|numpy.ndarray] A simple scalar to set for the given\n\
-  attribute on the named resources (``path``). Only simple\n\
-  scalars (booleans, integers, floats and complex numbers) and\n\
-  arrays of those are supported at the time being. You can use\n\
-  :py:mod:`numpy` scalars to set values with arbitrary\n\
-  precision (e.g. :py:class:`numpy.uint8`).\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to set an attribute at.\n\
-\n\
-.. warning::\n\
-\n\
-   Attributes in HDF5 files are supposed to be small containers or\n\
-   simple scalars that provide extra information about the data\n\
-   stored on the main resource (dataset or group|directory).\n\
-   Attributes cannot be retrieved in chunks, contrary to data in\n\
-   datasets.\n\
-   \n\
-   Currently, *no limitations* for the size of values stored on\n\
-   attributes is imposed.\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_set_attributes = bob::extension::FunctionDoc(
+  "set_attributes",
+  "Sets several attribute at the named resource using a dictionary",
+  "Each value in the dictionary should be simple scalars (booleans, integers, floats and complex numbers) or arrays of those are supported at the time being. "
+  "You can use :py:mod:`numpy` scalars to set values with arbitrary precision (e.g. :py:class:`numpy.uint8`).\n\n"
+  ".. warning:: Attributes in HDF5 files are supposed to be small containers or simple scalars that provide extra information about the data stored on the main resource (dataset or group|directory). "
+  "Attributes cannot be retrieved in chunks, contrary to data in datasets. "
+  "Currently, **no limitations** for the size of values stored on attributes is imposed.",
+  true
+)
+.add_prototype("attributes, [path]")
+.add_parameter("attributes", "{str: value}", "A python dictionary containing pairs of strings and values, which can be a py:class:`numpy.ndarray` or a scalar")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to set attributes at")
+;
+static PyObject* PyBobIoHDF5File_setAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"attrs", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_set_attributes.kwlist();
 
   PyObject* attrs = 0;
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &attrs, &path)) return 0;
 
   if (!PyDict_Check(attrs)) {
-    PyErr_SetString(PyExc_TypeError, "parameter `attrs' should be a dictionary where keys are strings and values are the attribute values");
+    PyErr_Format(PyExc_TypeError, "parameter `%s' should be a dictionary where keys are strings and values are the attribute values", kwlist[0]);
     return 0;
   }
 
@@ -2235,7 +1753,7 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
     auto name = PyBobIo_GetString(key);
     if (!name) return 0;
 
-    int is_array = PyBobIoHDF5File_GetObjectType(value, type, &converted);
+    int is_array = PyBobIoHDF5File_getObjectType(value, type, &converted);
     auto converted_ = make_xsafe(converted);
 
     if (is_array < 0) { ///< error condition, signal
@@ -2245,110 +1763,64 @@ static PyObject* PyBobIoHDF5File_SetAttributes(PyBobIoHDF5FileObject* self, PyOb
       return 0;
     }
 
-    PyObject* retval = PyBobIoHDF5File_WriteAttribute(self, path, name.get(), type, value, is_array, converted);
+    PyObject* retval = PyBobIoHDF5File_writeAttribute(self, path, name.get(), type, value, is_array, converted);
     if (!retval) return 0;
     Py_DECREF(retval);
 
   }
 
   Py_RETURN_NONE;
-
+BOB_CATCH_MEMBER(exception_message(self, s_set_attributes.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_set_attributes_str, "set_attributes");
-PyDoc_STRVAR(s_set_attributes_doc,
-"x.set_attributes(attrs, [path='.']) -> None\n\
-\n\
-Sets attributes in a given (existing) path using a dictionary\n\
-\n\
-Parameters:\n\
-\n\
-attrs\n\
-  [dict] A python dictionary containing pairs of strings and\n\
-  values. Each value in the dictionary should be simple scalars\n\
-  (booleans, integers, floats and complex numbers) or arrays of\n\
-  those are supported at the time being. You can use\n\
-  :py:mod:`numpy` scalars to set values with arbitrary precision\n\
-  (e.g. :py:class:`numpy.uint8`).\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to set attributes at.\n\
-\n\
-.. warning::\n\
-\n\
-   Attributes in HDF5 files are supposed to be small containers or\n\
-   simple scalars that provide extra information about the data\n\
-   stored on the main resource (dataset or group|directory).\n\
-   Attributes cannot be retrieved in chunks, contrary to data in\n\
-   datasets.\n\
-   \n\
-   Currently, *no limitations* for the size of values stored on\n\
-   attributes is imposed.\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_DelAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_del_attribute = bob::extension::FunctionDoc(
+  "del_attribute",
+  "Removes a given attribute at the named resource",
+  0,
+  true
+)
+.add_prototype("name, [path]")
+.add_parameter("name", "str", "The name of the attribute to delete; if the attribute is not available, a ``RuntimeError`` is raised")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to delete an attribute from; if the path does not exist, a ``RuntimeError`` is raised")
+;
+static PyObject* PyBobIoHDF5File_delAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"name", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_del_attribute.kwlist();
 
   const char* name = 0;
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
-  try {
-    self->f->deleteAttribute(path, name);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, filename);
-    return 0;
-  }
+  self->f->deleteAttribute(path, name);
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_del_attribute.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_del_attribute_str, "del_attribute");
-PyDoc_STRVAR(s_del_attribute_doc,
-"x.del_attribute(name, [path='.']) -> None\n\
-\n\
-Removes a given attribute at the named resource.\n\
-\n\
-Parameters:\n\
-\n\
-name\n\
-  [str] The name of the attribute to delete. A\n\
-  ``RuntimeError`` is raised if the attribute does\n\
-  not exist.\n\
-\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to set an attribute at.\n\
-  If the path does not exist, a ``RuntimeError`` is\n\
-  raised.\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_del_attributes = bob::extension::FunctionDoc(
+  "del_attributes",
+  "Removes attributes in a given (existing) path",
+  "If the ``attributes`` are not given or set to ``None``, then remove all attributes at the named resource.",
+  true
+)
+.add_prototype("[attributes], [path]")
+.add_parameter("attributes", "[str] or None", "[Default: ``None``] An iterable containing the names of the attributes to be removed, or ``None``")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to delete attributes from; if the path does not exist, a ``RuntimeError`` is raised")
+;
+static PyObject* PyBobIoHDF5File_delAttributes(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"attrs", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_del_attributes.kwlist();
 
   PyObject* attrs = 0;
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Os", kwlist, &attrs, &path)) return 0;
 
   if (attrs && !PyIter_Check(attrs)) {
-    PyErr_SetString(PyExc_TypeError, "parameter `attrs', if set, must be an iterable of strings");
+    PyErr_Format(PyExc_TypeError, "parameter `%s', if set, must be an iterable of strings", kwlist[0]);
     return 0;
   }
 
@@ -2360,331 +1832,232 @@ static PyObject* PyBobIoHDF5File_DelAttributes(PyBobIoHDF5FileObject* self, PyOb
       auto item_ = make_safe(item);
       auto name = PyBobIo_GetString(item);
       if (!name) return 0;
-      try {
-        self->f->deleteAttribute(path, name.get());
-      }
-      catch (std::exception& e) {
-        PyErr_SetString(PyExc_RuntimeError, e.what());
-        return 0;
-      }
-      catch (...) {
-        const char* filename = "<unknown>";
-        try{ filename = self->f->filename().c_str(); } catch(...){}
-        PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name.get(), path, filename);
-        return 0;
-      }
+      self->f->deleteAttribute(path, name.get());
     }
     Py_RETURN_NONE;
   }
 
   //else, find the attributes and remove all of them
   std::map<std::string, bob::io::base::HDF5Type> attributes;
-  try {
-    self->f->listAttributes(path, attributes);
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot list attributes at resource `%s' of HDF5 file `%s': unknown exception caught", path, filename);
-    return 0;
-  }
+  self->f->listAttributes(path, attributes);
   for (auto k=attributes.begin(); k!=attributes.end(); ++k) {
-    try {
-      self->f->deleteAttribute(path, k->first);
-    }
-    catch (std::exception& e) {
-      PyErr_SetString(PyExc_RuntimeError, e.what());
-      return 0;
-    }
-    catch (...) {
-      const char* filename = "<unknown>";
-      try{ filename = self->f->filename().c_str(); } catch(...){}
-      PyErr_Format(PyExc_RuntimeError, "cannot delete attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", k->first.c_str(), path, filename);
-      return 0;
-    }
+    self->f->deleteAttribute(path, k->first);
   }
 
   Py_RETURN_NONE;
+BOB_CATCH_MEMBER(exception_message(self, s_del_attributes.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_del_attributes_str, "del_attributes");
-PyDoc_STRVAR(s_del_attributes_doc,
-"x.del_attributes([attrs=None, [path='.']]) -> None\n\
-\n\
-Removes attributes in a given (existing) path\n\
-\n\
-Parameters:\n\
-\n\
-attrs\n\
-  [list] An iterable containing the names of the attributes to\n\
-  be removed. If not given or set to ``None``, then\n\
-  remove all attributes at the named resource.\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to set attributes at.\n\
-  If the path does not exist, a ``RuntimeError`` is\n\
-  raised.\n\
-\n\
-");
 
-static PyObject* PyBobIoHDF5File_HasAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
-
+static auto s_has_attribute = bob::extension::FunctionDoc(
+  "has_attribute",
+  "Checks existence of a given attribute at the named resource",
+  0,
+  true
+)
+.add_prototype("name, [path]", "existence")
+.add_parameter("name", "str", "The name of the attribute to check")
+.add_parameter("path", "str", "[Default: ``'.'``] The path leading to the resource (dataset or group|directory) you would like to delete attributes from; if the path does not exist, a ``RuntimeError`` is raised")
+.add_return("existence", "bool", "``True``, if the attribute ``name`` exists, otherwise ``False``")
+;
+static PyObject* PyBobIoHDF5File_hasAttribute(PyBobIoHDF5FileObject* self, PyObject *args, PyObject* kwds) {
+BOB_TRY
   /* Parses input arguments in a single shot */
-  static const char* const_kwlist[] = {"name", "path", 0};
-  static char** kwlist = const_cast<char**>(const_kwlist);
+  static char** kwlist = s_has_attribute.kwlist();
 
   const char* name = 0;
   const char* path = ".";
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|s", kwlist, &name, &path)) return 0;
 
-  try {
-    if (self->f->hasAttribute(path, name)) Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot verify existence of attribute `%s' at resource `%s' of HDF5 file `%s': unknown exception caught", name, path, filename);
-    return 0;
-  }
+  if (self->f->hasAttribute(path, name))
+    Py_RETURN_TRUE;
+  Py_RETURN_FALSE;
+
+BOB_CATCH_MEMBER(exception_message(self, s_has_attribute.name()).c_str(), 0)
 }
 
-PyDoc_STRVAR(s_has_attribute_str, "has_attribute");
-PyDoc_STRVAR(s_has_attribute_doc,
-"x.has_attribute(name, [path='.']) -> bool\n\
-\n\
-Checks existence of a given attribute at the named resource.\n\
-\n\
-Parameters:\n\
-\n\
-name\n\
-  [str] The name of the attribute to check.\n\
-\n\
-\n\
-path\n\
-  [str, optional] The path leading to the resource (dataset or\n\
-  group|directory) you would like to set an attribute at.\n\
-  If the path does not exist, a ``RuntimeError`` is\n\
-  raised.\n\
-\n\
-");
 
-static PyMethodDef PyBobIoHDF5File_Methods[] = {
+static PyMethodDef PyBobIoHDF5File_methods[] = {
   {
     s_close.name(),
-    (PyCFunction)PyBobIoHDF5File_Close,
+    (PyCFunction)PyBobIoHDF5File_close,
     METH_VARARGS|METH_KEYWORDS,
     s_close.doc()
   },
   {
     s_flush.name(),
-    (PyCFunction)PyBobIoHDF5File_Flush,
+    (PyCFunction)PyBobIoHDF5File_flush,
     METH_VARARGS|METH_KEYWORDS,
     s_flush.doc()
   },
   {
-    s_cd_str,
-    (PyCFunction)PyBobIoHDF5File_ChangeDirectory,
+    s_cd.name(),
+    (PyCFunction)PyBobIoHDF5File_changeDirectory,
     METH_VARARGS|METH_KEYWORDS,
-    s_cd_doc,
+    s_cd.doc(),
   },
   {
-    s_has_group_str,
-    (PyCFunction)PyBobIoHDF5File_HasGroup,
+    s_has_group.name(),
+    (PyCFunction)PyBobIoHDF5File_hasGroup,
     METH_VARARGS|METH_KEYWORDS,
-    s_has_group_doc,
+    s_has_group.doc(),
   },
   {
-    s_create_group_str,
-    (PyCFunction)PyBobIoHDF5File_CreateGroup,
+    s_create_group.name(),
+    (PyCFunction)PyBobIoHDF5File_createGroup,
     METH_VARARGS|METH_KEYWORDS,
-    s_create_group_doc,
+    s_create_group.doc(),
   },
   {
-    s_has_dataset_str,
-    (PyCFunction)PyBobIoHDF5File_HasDataset,
+    s_has_dataset.name(),
+    (PyCFunction)PyBobIoHDF5File_hasDataset,
     METH_VARARGS|METH_KEYWORDS,
-    s_has_dataset_doc,
+    s_has_dataset.doc(),
   },
   {
-    s_has_key_str,
-    (PyCFunction)PyBobIoHDF5File_HasDataset,
+    s_has_key.name(),
+    (PyCFunction)PyBobIoHDF5File_hasDataset,
     METH_VARARGS|METH_KEYWORDS,
-    s_has_dataset_doc,
+    s_has_key.doc(),
   },
   {
-    s_describe_str,
-    (PyCFunction)PyBobIoHDF5File_Describe,
+    s_describe.name(),
+    (PyCFunction)PyBobIoHDF5File_describe,
     METH_VARARGS|METH_KEYWORDS,
-    s_describe_doc,
+    s_describe.doc(),
   },
   {
-    s_unlink_str,
-    (PyCFunction)PyBobIoHDF5File_Unlink,
+    s_unlink.name(),
+    (PyCFunction)PyBobIoHDF5File_unlink,
     METH_VARARGS|METH_KEYWORDS,
-    s_unlink_doc,
+    s_unlink.doc(),
   },
   {
-    s_rename_str,
-    (PyCFunction)PyBobIoHDF5File_Rename,
+    s_rename.name(),
+    (PyCFunction)PyBobIoHDF5File_rename,
     METH_VARARGS|METH_KEYWORDS,
-    s_rename_doc,
+    s_rename.doc(),
   },
   {
-    s_paths_str,
-    (PyCFunction)PyBobIoHDF5File_Paths,
+    s_paths.name(),
+    (PyCFunction)PyBobIoHDF5File_paths,
     METH_VARARGS|METH_KEYWORDS,
-    s_paths_doc,
+    s_paths.doc(),
   },
   {
-    s_keys_str,
-    (PyCFunction)PyBobIoHDF5File_Paths,
+    s_keys.name(),
+    (PyCFunction)PyBobIoHDF5File_paths,
     METH_VARARGS|METH_KEYWORDS,
-    s_paths_doc,
+    s_keys.doc(),
   },
   {
-    s_sub_groups_str,
-    (PyCFunction)PyBobIoHDF5File_SubGroups,
+    s_sub_groups.name(),
+    (PyCFunction)PyBobIoHDF5File_subGroups,
     METH_VARARGS|METH_KEYWORDS,
-    s_sub_groups_doc,
+    s_sub_groups.doc(),
   },
   {
-    s_read_str,
-    (PyCFunction)PyBobIoHDF5File_Read,
+    s_read.name(),
+    (PyCFunction)PyBobIoHDF5File_read,
     METH_VARARGS|METH_KEYWORDS,
-    s_read_doc,
+    s_read.doc(),
   },
   {
-    "get",
-    (PyCFunction)PyBobIoHDF5File_Read,
+    s_get.name(),
+    (PyCFunction)PyBobIoHDF5File_read,
     METH_VARARGS|METH_KEYWORDS,
-    s_read_doc,
+    s_get.doc(),
   },
   {
-    s_lread_str,
-    (PyCFunction)PyBobIoHDF5File_ListRead,
+    s_lread.name(),
+    (PyCFunction)PyBobIoHDF5File_listRead,
     METH_VARARGS|METH_KEYWORDS,
-    s_lread_doc,
+    s_lread.doc(),
   },
   {
-    s_replace_str,
-    (PyCFunction)PyBobIoHDF5File_Replace,
+    s_replace.name(),
+    (PyCFunction)PyBobIoHDF5File_replace,
     METH_VARARGS|METH_KEYWORDS,
-    s_replace_doc,
+    s_replace.doc(),
   },
   {
-    s_append_str,
-    (PyCFunction)PyBobIoHDF5File_Append,
+    s_append.name(),
+    (PyCFunction)PyBobIoHDF5File_append,
     METH_VARARGS|METH_KEYWORDS,
-    s_append_doc,
+    s_append.doc(),
   },
   {
-    s_set_str,
-    (PyCFunction)PyBobIoHDF5File_Set,
+    s_set.name(),
+    (PyCFunction)PyBobIoHDF5File_set,
     METH_VARARGS|METH_KEYWORDS,
-    s_set_doc,
+    s_set.doc(),
   },
   {
-    "write",
-    (PyCFunction)PyBobIoHDF5File_Set,
+    s_write.name(),
+    (PyCFunction)PyBobIoHDF5File_set,
     METH_VARARGS|METH_KEYWORDS,
-    s_set_doc,
+    s_write.doc(),
   },
   {
-    s_copy_str,
-    (PyCFunction)PyBobIoHDF5File_Copy,
+    s_copy.name(),
+    (PyCFunction)PyBobIoHDF5File_copy,
     METH_VARARGS|METH_KEYWORDS,
-    s_copy_doc,
+    s_copy.doc(),
   },
   {
-    s_get_attribute_str,
-    (PyCFunction)PyBobIoHDF5File_GetAttribute,
+    s_get_attribute.name(),
+    (PyCFunction)PyBobIoHDF5File_getAttribute,
     METH_VARARGS|METH_KEYWORDS,
-    s_get_attribute_doc,
+    s_get_attribute.doc(),
   },
   {
-    s_get_attributes_str,
-    (PyCFunction)PyBobIoHDF5File_GetAttributes,
+    s_get_attributes.name(),
+    (PyCFunction)PyBobIoHDF5File_getAttributes,
     METH_VARARGS|METH_KEYWORDS,
-    s_get_attributes_doc,
+    s_get_attributes.doc(),
   },
   {
-    s_set_attribute_str,
-    (PyCFunction)PyBobIoHDF5File_SetAttribute,
+    s_set_attribute.name(),
+    (PyCFunction)PyBobIoHDF5File_setAttribute,
     METH_VARARGS|METH_KEYWORDS,
-    s_set_attribute_doc,
+    s_set_attribute.doc(),
   },
   {
-    s_set_attributes_str,
-    (PyCFunction)PyBobIoHDF5File_SetAttributes,
+    s_set_attributes.name(),
+    (PyCFunction)PyBobIoHDF5File_setAttributes,
     METH_VARARGS|METH_KEYWORDS,
-    s_set_attributes_doc,
+    s_set_attributes.doc(),
   },
   {
-    s_del_attribute_str,
-    (PyCFunction)PyBobIoHDF5File_DelAttribute,
+    s_del_attribute.name(),
+    (PyCFunction)PyBobIoHDF5File_delAttribute,
     METH_VARARGS|METH_KEYWORDS,
-    s_del_attribute_doc,
+    s_del_attribute.doc(),
   },
   {
-    s_del_attributes_str,
-    (PyCFunction)PyBobIoHDF5File_DelAttributes,
+    s_del_attributes.name(),
+    (PyCFunction)PyBobIoHDF5File_delAttributes,
     METH_VARARGS|METH_KEYWORDS,
-    s_del_attributes_doc,
+    s_del_attributes.doc(),
   },
   {
-    s_has_attribute_str,
-    (PyCFunction)PyBobIoHDF5File_HasAttribute,
+    s_has_attribute.name(),
+    (PyCFunction)PyBobIoHDF5File_hasAttribute,
     METH_VARARGS|METH_KEYWORDS,
-    s_has_attribute_doc,
+    s_has_attribute.doc(),
   },
   {0}  /* Sentinel */
 };
 
-static PyObject* PyBobIoHDF5File_Cwd(PyBobIoHDF5FileObject* self) {
-  try{
-    return Py_BuildValue("s", self->f->cwd().c_str());
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot access 'cwd' in HDF5 file `%s': unknown exception caught", filename);
-    return 0;
-  }
-}
-
-PyDoc_STRVAR(s_cwd_str, "cwd");
-PyDoc_STRVAR(s_cwd_doc,
-"The current working directory set on the file"
+static auto s_cwd = bob::extension::VariableDoc(
+  "cwd",
+  "str",
+  "The current working directory set on the file"
 );
-
-static PyObject* PyBobIoHDF5File_Filename(PyBobIoHDF5FileObject* self) {
-  try{
-    return Py_BuildValue("s", self->f->filename().c_str());
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot access 'filename' in HDF5 file `%s': unknown exception caught", filename);
-    return 0;
-  }
+static PyObject* PyBobIoHDF5File_cwd(PyBobIoHDF5FileObject* self) {
+BOB_TRY
+  return Py_BuildValue("s", self->f->cwd().c_str());
+BOB_CATCH_MEMBER(exception_message(self, s_cwd.name()).c_str(), 0)
 }
 
 static auto s_filename = bob::extension::VariableDoc(
@@ -2692,47 +2065,42 @@ static auto s_filename = bob::extension::VariableDoc(
   "str",
   "The name (and path) of the underlying file on hard disk"
 );
-
-static PyObject* PyBobIoHDF5File_Writable(PyBobIoHDF5FileObject* self) {
-  try{
-    return Py_BuildValue("b", self->f->writable());
-  }
-  catch (std::exception& e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
-    return 0;
-  }
-  catch (...) {
-    const char* filename = "<unknown>";
-    try{ filename = self->f->filename().c_str(); } catch(...){}
-    PyErr_Format(PyExc_RuntimeError, "cannot access 'writable' in HDF5 file `%s': unknown exception caught", filename);
-    return 0;
-  }
+static PyObject* PyBobIoHDF5File_filename(PyBobIoHDF5FileObject* self) {
+BOB_TRY
+  return Py_BuildValue("s", self->f->filename().c_str());
+BOB_CATCH_MEMBER(exception_message(self, s_filename.name()).c_str(), 0)
 }
+
 
 static auto s_writable = bob::extension::VariableDoc(
   "writable",
   "bool",
   "Has this file been opened in writable mode?"
 );
+static PyObject* PyBobIoHDF5File_writable(PyBobIoHDF5FileObject* self) {
+BOB_TRY
+  return Py_BuildValue("b", self->f->writable());
+BOB_CATCH_MEMBER(exception_message(self, s_writable.name()).c_str(), 0)
+}
 
 static PyGetSetDef PyBobIoHDF5File_getseters[] = {
     {
-      s_cwd_str,
-      (getter)PyBobIoHDF5File_Cwd,
+      s_cwd.name(),
+      (getter)PyBobIoHDF5File_cwd,
       0,
-      s_cwd_doc,
+      s_cwd.doc(),
       0,
     },
     {
       s_filename.name(),
-      (getter)PyBobIoHDF5File_Filename,
+      (getter)PyBobIoHDF5File_filename,
       0,
       s_filename.doc(),
       0,
     },
     {
       s_writable.name(),
-      (getter)PyBobIoHDF5File_Writable,
+      (getter)PyBobIoHDF5File_writable,
       0,
       s_writable.doc(),
       0,
@@ -2742,41 +2110,33 @@ static PyGetSetDef PyBobIoHDF5File_getseters[] = {
 
 PyTypeObject PyBobIoHDF5File_Type = {
     PyVarObject_HEAD_INIT(0, 0)
-    s_hdf5file_str,                             /*tp_name*/
-    sizeof(PyBobIoHDF5FileObject),              /*tp_basicsize*/
-    0,                                          /*tp_itemsize*/
-    (destructor)PyBobIoHDF5File_Delete,         /*tp_dealloc*/
-    0,                                          /*tp_print*/
-    0,                                          /*tp_getattr*/
-    0,                                          /*tp_setattr*/
-    0,                                          /*tp_compare*/
-    (reprfunc)PyBobIoHDF5File_Repr,             /*tp_repr*/
-    0,                                          /*tp_as_number*/
-    0,                                          /*tp_as_sequence*/
-    0, //&PyBobIoHDF5File_Mapping,                   /*tp_as_mapping*/
-    0,                                          /*tp_hash */
-    0,                                          /*tp_call*/
-    (reprfunc)PyBobIoHDF5File_Repr,             /*tp_str*/
-    0,                                          /*tp_getattro*/
-    0,                                          /*tp_setattro*/
-    0,                                          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /*tp_flags*/
-    s_hdf5file_doc,                             /* tp_doc */
-    0,		                                      /* tp_traverse */
-    0,		                                      /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,		                                      /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,		                                      /* tp_iternext */
-    PyBobIoHDF5File_Methods,                    /* tp_methods */
-    0,                                          /* tp_members */
-    PyBobIoHDF5File_getseters,                  /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)PyBobIoHDF5File_Init,             /* tp_init */
-    0,                                          /* tp_alloc */
-    PyBobIoHDF5File_New,                        /* tp_new */
+    0
 };
+
+bool init_HDF5File(PyObject* module){
+
+  // initialize the HDF5 file
+  PyBobIoHDF5File_Type.tp_name = s_hdf5file.name();
+  PyBobIoHDF5File_Type.tp_basicsize = sizeof(PyBobIoHDF5FileObject);
+  PyBobIoHDF5File_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
+  PyBobIoHDF5File_Type.tp_doc = s_hdf5file.doc();
+
+  // set the functions
+  PyBobIoHDF5File_Type.tp_new = PyBobIoHDF5File_New;
+  PyBobIoHDF5File_Type.tp_init = reinterpret_cast<initproc>(PyBobIoHDF5File_init);
+  PyBobIoHDF5File_Type.tp_dealloc = reinterpret_cast<destructor>(PyBobIoHDF5File_Delete);
+  PyBobIoHDF5File_Type.tp_methods = PyBobIoHDF5File_methods;
+  PyBobIoHDF5File_Type.tp_getset = PyBobIoHDF5File_getseters;
+
+  PyBobIoHDF5File_Type.tp_str = reinterpret_cast<reprfunc>(PyBobIoHDF5File_repr);
+  PyBobIoHDF5File_Type.tp_repr = reinterpret_cast<reprfunc>(PyBobIoHDF5File_repr);
+
+
+  // check that everyting is fine
+  if (PyType_Ready(&PyBobIoHDF5File_Type) < 0)
+    return false;
+
+  // add the type to the module
+  Py_INCREF(&PyBobIoHDF5File_Type);
+  return PyModule_AddObject(module, s_hdf5file.name(), (PyObject*)&PyBobIoHDF5File_Type) >= 0;
+}
