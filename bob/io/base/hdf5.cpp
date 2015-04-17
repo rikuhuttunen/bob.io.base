@@ -598,7 +598,7 @@ BOB_TRY
     PyList_SET_ITEM(retval, i, Py_BuildValue("s", values[i].c_str()));
   }
 
-  return retval;
+  return Py_BuildValue("O", retval);
 BOB_CATCH_MEMBER(exception_message(self, s_sub_groups.name()).c_str(), 0)
 }
 

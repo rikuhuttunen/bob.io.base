@@ -433,3 +433,49 @@ def test_close():
 
   finally:
     os.unlink(tmpname)
+
+def test_copy_constructor():
+  try:
+    tmpname = test_utils.temporary_filename()
+    tmpname2 = test_utils.temporary_filename()
+    hdf5 = HDF5File(tmpname, 'w')
+    shallow = HDF5File(hdf5)
+    deep = HDF5File(tmpname2, 'w')
+    hdf5.copy(deep)
+
+    hdf5.create_group("Test")
+    hdf5.cd("Test")
+    hdf5.set("Data", numpy.random.random((10,10)))
+    hdf5.flush()
+
+    assert shallow.has_group("/Test")
+    assert shallow.has_key("/Test/Data")
+    assert hdf5.filename == shallow.filename
+    assert hdf5.keys() == shallow.keys()
+    assert hdf5.cwd == shallow.cwd
+
+    assert not deep.has_group("/Test")
+    assert hdf5.filename != deep.filename
+    assert hdf5.keys() != deep.keys()
+    assert hdf5.cwd != deep.cwd
+
+    hdf5.cd("..")
+
+    assert hdf5.sub_groups() == shallow.sub_groups()
+    assert hdf5.sub_groups() != deep.sub_groups()
+
+    assert hdf5.writable
+    assert shallow.writable
+    assert deep.writable
+
+
+    hdf5.close()
+    deep.close()
+
+    def test_filename():
+      fn = shallow.filename
+    nose.tools.assert_raises(RuntimeError, test_filename)
+
+  finally:
+    os.unlink(tmpname)
+    os.unlink(tmpname2)
