@@ -166,7 +166,9 @@ BOB_CATCH_MEMBER("hdf5 constructor", -1)
 
 
 static PyObject* PyBobIoHDF5File_repr(PyBobIoHDF5FileObject* self) {
+BOB_TRY
   return PyString_FromFormat("%s(filename='%s')", Py_TYPE(self)->tp_name, self->f->filename().c_str());
+BOB_CATCH_MEMBER("__repr__", 0)
 }
 
 

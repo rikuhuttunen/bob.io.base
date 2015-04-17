@@ -458,6 +458,7 @@ def test_copy_constructor():
     assert hdf5.filename != deep.filename
     assert hdf5.keys() != deep.keys()
     assert hdf5.cwd != deep.cwd
+    assert str(shallow)
 
     hdf5.cd("..")
 
@@ -475,6 +476,9 @@ def test_copy_constructor():
     def test_filename():
       fn = shallow.filename
     nose.tools.assert_raises(RuntimeError, test_filename)
+    def test_repr():
+      fn = str(shallow)
+    nose.tools.assert_raises(RuntimeError, test_repr)
 
   finally:
     os.unlink(tmpname)
