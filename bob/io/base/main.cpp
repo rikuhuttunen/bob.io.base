@@ -91,9 +91,6 @@ static PyObject* create_module (void) {
   auto m_ = make_safe(m);
 
   /* register some constants */
-  if (PyModule_AddIntConstant(m, "__api_version__", BOB_IO_BASE_API_VERSION) < 0) return 0;
-  if (PyModule_AddStringConstant(m, "__version__", BOB_EXT_MODULE_VERSION) < 0) return 0;
-
   if (!init_File(m)) return 0;
   if (!init_HDF5File(m)) return 0;
 
