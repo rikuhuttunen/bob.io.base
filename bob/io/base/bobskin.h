@@ -13,9 +13,7 @@
 
 #include <bob.io.base/array.h>
 
-extern "C" {
 #include <bob.blitz/capi.h>
-}
 
 
 /**

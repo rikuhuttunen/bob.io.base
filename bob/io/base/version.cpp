@@ -5,114 +5,20 @@
  * @brief Binds configuration information available from bob
  */
 
-#include <Python.h>
 
+// include config.h without defining the bob_io_base_version function
+#include <bob.io.base/config.h>
+
+#define BOB_IMPORT_VERSION
+#define BOB_IO_BASE_MODULE
 #ifdef NO_IMPORT_ARRAY
 #undef NO_IMPORT_ARRAY
 #endif
-#define BOB_IO_BASE_MODULE
-#include <bob.io.base/config.h>
-
-#include <string>
-#include <cstdlib>
-#include <blitz/blitz.h>
-#include <boost/preprocessor/stringize.hpp>
-#include <boost/version.hpp>
-#include <boost/format.hpp>
-#include <hdf5.h>
 
 #include <bob.blitz/capi.h>
-#include <bob.blitz/cleanup.h>
-#include <bob.core/config.h>
-
-static int dict_steal(PyObject* d, const char* key, PyObject* value) {
-  if (!value) return 0;
-  auto value_ = make_safe(value);
-  int retval = PyDict_SetItemString(d, key, value);
-  if (retval == 0) return 1; //all good
-  return 0; //a problem occurred
-}
-
-
-static int dict_set(PyObject* d, const char* key, const char* value) {
-  PyObject* v = Py_BuildValue("s", value);
-  return dict_steal(d, key, v);
-}
-
-/***********************************************************
- * Version number generation
- ***********************************************************/
-
-static PyObject* hdf5_version() {
-  boost::format f("%s.%s.%s");
-  f % BOOST_PP_STRINGIZE(H5_VERS_MAJOR);
-  f % BOOST_PP_STRINGIZE(H5_VERS_MINOR);
-  f % BOOST_PP_STRINGIZE(H5_VERS_RELEASE);
-  return Py_BuildValue("s", f.str().c_str());
-}
-
-/**
- * Describes the version of Boost libraries installed
- */
-static PyObject* boost_version() {
-  boost::format f("%d.%d.%d");
-  f % (BOOST_VERSION / 100000);
-  f % (BOOST_VERSION / 100 % 1000);
-  f % (BOOST_VERSION % 100);
-  return Py_BuildValue("s", f.str().c_str());
-}
-
-/**
- * Describes the compiler version
- */
-static PyObject* compiler_version() {
-# if defined(__GNUC__) && !defined(__llvm__)
-  boost::format f("%s.%s.%s");
-  f % BOOST_PP_STRINGIZE(__GNUC__);
-  f % BOOST_PP_STRINGIZE(__GNUC_MINOR__);
-  f % BOOST_PP_STRINGIZE(__GNUC_PATCHLEVEL__);
-  return Py_BuildValue("{ssss}", "name", "gcc", "version", f.str().c_str());
-# elif defined(__llvm__) && !defined(__clang__)
-  return Py_BuildValue("{ssss}", "name", "llvm-gcc", "version", __VERSION__);
-# elif defined(__clang__)
-  return Py_BuildValue("{ssss}", "name", "clang", "version", __clang_version__);
-# else
-  return Py_BuildValue("{ssss}", "name", "unsupported", "version", "unknown");
-# endif
-}
-
-/**
- * Python version with which we compiled the extensions
- */
-static PyObject* python_version() {
-  boost::format f("%s.%s.%s");
-  f % BOOST_PP_STRINGIZE(PY_MAJOR_VERSION);
-  f % BOOST_PP_STRINGIZE(PY_MINOR_VERSION);
-  f % BOOST_PP_STRINGIZE(PY_MICRO_VERSION);
-  return Py_BuildValue("s", f.str().c_str());
-}
-
-/**
- * Numpy version
- */
-static PyObject* numpy_version() {
-  return Py_BuildValue("{ssss}", "abi", BOOST_PP_STRINGIZE(NPY_VERSION),
-      "api", BOOST_PP_STRINGIZE(NPY_API_VERSION));
-}
-
-/**
- * bob.blitz c/c++ api version
- */
-static PyObject* bob_blitz_version() {
-  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_BLITZ_API_VERSION));
-}
-
-/**
- * bob.core c/c++ api version
- */
-static PyObject* bob_core_version() {
-  return Py_BuildValue("{ss}", "api", BOOST_PP_STRINGIZE(BOB_CORE_API_VERSION));
-}
+#include <bob.core/api.h>
+// This will include config.h again, but will not do anything since its header guard is already defined.
+#include <bob.io.base/api.h>
 
 static PyObject* build_version_dictionary() {
 
@@ -169,11 +75,8 @@ static PyObject* create_module (void) {
   if (PyModule_AddObject(m, "externals", build_version_dictionary()) < 0) return 0;
 
   /* imports dependencies */
-  if (import_bob_blitz() < 0) {
-    PyErr_Print();
-    PyErr_Format(PyExc_ImportError, "cannot import `%s'", BOB_EXT_MODULE_NAME);
-    return 0;
-  }
+  if (import_bob_blitz() < 0) return 0;
+  if (import_bob_core_logging() < 0) return 0;
 
   return Py_BuildValue("O", m);
 
