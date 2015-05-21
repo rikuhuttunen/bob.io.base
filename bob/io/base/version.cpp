@@ -6,19 +6,11 @@
  */
 
 
-// include config.h without defining the bob_io_base_version function
-#include <bob.io.base/config.h>
-
 #define BOB_IMPORT_VERSION
-#define BOB_IO_BASE_MODULE
-#ifdef NO_IMPORT_ARRAY
-#undef NO_IMPORT_ARRAY
-#endif
-
-#include <bob.blitz/capi.h>
-#include <bob.core/api.h>
-// This will include config.h again, but will not do anything since its header guard is already defined.
-#include <bob.io.base/api.h>
+#include <bob.blitz/config.h>
+#include <bob.blitz/cleanup.h>
+#include <bob.core/config.h>
+#include <bob.io.base/config.h>
 
 static PyObject* build_version_dictionary() {
 
@@ -31,7 +23,7 @@ static PyObject* build_version_dictionary() {
   if (!dict_steal(retval, "Compiler", compiler_version())) return 0;
   if (!dict_steal(retval, "Python", python_version())) return 0;
   if (!dict_steal(retval, "NumPy", numpy_version())) return 0;
-  if (!dict_set(retval, "Blitz++", BZ_VERSION)) return 0;
+  if (!dict_steal(retval, "Blitz++", blitz_version())) return 0;
   if (!dict_steal(retval, "bob.blitz", bob_blitz_version())) return 0;
   if (!dict_steal(retval, "bob.core", bob_core_version())) return 0;
 
@@ -74,9 +66,8 @@ static PyObject* create_module (void) {
     return 0;
   if (PyModule_AddObject(m, "externals", build_version_dictionary()) < 0) return 0;
 
-  /* imports dependencies */
-  if (import_bob_blitz() < 0) return 0;
-  if (import_bob_core_logging() < 0) return 0;
+  // call bob_io_base_version once to avoid compiler warning
+  auto _ = make_safe(bob_io_base_version());
 
   return Py_BuildValue("O", m);
 

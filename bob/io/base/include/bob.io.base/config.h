@@ -21,6 +21,18 @@
 
   #include <Python.h>
   #include <boost/preprocessor/stringize.hpp>
+  #include <hdf5.h>
+
+  /**
+  * The version of HDF5
+  */
+  static PyObject* hdf5_version() {
+    boost::format f("%s.%s.%s");
+    f % BOOST_PP_STRINGIZE(H5_VERS_MAJOR);
+    f % BOOST_PP_STRINGIZE(H5_VERS_MINOR);
+    f % BOOST_PP_STRINGIZE(H5_VERS_RELEASE);
+    return Py_BuildValue("s", f.str().c_str());
+  }
 
   /**
    * bob.io.base c/c++ api version
