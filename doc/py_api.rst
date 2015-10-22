@@ -31,9 +31,23 @@ Functions
    bob.io.base.extensions
    bob.io.base.get_config
 
+Test Utilities
+--------------
+
+These functions might be useful when you are writing your nose tests.
+Please note that this is not part of the default ``bob.io.base`` API, so in order to use it, you have to ``import bob.io.base.test_utils`` separately.
+
+.. autosummary::
+   bob.io.base.test_utils.datafile
+   bob.io.base.test_utils.temporary_filename
+   bob.io.base.test_utils.extension_available
+
 
 Details
 -------
 
 .. automodule::
    bob.io.base
+
+.. automodule::
+   bob.io.base.test_utils
