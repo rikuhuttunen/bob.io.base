@@ -330,11 +330,11 @@ static bob::io::base::hdf5type PyBobIo_H5FromTypenum (int type_num) {
     case NPY_INT8:       return bob::io::base::i8;
     case NPY_INT16:      return bob::io::base::i16;
     case NPY_INT32:      return bob::io::base::i32;
-    case NPY_INT64:      return bob::io::base::i64;
+    // case NPY_INT64:      return bob::io::base::i64;
     case NPY_UINT8:      return bob::io::base::u8;
     case NPY_UINT16:     return bob::io::base::u16;
     case NPY_UINT32:     return bob::io::base::u32;
-    case NPY_UINT64:     return bob::io::base::u64;
+    // case NPY_UINT64:     return bob::io::base::u64;
     case NPY_FLOAT32:    return bob::io::base::f32;
     case NPY_FLOAT64:    return bob::io::base::f64;
 #ifdef NPY_FLOAT128
@@ -346,7 +346,8 @@ static bob::io::base::hdf5type PyBobIo_H5FromTypenum (int type_num) {
     case NPY_COMPLEX256: return bob::io::base::c256;
 #endif
       // Comment out __APPLE__ definition to get rid off duplicate case value error
-#if defined(__LP64__) /* || defined(__APPLE__) */
+      // -> caused std::bac_alloc RuntimeError
+#if defined(__LP64__) || defined(__APPLE__) 
     case NPY_LONGLONG:
                          switch (NPY_BITSOF_LONGLONG) {
                            case 8: return bob::io::base::i8;
